@@ -1,0 +1,72 @@
+MICHAELCRAFT BETA 1.0.3 - THE KING FIGHTS BACK
+===============================================
+
+NOTE: the version is now beta-1.0.3, so everyone in a multiplayer game needs 1.0.3.
+Worlds from 1.0.1 and 1.0.2 load fine.
+
+The King of the Abyss is now meant to be fought from range: bows and muskets.
+
+
+KING OF THE ABYSS
+-----------------
+  - 825 health (was 520). "Bosses Scale With Players" still adds +50% for each extra
+    player near him when he spawns.
+  - MELEE ARMOUR: close-up hits only do HALF damage (swords, axes, fists, katanas,
+    including katana dash cuts). The Hammer is the exception: it still hits for full.
+    Arrows and musket shots also do full damage.
+    You'll see a purple flash when he soaks up a hit, and the first time it
+    happens you get a hint to use a bow or musket.
+  - BLEEDING HEALS HIM: when the Sensei's Katana makes him bleed, the bleed heals
+    him 40-50 health over its 3 seconds instead of hurting him (green "+" numbers).
+    Ruby Arrows still make him bleed normally, so that bleed still hurts him.
+  - Friends can't shove him around with knockback any more.
+  - To tune him, see the BOSSES entry for 'abyssking' in index.html:
+      meleeTaken: 0.5       (how much melee damage gets through)
+      bleedHeal: [40, 50]   (how much a katana bleed heals him)
+    Any boss added later can use the same two settings.
+
+
+ARROWS: +25% DAMAGE
+-------------------
+  Arrow ................ 4  -> 5
+  Iron-Tipped Arrow .... 6  -> 7.5
+  Diamond-Tipped Arrow . 8  -> 10
+  Ruby Arrow ........... 10 -> 12.5
+
+
+FIXED: DOING THINGS THROUGH WALLS
+---------------------------------
+  This bug was in the whole game: you could mine, open, place blocks against and
+  hit anything within reach, even if it was behind solid blocks.
+  - Now a line is traced from your eyes to your cursor, block by block. The first
+    solid block in the way is what you mine or use, like in Minecraft.
+  - You can't open a chest, furnace or anything else through a wall.
+  - You can't target or hit monsters (or players, with Friendly Fire on) you
+    can't see. The sword sweep, katana slashes and the Hammer's shockwave only hit
+    what they can actually see.
+  - Windows work: if you can see part of it (head, middle or feet), you can hit it.
+  - Glass, leaves and other solid blocks count as walls. Torches, ladders,
+    platforms, water and other non-solid blocks don't block you.
+
+
+SMALL FIXES
+-----------
+  - A friend's Ruby Arrow bleed and katana dash bleed now actually reach the host
+    (before, only the friend's screen showed the bleed).
+
+
+BOSS FIXES (found after the first 1.0.3 build)
+----------------------------------------------
+  - FIXED: the King vanished about 2 seconds after spawning if you were in
+    CREATIVE mode (single player or multiplayer). This came from 1.0.2: creative
+    players weren't counted as being at the fight, so he thought everyone had left.
+    Creative players count again. He still can't hurt you in creative, like before.
+  - FIXED (an older bug): if you got more than 120 blocks away from the King, the
+    normal "clear out far-away monsters" cleanup deleted him without telling the
+    game. Then the altar said "The King is already awake!" and you couldn't summon
+    him again. Now bosses are never cleaned up like normal monsters. Run far
+    enough away and he leaves properly (after 4 seconds), and you can summon him again.
+
+  Tested: altar and /summon, survival and creative, single player; host/friend in
+  every creative/survival combo in multiplayer; getting hit, dying, running away,
+  and killing him (loot + advancement) in both.

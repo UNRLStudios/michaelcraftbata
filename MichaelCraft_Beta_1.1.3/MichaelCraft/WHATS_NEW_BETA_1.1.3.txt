@@ -1,0 +1,92 @@
+MICHAELCRAFT BETA 1.1.3 - SKINS
+===============================
+
+NOTE: the version is now beta-1.1.3, so everyone in a multiplayer game needs 1.1.3.
+
+
+SKINS (title screen > Skins, or Pause > Skins)
+----------------------------------------------
+  Your look is yours, not a world's: it's saved in your browser and follows you into
+  every world. Friends in multiplayer see it (colours, styles and accessories).
+
+  PRESETS (16): Miner (the old look), Explorer, Knight, Ninja, Farmer, Pirate,
+  Scientist, Abyss Walker, Sakura, Diver, Lumberjack, Nomad, Frost, Volcano,
+  Bald Brute, Royal. Click one to wear it.
+
+  CUSTOM: pick colours for your Skin, Hair, Eyes, Shirt, Pants and Shoes from the
+  swatches - or ANY colour with the picker at the end of each row. Plus:
+    Hair styles:  Short, Long, Buzz, Spiky, Ponytail, Bald
+    Shirts:       T-Shirt, Long Sleeves, Tank Top, Stripes
+  (Armour still covers your shirt and pants while you wear it.)
+
+  The big preview walks (pause it with the button under it) and turns around.
+  Your inventory shows your real look now too, accessories and all.
+
+
+ACCESSORIES: 55, each EARNED by a different advancement
+-------------------------------------------------------------
+  Wear one in each slot: Head, Face, Neck & Waist, and Back. Every one is made for
+  the advancement that gives it, and once earned it's yours in every world
+  (advancements you already got in your old worlds count as soon as you load them).
+  Locked ones show a lock - hover one to see which advancement earns it.
+  Some glow (the Crown of the Abyss, the Halo, the Miner's Helmet lamp...).
+
+    ACCESSORY                    SLOT   EARNED BY
+    Abyssal Horns                head   Into the Abyss
+    Baguette Hat                 head   Bake Bread
+    Captain's Hat                head   Set Sail
+    Carpenter's Pencil           head   Benchmarking
+    Cat Ears                     head   Best Friends Forever
+    Chef's Hat                   head   Easy as Pie
+    Cobalt Circlet               head   Deep Blue
+    Crimson Headband             head   Three Crimson Blades
+    Crown of Flames              head   Hot Stuff
+    Crown of the Abyss           head   Regicide
+    Diamond Headband             head   Diamonds!
+    Engineer's Goggles           head   Industrial Revolution
+    Explorer's Hat               head   Cartographer
+    Fishing Hat                  head   Fishy Business
+    Glow Antennae                head   Bottled Light
+    Halo                         head   Earn Your Wings
+    Hunter's Bandana             head   Monster Hunter
+    Kabuto Crest                 head   Way of the Warrior
+    Leaf Crown                   head   Getting Wood
+    Miner's Helmet               head   Into the Deep
+    Nightcap                     head   Sweet Dreams
+    Propeller Hat                head   To the Moon!
+    Pumpkin Head                 head   Pumpkin Patch
+    Rainbow Crown                head   Maxed Out
+    Squid Hat                    head   Tentacle Tussle
+    Stone Helmet                 head   Stone Age
+    Straw Kasa                   head   Through the Gate
+    Tonio's Tricorn              head   Sharpshooter
+    Twin Stars                   head   Better Together
+    Wizard Hat                   head   Enchanter
+    Diver's Goggles              face   Deep Diver
+    Eye Patch                    face   Critical Thinking
+    Gem Earring                  face   Polished
+    Jeweler's Loupe              face   Cutting Edge
+    Obsidian Shades              face   Ice Bucket Challenge
+    Ruby Monocle                 face   Seeing Red
+    Snorkel Mask                 face   Just Keep Swimming
+    Villager Nose                face   What a Deal!
+    Welding Goggles              face   Acquire Hardware
+    Brute Tooth Necklace         neck   Giant Slayer
+    Charm Belt                   neck   Fully Charmed
+    Charm Necklace               neck   Lucky Charm
+    Glowing Seashell             neck   Light of the Sea
+    Gold Chain                   neck   Midas Touch
+    House Key                    neck   Home Sweet Home
+    Sensei's Black Belt          neck   The Student Surpasses
+    Treasure Belt                neck   Solid Investment
+    Wind Scarf                   neck   Iaido
+    Cobalt Trident               back   Tidal Upgrade
+    Hero Cape                    back   Suit Up
+    Katana on Your Back          back   Way of the Blade
+    Pickaxe on Your Back         back   Getting an Upgrade
+    Quiver                       back   Take Aim
+    Sledgehammer on Your Back    back   Hammer Time
+    The King's Cape              back   Long Live the King
+
+  For whoever adds more: see the note above ACCESSORIES in index.html (one line each:
+  name, advancement, slot, position and pixel rows).

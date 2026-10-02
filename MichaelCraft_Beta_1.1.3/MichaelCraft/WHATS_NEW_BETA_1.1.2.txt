@@ -1,0 +1,9 @@
+MICHAELCRAFT BETA 1.1.2 - FIXES
+===============================
+
+NOTE: the version is now beta-1.1.2, so everyone in a multiplayer game needs 1.1.2.
+
+  - The main menu is back in the middle of the screen (it had slipped to the
+    bottom). On short screens (a phone held sideways) it still starts at the top
+    instead of getting cut off.
+  - Your charms no longer show on the title screen after you quit a world.

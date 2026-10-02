@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>UNRL 16x16 Tile Forge</title>
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#101216;color:#e9edf2;font-family:Inter,Segoe UI,Arial,sans-serif;height:100vh;overflow:hidden}
+button,input{font:inherit}
+.app{height:100vh;display:flex;flex-direction:column}
+.topbar{height:58px;background:#181b21;border-bottom:1px solid #30343c;display:flex;align-items:center;padding:0 14px;gap:12px}
+.logo{font-weight:800;letter-spacing:.8px;font-size:18px;margin-right:10px}
+.logo span{color:#8bc34a}
+.title{color:#aeb5c0;font-size:13px}
+.spacer{flex:1}
+.btn{background:#252a32;border:1px solid #3a404a;color:#e9edf2;border-radius:7px;padding:8px 12px;cursor:pointer}
+.btn:hover{background:#303640}
+.btn.primary{background:#6da331;border-color:#83bd3f;color:#fff}
+.btn.danger{color:#ff8c8c}
+.main{flex:1;display:grid;grid-template-columns:240px 1fr 270px;min-height:0}
+.sidebar,.rightbar{background:#171a1f;border-right:1px solid #30343c;padding:14px;overflow:auto}
+.rightbar{border-right:0;border-left:1px solid #30343c}
+.section{margin-bottom:18px}
+.section h3{font-size:12px;text-transform:uppercase;letter-spacing:1px;color:#8d96a3;margin:0 0 10px}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.tool{padding:10px 7px;text-align:center;background:#22262d;border:1px solid #343a44;border-radius:7px;color:#cdd3dc;cursor:pointer}
+.tool.active{border-color:#91c64e;background:#2b3524;color:#fff}
+.color-row{display:flex;gap:8px;align-items:center}
+#color{width:48px;height:38px;border:0;padding:0;background:none}
+.swatches{display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-top:9px}
+.swatch{height:27px;border-radius:5px;border:1px solid #454b55;cursor:pointer}
+.slider-row{display:flex;align-items:center;gap:8px;margin:9px 0}
+.slider-row input{width:100%}
+.stage{background:#0d0f12;position:relative;display:flex;align-items:center;justify-content:center;min-width:0;overflow:hidden}
+.canvas-wrap{position:relative;background:#d9d9d9;box-shadow:0 12px 50px #0008}
+#editor{display:block;image-rendering:pixelated;cursor:crosshair}
+#gridOverlay{position:absolute;inset:0;pointer-events:none}
+.checker{background-image:linear-gradient(45deg,#cfcfcf 25%,transparent 25%),linear-gradient(-45deg,#cfcfcf 25%,transparent 25%),linear-gradient(45deg,transparent 75%,#cfcfcf 75%),linear-gradient(-45deg,transparent 75%,#cfcfcf 75%);background-size:16px 16px;background-position:0 0,0 8px,8px -8px,-8px 0;background-color:#eee}
+.preview-box{display:flex;align-items:center;justify-content:center;background:#0d0f12;border:1px solid #343a44;border-radius:8px;height:190px;margin-bottom:10px}
+#preview{width:150px;height:150px;image-rendering:pixelated}
+.stat{font-size:12px;color:#929aa7;display:flex;justify-content:space-between;padding:4px 0}
+.field{display:flex;gap:7px}
+.field input{width:100%;background:#22262d;border:1px solid #393f49;color:#fff;border-radius:6px;padding:8px}
+select{width:100%;background:#22262d;border:1px solid #393f49;color:#fff;border-radius:6px;padding:8px}
+.help{font-size:12px;line-height:1.55;color:#89919d}
+kbd{background:#292e36;border:1px solid #444a54;border-radius:4px;padding:1px 5px;color:#dce1e8}
+.bottom{position:absolute;bottom:12px;left:50%;transform:translateX(-50%);background:#191c22dd;border:1px solid #363b44;border-radius:8px;padding:7px 11px;font-size:12px;color:#9ca5b1}
+.zoom{position:absolute;right:14px;bottom:14px;display:flex;gap:5px}
+.zoom button{width:34px;height:32px;padding:0}
+.hidden{display:none!important}
+hr{border:0;border-top:1px solid #2d323a;margin:13px 0}
+</style>
+</head>
+<body>
+<div class="app">
+  <div class="topbar">
+    <div class="logo">UNRL <span>TILE FORGE</span></div>
+    <div class="title">16 × 16 Pixel Tile Engine</div>
+    <div class="spacer"></div>
+    <button class="btn" id="newBtn">New</button>
+    <button class="btn" id="importBtn">Import PNG</button>
+    <button class="btn" id="undoBtn">Undo</button>
+    <button class="btn" id="redoBtn">Redo</button>
+    <button class="btn primary" id="exportBtn">Export PNG</button>
+  </div>
+
+  <div class="main">
+    <aside class="sidebar">
+      <div class="section">
+        <h3>Tools</h3>
+        <div class="tools">
+          <button class="tool active" data-tool="pencil">✎ Pencil</button>
+          <button class="tool" data-tool="eraser">⌫ Eraser</button>
+          <button class="tool" data-tool="fill">▨ Fill</button>
+          <button class="tool" data-tool="picker">◉ Picker</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Color</h3>
+        <div class="color-row">
+          <input type="color" id="color" value="#6da331">
+          <div>
+            <div style="font-size:12px;color:#aab1bb">Selected color</div>
+            <div id="hex" style="font-weight:700;margin-top:2px">#6DA331</div>
+          </div>
+        </div>
+        <div class="swatches" id="swatches"></div>
+      </div>
+
+      <div class="section">
+        <h3>Brush</h3>
+        <div class="slider-row">
+          <span style="font-size:12px">Size</span>
+          <input id="brush" type="range" min="1" max="4" value="1">
+          <b id="brushVal">1</b>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Canvas</h3>
+        <div class="field">
+          <button class="btn" id="clearBtn" style="width:100%">Clear</button>
+          <button class="btn" id="checkerBtn" style="width:100%">Checker</button>
+          <button class="btn" id="importBtn2" style="width:100%">Import Image</button>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Keyboard</h3>
+        <div class="help">
+          <div><kbd>B</kbd> Pencil</div>
+          <div><kbd>E</kbd> Eraser</div>
+          <div><kbd>F</kbd> Fill</div>
+          <div><kbd>I</kbd> Picker</div>
+          <div><kbd>Ctrl+Z</kbd> Undo</div>
+          <div><kbd>Ctrl+Y</kbd> Redo</div>
+          <div><kbd>Ctrl+S</kbd> Export</div>
+          <div><kbd>Ctrl+O</kbd> Import PNG</div>
+        </div>
+      </div>
+    </aside>
+
+    <main class="stage" id="stage">
+      <div class="canvas-wrap checker" id="canvasWrap">
+        <canvas id="editor" width="512" height="512"></canvas>
+        <canvas id="gridOverlay" width="512" height="512"></canvas>
+      </div>
+      <div class="bottom">LMB: draw • RMB: erase • Wheel: zoom</div>
+      <div class="zoom">
+        <button class="btn" id="zoomOut">−</button>
+        <button class="btn" id="zoomReset">1:1</button>
+        <button class="btn" id="zoomIn">+</button>
+      </div>
+    </main>
+
+    <aside class="rightbar">
+      <div class="section">
+        <h3>Preview</h3>
+        <div class="preview-box checker"><canvas id="preview" width="16" height="16"></canvas></div>
+        <div class="stat"><span>Resolution</span><b>16 × 16</b></div>
+        <div class="stat"><span>Format</span><b>PNG</b></div>
+        <div class="stat"><span>Transparency</span><b id="alphaStat">Enabled</b></div>
+      </div>
+
+      <hr>
+
+      <div class="section">
+        <h3>Tile Name</h3>
+        <input class="field" id="tileName" value="grass_tile" style="width:100%;background:#22262d;border:1px solid #393f49;color:#fff;border-radius:6px;padding:8px">
+      </div>
+
+      <div class="section">
+        <h3>Export</h3>
+        <button class="btn primary" id="exportBtn2" style="width:100%;margin-bottom:8px">Export 16×16 PNG</button>
+        <button class="btn" id="copyBtn" style="width:100%">Copy PNG to Clipboard</button>
+      </div>
+
+      <div class="section">
+        <h3>Pixel Info</h3>
+        <div class="stat"><span>Position</span><b id="pos">—</b></div>
+        <div class="stat"><span>Color</span><b id="posColor">—</b></div>
+      </div>
+
+      <hr>
+
+      <div class="help">
+        <b style="color:#cbd1d9">Minecraft-style workflow</b><br>
+        Build each tile directly at true 16×16 resolution. The editor scales the pixels up for comfortable drawing, while the exported PNG stays exactly 16×16 with no blur.
+      </div>
+    </aside>
+  </div>
+</div>
+
+<input id="fileInput" type="file" accept="image/png,image/jpeg,image/webp" class="hidden">
+
+<script>
+const SIZE=16;
+const canvas=document.getElementById('editor');
+const ctx=canvas.getContext('2d');
+const grid=document.getElementById('gridOverlay');
+const gctx=grid.getContext('2d');
+const preview=document.getElementById('preview');
+const pctx=preview.getContext('2d');
+
+let pixels=Array.from({length:SIZE},()=>Array(SIZE).fill(null));
+let tool='pencil', color='#6da331', brushSize=1, zoom=32;
+let drawing=false, history=[], future=[], checker=true;
+
+function snapshot(){ return pixels.map(r=>r.slice()); }
+function restore(s){ pixels=s.map(r=>r.slice()); render(); }
+
+function pushHistory(){
+  history.push(snapshot());
+  if(history.length>80) history.shift();
+  future=[];
+}
+function setPixel(x,y,c){
+  if(x<0||y<0||x>=SIZE||y>=SIZE)return;
+  pixels[y][x]=c;
+}
+function drawBrush(x,y,c){
+  const s=brushSize;
+  const start=-Math.floor((s-1)/2);
+  for(let yy=0;yy<s;yy++)for(let xx=0;xx<s;xx++)setPixel(x+start+xx,y+start+yy,c);
+}
+function hexToRgba(hex){
+  const n=parseInt(hex.slice(1),16);
+  return [(n>>16)&255,(n>>8)&255,n&255,255];
+}
+function render(){
+  ctx.clearRect(0,0,canvas.width,canvas.height);
+  const scale=canvas.width/SIZE;
+  for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
+    if(pixels[y][x]){
+      ctx.fillStyle=pixels[y][x];
+      ctx.fillRect(x*scale,y*scale,scale,scale);
+    }
+  }
+  drawGrid();
+  pctx.clearRect(0,0,16,16);
+  for(let y=0;y<SIZE;y++)for(let x=0;x<SIZE;x++){
+    if(pixels[y][x]){pctx.fillStyle=pixels[y][x];pctx.fillRect(x,y,1,1)}
+  }
+}
+function drawGrid(){
+  const s=canvas.width/SIZE;
+  gctx.clearRect(0,0,grid.width,grid.height);
+  gctx.strokeStyle='rgba(0,0,0,.20)';
+  gctx.lineWidth=1;
+  for(let i=0;i<=SIZE;i++){
+    const p=Math.round(i*s)+.5;
+    gctx.beginPath();gctx.moveTo(p,0);gctx.lineTo(p,grid.height);gctx.stroke();
+    gctx.beginPath();gctx.moveTo(0,p);gctx.lineTo(grid.width,p);gctx.stroke();
+  }
+}
+function resizeCanvas(){
+  canvas.width=SIZE*zoom; canvas.height=SIZE*zoom;
+  grid.width=canvas.width; grid.height=canvas.height;
+  document.getElementById('canvasWrap').style.width=canvas.width+'px';
+  document.getElementById('canvasWrap').style.height=canvas.height+'px';
+  render();
+}
+function posFromEvent(e){
+  const r=canvas.getBoundingClientRect();
+  const x=Math.floor((e.clientX-r.left)/(r.width/SIZE));
+  const y=Math.floor((e.clientY-r.top)/(r.height/SIZE));
+  return {x,y};
+}
+function applyAt(e,forceErase=false){
+  const {x,y}=posFromEvent(e);
+  if(x<0||y<0||x>=SIZE||y>=SIZE)return;
+  document.getElementById('pos').textContent=x+', '+y;
+  document.getElementById('posColor').textContent=pixels[y][x]||'transparent';
+  if(tool==='picker'){
+    if(pixels[y][x]){
+      color=pixels[y][x]; document.getElementById('color').value=color;
+      document.getElementById('hex').textContent=color.toUpperCase();
+    }
+    return;
+  }
+  if(tool==='fill'){
+    floodFill(x,y,forceErase?null:color); render(); return;
+  }
+  drawBrush(x,y,(tool==='eraser'||forceErase)?null:color);
+  render();
+}
+function floodFill(x,y,newColor){
+  const old=pixels[y][x];
+  if(old===newColor)return;
+  const q=[[x,y]], seen=new Set();
+  while(q.length){
+    const [cx,cy]=q.pop(), key=cx+','+cy;
+    if(seen.has(key)||cx<0||cy<0||cx>=SIZE||cy>=SIZE)continue;
+    seen.add(key);
+    if(pixels[cy][cx]!==old)continue;
+    pixels[cy][cx]=newColor;
+    q.push([cx+1,cy],[cx-1,cy],[cx,cy+1],[cx,cy-1]);
+  }
+}
+
+function importImage(file){
+  if(!file || !file.type.startsWith('image/')) return;
+
+  const url=URL.createObjectURL(file);
+  const img=new Image();
+
+  img.onload=()=>{
+    pushHistory();
+
+    // Fit any imported image into the 16×16 tile while preserving transparency
+    // and aspect ratio. This means PNGs of any size can be imported.
+    const temp=document.createElement('canvas');
+    temp.width=16;
+    temp.height=16;
+    const tctx=temp.getContext('2d');
+    tctx.clearRect(0,0,16,16);
+
+    const scale=Math.min(16/img.width,16/img.height);
+    const w=Math.max(1,Math.round(img.width*scale));
+    const h=Math.max(1,Math.round(img.height*scale));
+    const dx=Math.floor((16-w)/2);
+    const dy=Math.floor((16-h)/2);
+
+    tctx.imageSmoothingEnabled=false;
+    tctx.drawImage(img,dx,dy,w,h);
+
+    const data=tctx.getImageData(0,0,16,16).data;
+    pixels=Array.from({length:16},()=>Array(16).fill(null));
+
+    for(let y=0;y<16;y++){
+      for(let x=0;x<16;x++){
+        const i=(y*16+x)*4;
+        const a=data[i+3];
+        if(a===0) continue;
+        const r=data[i],g=data[i+1],b=data[i+2];
+        pixels[y][x]=`rgba(${r},${g},${b},${a/255})`;
+      }
+    }
+
+    const base=file.name.replace(/\.[^/.]+$/,'').replace(/[^a-z0-9_-]+/gi,'_');
+    if(base) document.getElementById('tileName').value=base;
+
+    render();
+    URL.revokeObjectURL(url);
+  };
+
+  img.onerror=()=>{
+    URL.revokeObjectURL(url);
+    alert('Could not load that image.');
+  };
+
+  img.src=url;
+}
+
+function openImportDialog(){
+  const input=document.getElementById('fileInput');
+  input.value='';
+  input.click();
+}
+
+function exportPNG(){
+  const out=document.createElement('canvas');out.width=16;out.height=16;
+  const o=out.getContext('2d');
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++){
+    if(pixels[y][x]){o.fillStyle=pixels[y][x];o.fillRect(x,y,1,1)}
+  }
+  const name=(document.getElementById('tileName').value.trim()||'tile').replace(/[^a-z0-9_-]+/gi,'_');
+  const a=document.createElement('a');a.download=name+'.png';a.href=out.toDataURL('image/png');a.click();
+}
+async function copyPNG(){
+  const out=document.createElement('canvas');out.width=16;out.height=16;
+  const o=out.getContext('2d');
+  for(let y=0;y<16;y++)for(let x=0;x<16;x++){if(pixels[y][x]){o.fillStyle=pixels[y][x];o.fillRect(x,y,1,1)}}
+  out.toBlob(async blob=>{
+    try{await navigator.clipboard.write([new ClipboardItem({'image/png':blob})]);alert('PNG copied to clipboard!')}
+    catch(e){alert('Clipboard image copy is not supported by this browser/file mode. Use Export PNG instead.')}
+  },'image/png');
+}
+
+canvas.addEventListener('mousedown',e=>{
+  if(e.button!==0 && e.button!==2)return;
+  e.preventDefault(); pushHistory(); drawing=true; applyAt(e,e.button===2);
+});
+window.addEventListener('mouseup',()=>drawing=false);
+canvas.addEventListener('mousemove',e=>{
+  if(drawing && (e.buttons&1 || e.buttons&2)) applyAt(e,!!(e.buttons&2));
+});
+canvas.addEventListener('contextmenu',e=>e.preventDefault());
+canvas.addEventListener('wheel',e=>{
+  e.preventDefault();
+  zoom=Math.max(8,Math.min(64,zoom+(e.deltaY<0?4:-4)));
+  resizeCanvas();
+},{passive:false});
+
+document.querySelectorAll('.tool').forEach(b=>b.onclick=()=>{
+  tool=b.dataset.tool;
+  document.querySelectorAll('.tool').forEach(x=>x.classList.toggle('active',x===b));
+});
+document.getElementById('color').oninput=e=>{
+  color=e.target.value;
+  document.getElementById('hex').textContent=color.toUpperCase();
+};
+document.getElementById('brush').oninput=e=>{
+  brushSize=+e.target.value;document.getElementById('brushVal').textContent=brushSize;
+};
+document.getElementById('clearBtn').onclick=()=>{pushHistory();pixels=Array.from({length:16},()=>Array(16).fill(null));render()};
+document.getElementById('checkerBtn').onclick=()=>{
+  checker=!checker;document.getElementById('canvasWrap').classList.toggle('checker',checker);
+};
+document.getElementById('newBtn').onclick=()=>{
+  if(confirm('Create a new blank 16×16 tile?')){pushHistory();pixels=Array.from({length:16},()=>Array(16).fill(null));render()}
+};
+document.getElementById('undoBtn').onclick=()=>{
+  if(history.length){future.push(snapshot());restore(history.pop())}
+};
+document.getElementById('redoBtn').onclick=()=>{
+  if(future.length){history.push(snapshot());restore(future.pop())}
+};
+document.getElementById('exportBtn').onclick=exportPNG;
+document.getElementById('exportBtn2').onclick=exportPNG;
+document.getElementById('copyBtn').onclick=copyPNG;
+document.getElementById('importBtn').onclick=openImportDialog;
+document.getElementById('importBtn2').onclick=openImportDialog;
+document.getElementById('fileInput').onchange=e=>importImage(e.target.files[0]);
+document.getElementById('zoomIn').onclick=()=>{zoom=Math.min(64,zoom+4);resizeCanvas()};
+document.getElementById('zoomOut').onclick=()=>{zoom=Math.max(8,zoom-4);resizeCanvas()};
+document.getElementById('zoomReset').onclick=()=>{zoom=32;resizeCanvas()};
+
+document.addEventListener('keydown',e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='z'){e.preventDefault();document.getElementById('undoBtn').click();return}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='y'){e.preventDefault();document.getElementById('redoBtn').click();return}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='s'){e.preventDefault();exportPNG();return}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==='o'){e.preventDefault();openImportDialog();return}
+  if(e.target.matches('input'))return;
+  const k=e.key.toLowerCase();
+  const map={b:'pencil',e:'eraser',f:'fill',i:'picker'};
+  if(map[k]){
+    tool=map[k];document.querySelectorAll('.tool').forEach(x=>x.classList.toggle('active',x.dataset.tool===tool));
+  }
+});
+
+const palette=['#6DA331','#83B840','#A4C95B','#D5E58A','#3F6B2A','#254C25',
+'#7C4A2D','#A8653A','#C88752','#E0B37A','#5A3A29','#38271F',
+'#5B5F64','#80858B','#AEB3B7','#D8DADD','#34383D','#202328',
+'#2F6FA3','#4A91C4','#79B8D9','#B8E2EF','#234C70','#162F46',
+'#C7A04A','#E0C16B','#F1DA9A','#FFF1C2','#8C6D32','#5E471F'];
+const sw=document.getElementById('swatches');
+palette.forEach(c=>{const d=document.createElement('div');d.className='swatch';d.style.background=c;d.title=c;d.onclick=()=>{color=c;document.getElementById('color').value=c;document.getElementById('hex').textContent=c};sw.appendChild(d)});
+
+resizeCanvas();
+</script>
+</body>
+</html>

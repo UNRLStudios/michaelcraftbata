@@ -1,0 +1,66 @@
+MICHAELCRAFT BETA 1.0 - MULTIPLAYER
+===================================
+
+HOW TO PLAY TOGETHER (ONLINE)
+-----------------------------
+Everyone needs this same MichaelCraft Beta 1.0 folder (including the "lib" folder)
+and an internet connection. Open index.html in Chrome (or Edge).
+
+HOSTING (the person whose world it is)
+  1. Title screen > Multiplayer.
+  2. Type your username. Make sure it says "Connection: Online".
+  3. Click "Host a Saved World" (then pick one from your world list) or "Host a New World".
+     (Already playing? Pause > "Open to Friends" works too.)
+  4. A room code like WOLF-4821 shows up in chat and at the top-left.
+     Pause any time to see it again (there's a Copy button).
+  5. Send the code to your friend. Keep the game open while they play:
+     the world lives on your computer.
+
+JOINING (your friend)
+  1. Title screen > Multiplayer.
+  2. Type a username, keep "Connection: Online".
+  3. Type the room code and click Join.
+  4. To leave: Pause > Leave World. Your inventory is kept in the host's world
+     (by username), so next time you join you get it all back.
+
+TRYING IT ON ONE COMPUTER
+  Open the game in two browser windows. In both, go to Multiplayer and click the
+  Connection button until it says "Same Computer". Host in one window, then type
+  the code into the other window and Join.
+
+IN THE GAME
+  - Press T (or /) to chat: type a message and press Enter. Commands still start with /.
+  - /players shows who's in the world (and the room code, for the host).
+  - Everyone's name floats over their head, and each player gets their own shirt colour.
+  - The host's cheats setting counts for everyone. /time and /killall from a friend are
+    run by the host.
+
+WHAT'S SHARED
+  - The whole world: every block and wall anyone places or breaks.
+  - Monsters: they chase whoever is closest, and anyone can fight them.
+    The katana dash, hammer AOE and piercing musket all work for friends too.
+  - Drops: whoever walks over them picks them up.
+  - Chests, furnaces and the gem cutter.
+  - The time of day, water and lava, crops.
+  - Tonio's musket is still one per world, and a Sensei's win counts for everyone.
+  - Sensei duels: anyone can challenge a Sensei (one duel at a time). Whoever is
+    duelling gets the health bar and the duel music.
+  - The world keeps going for your friends while the host is paused, dead,
+    or inside a building.
+
+BETA 1.0 LIMITS (planned for later betas)
+  - The world only exists while the host has it open. If the host quits, everyone
+    is sent back to the title screen.
+  - Inside buildings (Tonio's house, temples), each player has their own copy.
+  - The King of the Abyss only attacks the host.
+  - Only the host can tame and breed animals, and use /summon.
+  - Boats aren't shared.
+  - Some school or work networks block this kind of connection. If joining never
+    works, try a home network.
+
+HOW IT WORKS (for the curious)
+  The host's game runs the world. Friends' games build the same terrain from the
+  seed, so only changes travel over the internet: movement, block edits, monster
+  and drop snapshots, chest contents. Online play uses PeerJS (lib/peerjs.min.js,
+  MIT licence): its free public server introduces the two browsers, then they talk
+  directly to each other over WebRTC.

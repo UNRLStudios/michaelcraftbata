@@ -1,0 +1,77 @@
+MICHAELCRAFT BETA 1.0.6 - THE CHARM MERGER
+==========================================
+
+NOTE: the version is now beta-1.0.6, so everyone in a multiplayer game needs 1.0.6.
+Older worlds load fine, and charms keep their tiers.
+
+
+THE CHARM MERGER (new block)
+----------------------------
+  Recipe (Crafting Table):   G F G      G = Gold Ingot
+                             D O D      F = Gold Charm Frame
+                             O O O      D = Diamond
+                                        O = Obsidian
+  - Right-click it: put two charms of the SAME kind and the SAME tier in its two
+    slots, then click the result to merge them into one charm of the next tier
+    (shift-click sends it straight to your inventory).
+  - It tells you what's wrong if they don't match (different charms, different
+    tiers, already tier VIII).
+  - Anything left on it comes back to you when you close it (or drops if you die).
+  - Charms no longer merge in the crafting grid; the Charm Merger does it now.
+  - New advancements: "Two Become One" (build one), "Better Together" (merge two
+    charms), and "Maxed Out" now means getting a charm to tier VIII.
+  - Texture: Textures/blocks/charm_merger.png (16x16 - swap in your own art if you
+    like). Sound: an anvil.
+
+
+CHARM TIERS I TO VIII
+---------------------
+  Every tier takes two of the tier below, so it doubles each time:
+  II = 2 charms, III = 4, IV = 8, V = 16, VI = 32, VII = 64, VIII = 128.
+  The tier shows in the slot corner in its own colour: I white, II aqua, III gold,
+  IV green, V orange, VI red, VII purple, VIII pink (flashing).
+
+                  I      II     III    IV     V      VI     VII    VIII
+    Spring jump  +56%   +82%   2.1x   2.3x   2.6x   2.8x   3.0x   3.2x as high
+    Swift        +25%   +35%   +45%   +55%   +65%   +75%   +85%   +100% speed
+    Warrior      +25%   +35%   +50%   +60%   +70%   +85%   +100%  +125% melee
+    Heart        +5     +6     +8     +9     +10    +12    +14    +16 hearts
+    Cloud jumps  2      2      3      3      3      4      4      5   (in a row)
+    Cloud dash   0.9s   0.65s  0.45s  0.4s   0.35s  0.3s   0.25s  0.2s
+    Feather fall 3.2    2.4    1.7    1.4    1.2    1.0    0.85   0.7 blocks/s
+    Power flight ~10    ~14    ~21    ~27    ~34    ~42    ~52    ~64 blocks
+    Angel Wings  = Power + Feather at its tier
+
+  Tooltips spell out exactly what each tier does.
+  To change the numbers: PERK_STATS in index.html (one column per tier).
+
+
+THE DESPERATION PHASE: FASTER AND HARDER
+----------------------------------------
+  Still built from learnable patterns (Corridor, Hex, Snake, Spiral - same every
+  time, one clear answer each), but:
+  - 8 seconds a pattern instead of 12, and only a 2-second flash between rounds.
+  - Everything is quicker and denser each round:
+      CORRIDOR  the gap gets narrower and steps faster, and from round 2 he aims
+                darts at you while you're in it
+      HEX       he HOPS between three spots (middle, left, right) as he casts;
+                round 2 throws 2 sets each time, round 3 throws 3 (each turned half
+                a gap from the last)
+      SNAKE     faster walls, narrower gaps, bombs from round 2
+      SPIRAL    3, 4, then 5 arms, quicker pulses, and the spin reverses 1, 2,
+                then 3 times
+  - NEW round 4: PAIRS - two patterns at once (Corridor + Hex, Snake + Spiral,
+    Hex + Snake, Spiral + Corridor, Corridor + Snake). The first leads; the second
+    runs a level gentler on top of it.
+  - NEW finale: three harder pairs back to back (Hex III + Snake, Spiral III +
+    Corridor, Corridor III + Hex), then he swells with light and falls as the song
+    ends.
+      0:00 round 1   0:34 round 2   1:08 round 3   1:42 PAIRS   2:24 FINALE   2:50 end
+  - It's still always beatable: the snake never moves its gap further than you can
+    fly before the next wall, and the spiral never spins faster than you can fly
+    around him at 6 blocks out.
+  - Hits hurt more (darts 3, pillars 4 in Diamond armour), 1.1 seconds of safety
+    after a hit (was 1.4), and still 3 hearts back at each flash.
+  - The pattern shows under the boss bar (pairs show both, e.g. "Snake + Spiral").
+  - To tune it: DESP_DMG, DESP.iframes, and the CORR / HEX / SNAKE / SPIRAL lines
+    in kingDesperation (one number per round).

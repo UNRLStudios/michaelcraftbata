@@ -1,0 +1,69 @@
+MICHAELCRAFT BETA 1.1.4 - THE APEX PARASITE
+===========================================
+
+NOTE: the version is now beta-1.1.4, so everyone in a multiplayer game needs 1.1.4.
+
+
+THE APEX PARASITE - the desert's boss
+-------------------------------------
+  A huge armored worm, 22 plates long, that flies through the air AND swims through the
+  sand. It is fast, it twists and curls, and the less health it has left, the faster it
+  gets (up to 60% faster). Touching ANY part of it hurts.
+
+  WAKING IT
+    Craft a PARASITE TOTEM: an Abyssal Heart in the middle and 8 Gold Ingots around it
+    (Crafting Table):          G G G
+                               G H G        G = Gold Ingot,  H = Abyssal Heart
+                               G G G
+    Place the totem on dry sand on the SURFACE of a DESERT, under the open sky, and
+    right-click it. The ground trembles... and it bursts out from underneath.
+    (Anywhere else the totem just says it only stirs in a desert.)
+    If you fall - or everyone runs away - it slithers back under the sand and the
+    totem is left behind for another try.
+
+  HOW TO FIGHT IT
+    * Aim for the HEAD. Every ring of its body can be hit too, but the plates blunt your
+      blows. As it gets hurt it MOLTS and sheds plates, so its body takes more damage -
+      but it also gets nastier.
+    * PHASE 1 (100-66%)  The Hunt. It chases you in curving, weaving runs, and:
+        - DIVES: climbs high above you with a roar, then plunges through where you stood.
+        - BURROWS: sinks under the sand and tunnels beneath you (watch for the dust on the
+          ground - that is where it will come up), then erupts under your feet, spraying
+          acid into the sky.
+        - SPITS ACID: circles you lobbing glowing globs of acid that arc down at you.
+        - BROODS: curls up with its sacs swollen (its plates are open now - hit it!) and
+          bursts into Brood Larvae.
+    * PHASE 2 (66-33%)  It molts. Faster, spits two globs at a time, more larvae, and it
+      CONSTRICTS: runs a ring around you that closes in. Get out through the gap!
+    * PHASE 3 (below 33%)  FRENZY. Twitchy, unpredictable, double dives, triple acid and
+      the most larvae.
+
+  THE BROOD LARVAE
+    Little worms of its own, each with its own way of moving:
+      Guards    circle their mother like a ring, then lunge at you and fall back.
+      Weavers   dart at you in a weaving line.
+      Burrowers dive into the sand, tunnel under you, then leap out.
+    Each has 14 health. They all vanish when the Parasite dies or leaves.
+
+  REWARDS
+    Gold Ingots, Diamonds, Emeralds, Rubies - and your Abyssal Heart back (so you only
+    ever pay the 8 gold). Two new advancements: "Something Stirs Below" (wake it) and
+    "Exterminator" (beat it).
+
+  FOR TESTING
+    /summon parasite     makes it rise out of the sand right where you stand
+    /summon larva 5      a few Brood Larvae on their own
+    Multiplayer: everyone sees and fights the same worm (it gets +50% health for each
+    extra player near it, like the King - see Game Rules > Boss Scaling).
+
+
+FOR WHOEVER ADDS THE NEXT BOSS
+------------------------------
+  The Parasite is a good example of a boss with a BODY (not just a box):
+    * the boss is ONE mob (the head). parasiteSegs() builds the body from the head's path,
+      so friends compute the same body themselves and only the head travels over the net.
+    * parasiteProxies() hands every weapon one stand-in per ring of the body (through
+      combatTargets()), and hurtMob() forwards those hits to the head.
+    * its helpers (wormSteer = chase a point by turning) are reusable for any worm.
+  The long comment above "THE APEX PARASITE" in index.html explains it all.
+  (It plays the same boss song as the King - there is only one boss track so far.)

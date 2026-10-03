@@ -47,7 +47,7 @@ THE APEX PARASITE - the desert's boss
     Each has 14 health. They all vanish when the Parasite dies or leaves.
 
   REWARDS
-    Gold Ingots, Diamonds, Emeralds and Rubies. Two new advancements: "Something Stirs Below" (wake it) and
+    20 PARASITE INGOTS (see below), Gold Ingots, Diamonds, Emeralds and Rubies. Two new advancements: "Something Stirs Below" (wake it) and
     "Exterminator" (beat it).
 
   FOR TESTING
@@ -55,6 +55,33 @@ THE APEX PARASITE - the desert's boss
     /summon larva 5      a few Brood Larvae on their own
     Multiplayer: everyone sees and fights the same worm (it gets +50% health for each
     extra player near it, like the King - see Game Rules > Boss Scaling).
+
+
+PARASITE GEAR - better than ruby
+--------------------------------
+  The 20 Parasite Ingots it drops make bone-white armor and tools with glowing green
+  veins. All of it LEECHES: it heals you a little as you hit things (at most ~3 life a
+  second, so it helps but doesn't make you unkillable).
+    Parasite Pickaxe   3 ingots + 2 sticks. Mines faster than anything (12.5), 760 uses,
+                       and it's LUCKY: 45% to shake a second drop out of ore.
+    Parasite Axe       3 ingots + 2 sticks        Parasite Shovel   1 ingot + 2 sticks
+    Parasite Sword     2 ingots + 1 stick. 10 damage (ruby is 7), leeches the most.
+    Parasite Armor     8 ingots (chestplate shape). 14 armor (ruby is 10), +3 damage with
+                       every weapon, +2 hearts, leech. The body of your character changes
+                       to bone plates with a green sac on the chest.
+    PARASITE KATANA    a Sensei's Katana in the middle, ringed by 8 ingots. 16 damage (was 9),
+                       a cut every 0.12 s (Sensei: 0.2 s), a longer dash that cuts for 24,
+                       bleeds, leeches, and throws green spores. About 3x the damage per
+                       second of the Sensei's Katana.
+
+KATANAS ARE FASTER
+------------------
+  Both the Katana and the Sensei's Katana now cut every 0.2 seconds (it was 0.5).
+
+DEATH MESSAGE
+-------------
+  "was slain by the King of the Abyss" is only for the King now. The Apex Parasite (and
+  its larvae) get their own name.
 
 
 BOSS MUSIC

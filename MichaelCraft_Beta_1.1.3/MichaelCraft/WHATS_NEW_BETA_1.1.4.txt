@@ -66,17 +66,17 @@ PARASITE GEAR - better than ruby
                        and it's LUCKY: 45% to shake a second drop out of ore.
     Parasite Axe       3 ingots + 2 sticks        Parasite Shovel   1 ingot + 2 sticks
     Parasite Sword     2 ingots + 1 stick. 10 damage (ruby is 7), leeches the most.
-    Parasite Armor     8 ingots (chestplate shape). 14 armor (ruby is 10), +3 damage with
+    Parasite Armor     8 ingots (chestplate shape). 11 armor (ruby is 10), +1 damage with
                        every weapon, +2 hearts, leech. The body of your character changes
                        to bone plates with a green sac on the chest.
-    PARASITE KATANA    a Sensei's Katana in the middle, ringed by 8 ingots. 16 damage (was 9),
-                       a cut every 0.12 s (Sensei: 0.2 s), a longer dash that cuts for 24,
-                       bleeds, leeches, and throws green spores. About 3x the damage per
-                       second of the Sensei's Katana.
+    PARASITE KATANA    a Sensei's Katana in the middle, ringed by 8 ingots. 13 damage (Sensei: 9),
+                       a cut every 0.25 s (Sensei: 0.4 s), a longer dash that cuts for 24,
+                       bleeds, leeches, and throws green spores. About twice the damage
+                       per second of the Sensei's Katana.
 
 KATANAS ARE FASTER
 ------------------
-  Both the Katana and the Sensei's Katana now cut every 0.2 seconds (it was 0.5).
+  The Katana now cuts every 0.2 seconds and the Sensei's Katana every 0.4 (both were 0.5).
 
 DEATH MESSAGE
 -------------
@@ -95,6 +95,12 @@ BLEED IS GENTLER
   (it was every half second, so twice as much). And on the Apex Parasite a katana hit
   now cuts the worm ONCE - it used to count a hit for every ring of its body, so the
   katana's dash did ~20 hits at once. Same for the Hammer's smash.
+
+
+CREATIVE MENU
+-------------
+  Every charm is in the creative menu in ALL 8 tiers (Speed Charm I ... Speed Charm VIII).
+  Search "charm", or a tier like "vii".
 
 
 RECIPE SEARCH

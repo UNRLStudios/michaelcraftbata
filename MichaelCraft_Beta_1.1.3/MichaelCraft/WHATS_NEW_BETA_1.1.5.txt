@@ -32,12 +32,13 @@ WATER INTAKE - no more buckets
   A fourth block: 4 iron, 4 glass and a Water Pipe (grate shape: I G I / G P G / I G I).
   Put it IN a lake or sea (it can go anywhere in the water, or sit on the shore with
   water touching it) and run Water Pipes from it to the pump. It sucks water up the pipes
-  into the tank for you: 5 units a second per intake while still water touches it
-  (lakes never run dry). One intake keeps about 10 sprinklers going. The pump screen shows
-  how many intakes are drawing, and the pipes on the intake's line run toward the pump.
-  Several intakes add up. Buckets still work any time you want to use them.
-  A pump now works as soon as it's placed: you don't have to open it first.
-  Breaking an intake in a lake leaves the water behind.
+  into the pump: while an intake is drawing (still water touching it) the tank is always
+  FULL (lakes never run dry) and the pump looks full of water. The pump screen shows how
+  many intakes are drawing, and the pipes on the intake's line run toward the pump.
+  Buckets still work any time you want to use them.
+  A pump works as soon as it's placed: you don't have to open it first.
+  Pipes, pumps, sprinklers and intakes placed IN water keep the water around them (and
+  leave it behind when you break them). Pipes can go anywhere in a lake.
 
 CROP GROWTH
   A seed now grows into ripe wheat in 3 MINUTES (3 stages of 60 seconds each). Crops

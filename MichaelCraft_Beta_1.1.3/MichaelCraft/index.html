@@ -16208,6 +16208,8 @@
         }
         b.x = nx; b.y = ny;
         if (b.trail && Math.random() < dt * 40 * particleMul()) Game.particles.push({ x: b.x, y: b.y, vx: (Math.random() - 0.5) * 0.6, vy: (Math.random() - 0.5) * 0.6, life: 0.3, age: 0, size: 0.08, color: BOLT_COL12[b.kind] ? BOLT_COL12[b.kind][1] : '#fff', gravity: 0 });
+        if (b.well) for (const m of hostileNear12(b.x, b.y, b.well)) { if (m.def.boss || m.dying != null) continue; const d = Math.max(0.5, boxDistToPoint(m, b.x, b.y)); m.vx += Math.sign(b.x - (m.x + m.w / 2)) * 14 * dt / d * 2; if (m.def.flying) m.vy += Math.sign(b.y - (m.y + m.h / 2)) * 14 * dt / d * 2; }
+        if (b.noHit) { if (b.trail && Math.random() < dt * 30) Game.particles.push({ x: b.x + (Math.random() - 0.5) * 2, y: b.y + (Math.random() - 0.5) * 2, vx: (b.x - b.x) , vy: 0, life: 0.4, age: 0, size: 0.07, color: '#c090ff', gravity: 0 }); continue; }
         let hit = false;
         if (b.from === 'mob') {
           if (p && !p.dead && boxDistToPoint(p, b.x, b.y) < b.r) {
@@ -16231,6 +16233,14 @@
       }
     }
     B12.updaters.push((dt) => updateBolts12(dt));
+    B12.pre.push(function drawVoid12(ox, oy) {
+      for (const b of Game.bolts12) if (b.kind === 'pvoid') {
+        const x = ox + b.x * TILE, y = oy + b.y * TILE, r = b.r * TILE * (1 + 0.08 * Math.sin(Game.time * 12));
+        ctx.fillStyle = '#05010c'; ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.fill();
+        ctx.strokeStyle = 'rgba(190,120,255,0.9)'; ctx.lineWidth = Math.max(2, r * 0.22); ctx.beginPath(); ctx.arc(x, y, r, 0, 6.283); ctx.stroke();
+        for (let i = 0; i < 3; i++) { const a = Game.time * 4 + i * 2.1; ctx.fillStyle = 'rgba(230,200,255,0.9)'; ctx.fillRect(x + Math.cos(a) * r * 1.5 - 2, y + Math.sin(a) * r * 1.5 - 2, 4, 4); }
+      }
+    });
     B12.glow.push(function drawBolts12(ox, oy, glow) {
       for (const b of Game.bolts12) {
         const x = ox + b.x * TILE, y = oy + b.y * TILE, r = Math.max(4, b.r * TILE), c = BOLT_COL12[b.kind] || BOLT_COL12.ice;
@@ -16455,6 +16465,113 @@
       Game.mobs.push(m);
     }
     B12.updaters.push(spawner12);
+
+    // =============================================================================
+    // BETA 1.2 - MAGIC. A new kind of weapon that costs MANA (the blue bar) instead of durability.
+    //   Ember Staff     bouncing fireballs that set things alight and burst on a hit
+    //   Frost Wand      a fast freezing bolt: chills (and sometimes freezes) what it hits
+    //   Void Orb        a slow sphere that drags monsters in, then explodes a few seconds later
+    //   Lightning Rod   calls lightning down on the monster you point at - and it jumps to others
+    //   Abyss Tome      a fan of small shadow bolts that curve toward monsters
+    // Left-click (or hold) to cast. Mana comes back by itself (about 5 a second after a short pause)
+    // and from Mana Potions. To add a spell: a WEAPONS entry with type 'magic' and a spell name, plus a
+    // function in SPELL12 below.
+    // =============================================================================
+    const SPELL12 = {};
+    function castSpell12(p, slot, W) {
+      if (!spendMana(p, W.mana)) { p.attackCooldown = 0.25; return; }
+      p.attackCooldown = W.cd; p.swing = 1; startAction(p, 'slash');
+      const dmg = weaponDamage(p, slot, W);
+      const ox = p.x + p.w / 2 + p.lookX * 0.9, oy = p.y + 0.55 + p.lookY * 0.9;
+      for (let i = 0; i < 7; i++) { const a = Math.random() * 6.28; Game.particles.push({ x: ox + Math.cos(a) * 0.3, y: oy + Math.sin(a) * 0.3, vx: -Math.cos(a) * 1.5 + p.lookX * 2, vy: -Math.sin(a) * 1.5 + p.lookY * 2, life: 0.3, age: 0, size: 0.07, color: W.color, gravity: 0, kind: 'star' }); }
+      flashAt(ox, oy, 1.6, BOLT_COL12['p' + W.spell] ? BOLT_COL12['p' + W.spell][0] : '255,255,255', 0.09);
+      SPELL12[W.spell](p, W, dmg, ox, oy);
+      Adv.grant('cast');
+      renderHUD.hotSig = null;
+    }
+    function hostileNear12(x, y, r, pred) {
+      const out = [];
+      for (const m of combatTargets()) {
+        if (m.dying != null || m.dead || m.isPlayerProxy || m.def.npc || m.def.villager || (m.def.pet && m.tamed)) continue;
+        if (!(m.def.hostile || m.def.boss || m.segOf)) continue;
+        if (boxDistToPoint(m, x, y) < r && (!pred || pred(m))) out.push(m);
+      }
+      return out;
+    }
+    function nearestFoe12(x, y, r, except) { let best = null, bd = r; for (const m of hostileNear12(x, y, r)) { if (except && except.has(m.id)) continue; const d = boxDistToPoint(m, x, y); if (d < bd) { bd = d; best = m; } } return best; }
+    function blast12(x, y, r, dmg, colors, shake, noFalloff) {
+      for (const m of hostileNear12(x, y, r)) { const d = boxDistToPoint(m, x, y); hurtMob(m, Math.max(1, Math.round(dmg * (noFalloff ? 1 : 1 - 0.5 * d / r))), Game.player, false); if (!m.def.boss && m.vx !== undefined) { m.vx += Math.sign(m.x + m.w / 2 - x) * 5; m.vy -= 3; } }
+      for (let i = 0; i < 26 * particleMul() + 6; i++) { const a = Math.random() * 6.28, sp = 2 + Math.random() * r * 2.2; Game.particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.4 + Math.random() * 0.4, age: 0, size: 0.09 + Math.random() * 0.12, color: colors[i % colors.length], gravity: 3 }); }
+      if (shake) screenShake(shake);
+    }
+    SPELL12.ember = function (p, W, dmg, ox, oy) {
+      spawnBolt12({ from: 'player', kind: 'pfire', x: ox, y: oy, vx: p.lookX * 14, vy: p.lookY * 14 - 1, grav: 15, bounce: 3, life: 3.4, r: 0.34, dmg, trail: true,
+        fx: (m) => { if (!m.def.fireproof && !m.def.boss) m.burn = Math.max(m.burn || 0, 3.5); },
+        onHitMob: (b, m) => { blast12(b.x, b.y, 1.7, Math.ceil(dmg * 0.5), ['#ffe08a', '#ff8a2a', '#ff3a1a', '#3a1a14'], 0.15); sfx('spell.boom', { x: b.x, y: b.y, vol: 0.5, pitch: 1.4 }); },
+        onHitWorld: (b) => { blast12(b.x, b.y, 1.5, Math.ceil(dmg * 0.4), ['#ffe08a', '#ff8a2a', '#ff3a1a'], 0.1); sfx('spell.boom', { x: b.x, y: b.y, vol: 0.4, pitch: 1.5 }); } });
+      sfx('spell.fire');
+    };
+    SPELL12.frost = function (p, W, dmg, ox, oy) {
+      spawnBolt12({ from: 'player', kind: 'pfrost', x: ox, y: oy, vx: p.lookX * 19, vy: p.lookY * 19, life: 1.3, r: 0.26, dmg, trail: true,
+        fx: (m) => { if (m.def.boss) return; m.chill = Math.max(m.chill || 0, 4.5); if (Math.random() < 0.3) { m.freeze = Math.max(m.freeze || 0, 1.3); for (let i = 0; i < 10; i++) Game.particles.push({ x: m.x + Math.random() * m.w, y: m.y + Math.random() * m.h, vx: 0, vy: -1, life: 0.6, age: 0, size: 0.1, color: '#ffffff', gravity: 0, kind: 'star' }); } } });
+      sfx('spell.frost');
+    };
+    function voidBlast12(b) {
+      blast12(b.x, b.y, 4.2, b.dmgReal, ['#d8b0ff', '#a060ff', '#5a2aa0', '#12062a'], 0.7);
+      for (let ring = 0; ring < 2; ring++) for (let i = 0; i < 24; i++) { const a = i / 24 * 6.28, sp = 6 + ring * 3; Game.particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.5, age: 0, size: 0.12, color: ring ? '#a060ff' : '#f0e0ff', gravity: 0, kind: 'star' }); }
+      flashAt(b.x, b.y, 5, '170,100,255', 0.3); sfx('spell.boom', { x: b.x, y: b.y, vol: 1, pitch: 0.55 });
+    }
+    SPELL12.void = function (p, W, dmg, ox, oy) {
+      spawnBolt12({ from: 'player', kind: 'pvoid', x: ox, y: oy, vx: p.lookX * 5.2, vy: p.lookY * 5.2, life: 3.2, r: 0.5, dmg: 0, dmgReal: dmg, noHit: true, well: 5, trail: true, onEnd: voidBlast12, onHitWorld: voidBlast12 });
+      sfx('spell.void');
+    };
+    // lightning: instant, from the sky
+    B12.strikes = [];
+    function strikeAt12(x, y, dmg, from) {
+      const pts = []; let cx = x + (Math.random() - 0.5) * 2, cy = y - 28;
+      pts.push([cx, cy]); while (cy < y - 1) { cy += 1.6 + Math.random() * 1.4; cx += (x - cx) * 0.25 + (Math.random() - 0.5) * 1.6; pts.push([cx, Math.min(cy, y)]); } pts.push([x, y]);
+      const st = { pts, age: 0, life: 0.45, branch: [] };
+      for (let i = 4; i < pts.length - 2; i += 3) { const [bx, by] = pts[i], d = Math.random() < 0.5 ? -1 : 1; st.branch.push([[bx, by], [bx + d * (1.5 + Math.random() * 2), by + 1.5 + Math.random() * 1.5], [bx + d * (3 + Math.random() * 2), by + 3 + Math.random() * 2]]); }
+      B12.strikes.push(st);
+      flashAt(x, y, 7, '255,250,200', 0.2); screenShake(0.3); sfx('spell.zap', { x, y, vol: 1.2 }); B12.skyFlash = 0.18;
+      for (let i = 0; i < 18 * particleMul() + 4; i++) { const a = -Math.random() * 3.14, sp = 2 + Math.random() * 6; Game.particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.4 + Math.random() * 0.3, age: 0, size: 0.08 + Math.random() * 0.08, color: i % 2 ? '#fff6a0' : '#ffffff', gravity: 9, kind: 'star' }); }
+      for (const m of hostileNear12(x, y, 1.9)) { hurtMob(m, dmg, Game.player, true); if (!m.def.boss && !m.def.fireproof) m.burn = Math.max(m.burn || 0, 2); if (!m.def.boss) m.kbTimer = Math.max(m.kbTimer, 0.3); }
+    }
+    SPELL12.lightning = function (p, W, dmg, ox, oy) {
+      let t = (Game.targetMob && Game.targetMob.dying == null && (Game.targetMob.def.hostile || Game.targetMob.def.boss)) ? Game.targetMob : null;
+      if (!t) { let bs = -1; for (const m of hostileNear12(p.x + p.w / 2, p.y + 0.5, 20)) { const cxm = m.x + m.w / 2 - (p.x + p.w / 2), cym = m.y + m.h / 2 - (p.y + 0.5), L = Math.hypot(cxm, cym) || 1, dot = (cxm * p.lookX + cym * p.lookY) / L; if (dot > 0.8 && dot / (1 + L * 0.03) > bs) { bs = dot / (1 + L * 0.03); t = m; } } }
+      const hit = new Set(); let tx, ty;
+      if (t) { tx = t.x + t.w / 2; ty = t.y + t.h; } else { tx = ox; ty = oy; for (let s = 0; s < 120; s++) { tx += p.lookX * 0.1; ty += p.lookY * 0.1; if (solidAt(Math.floor(tx), Math.floor(ty))) break; } }
+      strikeAt12(tx, ty, dmg);
+      if (t) {   // it jumps to up to two more monsters nearby
+        hit.add(t.id); let px = tx, py = ty - t.h / 2;
+        for (let j = 0; j < 2; j++) { const n = nearestFoe12(px, py, 7, hit); if (!n) break; hit.add(n.id); const nx = n.x + n.w / 2, ny = n.y + n.h / 2; B12.strikes.push({ pts: [[px, py], [(px + nx) / 2 + (Math.random() - 0.5), (py + ny) / 2 + (Math.random() - 0.5)], [nx, ny]], age: 0, life: 0.3, branch: [] }); hurtMob(n, Math.ceil(dmg * 0.6), Game.player, false); if (!n.def.boss && !n.def.fireproof) n.burn = Math.max(n.burn || 0, 2); px = nx; py = ny; sfx('spell.zap', { x: nx, y: ny, vol: 0.5, pitch: 1.8 }); }
+      }
+    };
+    B12.updaters.push((dt) => { for (let i = B12.strikes.length - 1; i >= 0; i--) { B12.strikes[i].age += dt; if (B12.strikes[i].age > B12.strikes[i].life) B12.strikes.splice(i, 1); } B12.skyFlash = Math.max(0, (B12.skyFlash || 0) - dt); });
+    B12.glow.push(function drawStrikes12(ox, oy, glow) {
+      if (B12.skyFlash > 0) { ctx.fillStyle = `rgba(235,240,255,${B12.skyFlash * 1.1})`; ctx.fillRect(0, 0, VIEW.w, VIEW.h); }
+      for (const st of B12.strikes) {
+        const k = 1 - st.age / st.life, flick = Math.random() < 0.3 ? 0.5 : 1;
+        const draw = (pts, w, a) => { ctx.beginPath(); pts.forEach(([x, y], i) => { const sx = ox + x * TILE, sy = oy + y * TILE; i ? ctx.lineTo(sx, sy) : ctx.moveTo(sx, sy); }); ctx.lineWidth = w; ctx.strokeStyle = a; ctx.stroke(); };
+        ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+        draw(st.pts, TILE * 0.5 * k, `rgba(140,170,255,${0.35 * k * flick})`);
+        for (const br of st.branch) draw(br, TILE * 0.18 * k, `rgba(200,220,255,${0.7 * k})`);
+        draw(st.pts, TILE * 0.2 * k + 1, `rgba(255,255,255,${0.95 * flick})`);
+        const e = st.pts[st.pts.length - 1]; glow(ox + e[0] * TILE, oy + e[1] * TILE, TILE * 3 * k + 4, '200,215,255', 0.8 * k);
+      }
+    });
+    SPELL12.abyss = function (p, W, dmg, ox, oy) {
+      const base = Math.atan2(p.lookY, p.lookX);
+      for (let i = -2; i <= 2; i++) {
+        const a = base + i * 0.16, hit = new Set();
+        spawnBolt12({ from: 'player', kind: 'pabyss', x: ox, y: oy, vx: Math.cos(a) * 15, vy: Math.sin(a) * 15, life: 1.8, r: 0.17, dmg, trail: true, hitSet: hit,
+          homing: (b) => { const n = nearestFoe12(b.x, b.y, 9, hit); return n ? { x: n.x + n.w / 2, y: n.y + n.h / 2 } : null; },
+          fx: (m) => { for (let k = 0; k < 6; k++) Game.particles.push({ x: m.x + Math.random() * m.w, y: m.y + Math.random() * m.h, vx: 0, vy: -1, life: 0.5, age: 0, size: 0.09, color: '#c050ff', gravity: -0.5 }); } });
+      }
+      sfx('spell.abyss');
+    };
+    // hook into the engine
 
     let mobEyeGlows = [];
     function renderMobs(originX, originY) {
@@ -17410,6 +17527,12 @@
       S12('ruinskeleton', [husI, [1.3, 1.5], 0.6], [husH, [1.3, 1.5]], [husD, [1.3, 1.5]], [husS, [1.4, 1.6]]);
       S12('sentinel', [rav, [0.55, 0.7]], [golem, [0.7, 0.85]], [ravD, [0.6, 0.75]], [golem, [0.45, 0.55], 0.3]);
       S12('hollowknight', [wit, [0.5, 0.65]], [witH, [0.55, 0.7]], [['mob/wither/death'], [0.55, 0.65]], [golem, [0.4, 0.5], 0.3]);
+    SOUNDS['spell.fire'] = { files: ['mob/ghast/fireball4'], vol: 0.45, pitch: [1.3, 1.6], cat: 'volPlayers' };
+    SOUNDS['spell.frost'] = { files: n_('random/glass', 3), vol: 0.5, pitch: [1.6, 2.0], cat: 'volPlayers' };
+    SOUNDS['spell.void'] = { files: ['boss/purpleorb_fire'], vol: 0.5, pitch: [0.7, 0.8], cat: 'volPlayers' };
+    SOUNDS['spell.abyss'] = { files: ['boss/purpleorb_fire'], vol: 0.35, pitch: [1.5, 1.8], cat: 'volPlayers' };
+    SOUNDS['spell.zap'] = { files: ['boss/beam', 'random/explode1'], vol: 0.7, pitch: [1.3, 1.6], cat: 'volPlayers' };
+    SOUNDS['spell.boom'] = { files: n_('random/explode', 4), vol: 0.6, pitch: [0.7, 0.9], cat: 'volPlayers' };
       SOUNDS['mob.blaze'] = { files: ['mob/ghast/fireball4'], vol: 0.35, pitch: [1.5, 1.8], cat: 'volCreatures' };
     }
     // (1.2) the new blocks' sound groups
@@ -19700,6 +19823,7 @@
     function weaponAttack(p, slot, W, target) {
       if (W.type === 'katana') katanaSwing(p, slot, W, target);
       else if (W.type === 'hammer') startHammerSmash(p, slot, W);
+      else if (W.type === 'magic') castSpell12(p, slot, W);   // (1.2)
       // (the musket fires from updateWeaponHeld, on a fresh click)
     }
     function weaponRightClick(p, slot, W) {
@@ -20124,10 +20248,11 @@
     // Weapons in hand (called from drawPlayerSprite, in the hand's frame).
     function drawHeldWeapon(g, u, item, icon, o) {
       const W = WEAPONS[item], iw = icon.width, ih = icon.height;
-      if (W.type === 'katana') {
+      if (W.type === 'katana' || W.type === 'magic') {
         g.rotate(1.95 + (o.heldSpin || 0));
         const sz = 22 * u;
-        if (item === SENSEI_KATANA) g.filter = `drop-shadow(0 0 ${Math.max(1, u * 1.4).toFixed(1)}px rgba(255,40,60,0.85))`;
+        if (W.type === 'magic') g.filter = `drop-shadow(0 0 ${Math.max(1, u * 1.6).toFixed(1)}px ${W.color})`;
+        else if (item === SENSEI_KATANA) g.filter = `drop-shadow(0 0 ${Math.max(1, u * 1.4).toFixed(1)}px rgba(255,40,60,0.85))`;
         g.drawImage(icon, 0, 0, iw, ih, -sz * 0.2, -sz * 0.8, sz, sz);
         g.filter = 'none';
       } else if (W.type === 'hammer') {
@@ -21284,6 +21409,7 @@
     function weaponTooltip(stack, W) {
       if (W.type === 'katana') return `<div class="tt-blue">3-hit combo</div><div class="tt-blue">Right-click: dash slash (${W.dashDmg} damage)</div>` + (W.bleed ? '<div class="tt-blue">Makes enemies bleed</div>' : '') + (W.leech ? '<div class="tt-blue">Leech: heals you as you hit</div>' : '') + `<div class="tt-line">A cut every ${W.cd} s</div>`;
       if (W.type === 'hammer') return '<div class="tt-blue">Flattens and launches monsters</div><div class="tt-blue">Right-click: ground pound</div><div class="tt-line">Heavy: you move a bit slower</div>';
+      if (W.type === 'magic') return `<div class="tt-blue">Costs ${W.mana} mana per cast</div><div class="tt-blue">Left-click (or hold) to cast</div>`;
       if (W.type === 'musket') return `<div class="tt-blue">Left-click: fire. Aim for the head!</div><div class="tt-blue">Shots pierce up to 4 monsters</div><div class="tt-line">${stack.loaded ? 'Loaded' : 'Empty (reloads with Musket Balls)'}</div>`;
       return '';
     }

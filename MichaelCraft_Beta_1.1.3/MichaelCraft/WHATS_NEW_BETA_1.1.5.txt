@@ -1,0 +1,43 @@
+MICHAELCRAFT BETA 1.1.5 - SPRINKLERS
+====================================
+
+NOTE: the version is now beta-1.1.5, so everyone in a multiplayer game needs 1.1.5.
+
+Farming is easier now. Like the Gas Furnace, sprinklers are a system you build in the world,
+Create-style, out of three new blocks:
+
+  WATER PUMP   the tank. 6 iron ingots, 2 glass and a Bucket:      I I I
+                                                                   G B G
+                                                                   I I I
+  WATER PIPE   4 pipes from 2 iron ingots and a glass:             I G I
+  SPRINKLER    2 sprinklers from 3 iron ingots and a pipe:         I P I
+                                                                     I
+
+HOW IT WORKS
+  1. Place a Water Pump and RIGHT-CLICK it. Put Water Buckets in the slot on the left
+     (or just right-click it WITH a Water Bucket in your hand): each one fills the tank by
+     100 units and you get the empty Bucket back out of the slot on the right. The tank holds
+     16 buckets.
+  2. Run Water Pipes away from the pump, touching it on any side, in any shape you like:
+     up, down, round corners, through walls (up to 96 pipes). Pipes join up to whatever they
+     touch, with flanges at every joint. They light up aqua with running water when the pump
+     has some.
+  3. Put Sprinklers on the pipes (a sprinkler is a pipe joint too, so pipe - sprinkler -
+     pipe - sprinkler works). EACH PUMP FEEDS UP TO 10 SPRINKLERS (the nearest ten): any
+     others on the same pump get nothing and show a red mark.
+
+WHAT A SPRINKLER DOES
+  It waters a patch 7 blocks wide: 3 blocks to its left, 3 to its right, and itself, from one
+  block above it to two blocks below. Put it right next to your farmland (or on a pipe
+  running along the top of your field). Watered farmland goes dark and shiny, and crops
+  growing in it grow about 3x faster. Water sprays out in arcs and the nozzle spins.
+  A sprinkler only drinks while it has something to water (0.4 units a second), and an empty
+  tank waters nothing: the pump screen shows the tank, how many sprinklers are connected,
+  how many are watering right now, and tells you what's wrong.
+
+ALSO
+  * Breaking the pump spills the buckets inside it (the water in the tank is lost).
+  * Multiplayer: everyone sees the sprays, the wet farmland and the tank level; one person
+    uses the pump screen at a time, like a chest.
+  * New advancement: "Let It Rain" (get a sprinkler watering your crops).
+  * Everything from 1.1.4 (see WHATS_NEW_BETA_1.1.4.txt) is still here.

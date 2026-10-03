@@ -14329,6 +14329,7 @@
     function interactMob(m) {
       const p = Game.player, slot = p.selectedSlot(), item = slot ? slot.item : null;
       if (m.dying != null || m.isPlayerProxy) return false;
+      if (!m.duel && (B12.night || B12.blood) && (m.def.villager || m.def.npc) && npcNightTalk12(m)) return true;   // (1.2)
       if (m.def.npc) { if (m.duel) return false; openNpcDialog(m); return true; }
       if (m.net && !m.def.villager) return false;
       if (item === 135) { openNameDialog(m); return true; }
@@ -14509,6 +14510,7 @@
       if (m.soundCd <= 0 && dist < 10) { m.soundCd = 6 + Math.random() * 10; sfx('villager.say', mobPos(m)); }
       if (m.homeX != null) {
         const hx = m.homeX + 0.5 - (m.x + m.w / 2);
+        if (B12.blood) return Math.abs(hx) > 0.6 ? Math.sign(hx) * def.speed * 1.7 : 0;   // (1.2) the Blood Moon: everybody runs for the door
         if (isNight) return Math.abs(hx) > 0.6 ? Math.sign(hx) * def.speed : 0;   // wait at the door at night
         if (Math.abs(hx) > 9) return Math.sign(hx) * def.speed * 0.6;
       }
@@ -14953,6 +14955,7 @@
       const g = ctx.createLinearGradient(0, horizonY - VIEW.h * 1.05, 0, horizonY);
       g.addColorStop(0, top); g.addColorStop(1, hor);
       ctx.fillStyle = g; ctx.fillRect(0, 0, VIEW.w, VIEW.h);
+      bloodSkyOverlay12(horizonY);   // (1.2)
 
       // the sun and moon ride an arc across the sky; the moon is opposite the sun
       const theta = dayFrac * Math.PI * 2;
@@ -14998,16 +15001,17 @@
       }
       // pixel moon, phase changes each in-game day
       if (moonY < horizonY + 40) {
-        const u = 4, M = 8 * u, mx = Math.round(moonX - M / 2), my = Math.round(moonY - M / 2);
+        const bmA = B12.bloodAmt || 0, u = 4 + bmA * 3, M = 8 * u, mx = Math.round(moonX - M / 2), my = Math.round(moonY - M / 2);
         ctx.save(); ctx.globalCompositeOperation = 'lighter';
         ctx.fillStyle = 'rgba(200,215,255,0.08)'; ctx.fillRect(mx - M * 0.6, my - M * 0.6, M * 2.2, M * 2.2);
+        if (bmA > 0.02) { const rg2 = ctx.createRadialGradient(moonX, moonY, M * 0.3, moonX, moonY, M * 3.2); rg2.addColorStop(0, `rgba(255,30,30,${0.55 * bmA})`); rg2.addColorStop(1, 'rgba(255,30,30,0)'); ctx.fillStyle = rg2; ctx.fillRect(moonX - M * 3.2, moonY - M * 3.2, M * 6.4, M * 6.4); }
         ctx.restore();
         const phase = Math.floor(dayClock() / DAY_LENGTH) % 8;
         const dark = MOON_DARK_COLS[phase], darkLeft = phase <= 4;
         for (let r = 0; r < 8; r++) for (let c = 0; c < 8; c++) {
           const col = MOON_COLORS[MOON_ROWS[r][c]]; if (!col) continue;
           const shaded = darkLeft ? c < dark : c >= 8 - dark;
-          ctx.fillStyle = shaded ? '#232733' : col;
+          ctx.fillStyle = bmA > 0.02 ? lerpColor(shaded ? '#232733' : col, shaded ? '#2a0508' : '#d01822', Math.min(1, bmA * 1.2)) : (shaded ? '#232733' : col);
           ctx.fillRect(mx + c * u, my + r * u, u, u);
         }
       }
@@ -15354,6 +15358,7 @@
       renderBossBody(originX, originY);
       renderGlowFX(originX, originY);
       renderB12Glow(originX, originY, glowCircle12);   // (1.2)
+      renderB12Post(originX, originY);
       renderBowAim(originX, originY);
       renderCombatFX(originX, originY);
       renderAbyssCompass(originX, originY);
@@ -16698,6 +16703,180 @@
       }
     });
 
+    // =============================================================================
+    // BETA 1.2 - DANGEROUS NIGHTS and the BLOOD MOON
+    //   Nights: more monsters, rarer ones (Night Stalkers that blink behind you), night-only creatures (Moon
+    //   Moths, Gloom Owls), Moonblooms that open only after dark, ancient braziers that light themselves, and
+    //   villagers who whisper warnings (and hide at the door).
+    //   BLOOD MOON: now and then (never on the first nights) the night is a Blood Moon: the sky bleeds, the
+    //   moon is huge and red, the music turns into a drone, bats and Crimson Husks pour out of the dark, the
+    //   villagers refuse to trade, and one CRIMSON REAPER hunts you. Survive until dawn for the rewards.
+    //   /bloodmoon on|off forces one (for testing).
+    // =============================================================================
+    B12.blood = false; B12.bloodAmt = 0; B12.post = [];
+    function renderB12Post(ox, oy) { for (const f of B12.post) f(ox, oy); }
+    function bloodNight12(n) {
+      if (B12.forceBlood === true) return true;
+      if (B12.forceBlood === false) return false;
+      return n >= 3 && hash1(n, Game.seed + 9001) < 0.24 && !(hash1(n - 1, Game.seed + 9001) < 0.24);
+    }
+    const NIGHT_TALK12 = ['Shh! Keep your voice down... they walk at night.', 'The owls are out. They watch everything.', 'Stay near a lantern. The dark things hate the light.', 'Moonblooms open after dark, if you dare pick them.', 'I heard something at the window...'];
+    const BLOOD_TALK12 = ['The moon... it is BLEEDING! Get inside!', 'Not tonight! I will not trade under that sky!', 'They are crawling out of the dark. All of them.', 'Bar the door. Do not talk to me!', 'My grandmother told me about a red moon...'];
+    function npcNightTalk12(m) {
+      const nm = m.def.villager ? 'Villager' : m.def.name;
+      if (B12.blood) {
+        if (m.def.villager) { eventMessage(`${nm}: "${BLOOD_TALK12[Math.floor(Math.random() * BLOOD_TALK12.length)]}"`, '#ff9a8a'); sfx('villager.no', mobPos(m)); m.panic = 2; m.fleeDir = (m.homeX != null ? Math.sign(m.homeX - m.x) : 1) || 1; return true; }
+        if (m.type === 'tonio') { eventMessage('Tonio: "Even a man of business closes shop under a red moon."', '#ffd27a'); return true; }
+        if (m.type === 'sensei') { eventMessage('Sensei: "The blade is silent tonight. Guard your life, not your honour."', '#ff9aaa'); return true; }
+      } else if (B12.night && m.def.villager && Math.random() < 0.6) eventMessage(`${nm}: "${NIGHT_TALK12[Math.floor(Math.random() * NIGHT_TALK12.length)]}"`, '#cfd8ff');
+      return false;
+    }
+    // ---- the night system ----
+    B12.updaters.push(function nightSys12(dt, p) {
+      const w = Game.world; if (w.isInterior) return;
+      const n = Math.floor(dayClock() / DAY_LENGTH);
+      B12.bloodAmt = approach(B12.bloodAmt, B12.blood ? 1 : 0, dt * 0.3);
+      if (B12.night !== B12.wasNight) {
+        if (B12.night) {   // dusk
+          if (bloodNight12(n)) {
+            B12.blood = true; B12.reaperDone = false; B12.bloodStart = Game.time;
+            eventMessage('The Blood Moon rises...', '#ff3a4a'); bigTitle12('Blood Moon', 'survive until dawn', '#ff3a4a'); sfx('bloodmoon.rise');
+          }
+        } else if (B12.wasNight !== undefined) {   // dawn
+          if (B12.blood) {
+            B12.blood = false;
+            if (!p.dead) { eventMessage('The Blood Moon sets. You survived.', '#ffd0a0'); Adv.grant('bloodmoon'); if (Game.flags) Game.flags.bloodMoons = (Game.flags.bloodMoons | 0) + 1; }
+            for (const m of Game.mobs) if (m.type === 'crimsonreaper' && m.dying == null) { m.dead = true; deathPuff(m.x + m.w / 2, m.y + m.h / 2, ['#c01830', '#2a0a14']); }
+          }
+          B12.noReaper = false;
+        }
+        B12.wasNight = B12.night;
+      }
+      if (B12.wasNight === undefined) B12.wasNight = B12.night;
+      if (!B12.night && B12.blood && !B12.forceBlood) B12.blood = false;
+      if (B12.forceBlood === true && !B12.blood) { B12.blood = true; B12.reaperDone = false; B12.bloodStart = Game.time; }
+      if (B12.forceBlood === false && B12.blood) B12.blood = false;
+      if (Game.creative || netIsClient()) return;
+      const sf = w.surfaceHeight(Math.floor(p.x)), surfaceish = p.y < sf + 8;
+      // the Crimson Reaper arrives about half a minute into the Blood Moon
+      if (B12.blood && !B12.reaperDone && Game.time - B12.bloodStart > 25 && surfaceish && Settings.difficulty !== 'peaceful') {
+        B12.reaperDone = true;
+        const x = Math.floor(p.x + (Math.random() < 0.5 ? -1 : 1) * 20), r = new Mob('crimsonreaper', x, w.surfaceHeight(x) - 8);
+        r.customName = 'Crimson Reaper'; r.state = 'hostile'; Game.mobs.push(r);
+        eventMessage('A Crimson Reaper has come for you.', '#ff2a4a'); bigTitle12('The Crimson Reaper', 'it has come for you', '#ff2a4a'); screenShake(0.5);
+      }
+      // more monsters after dark (and a flood of them under the Blood Moon)
+      B12.nsT = (B12.nsT || 2) - dt;
+      if (B12.nsT <= 0) {
+        B12.nsT = B12.blood ? 0.9 + Math.random() * 0.8 : 2.6 + Math.random() * 1.8;
+        if (B12.night && surfaceish && Settings.difficulty !== 'peaceful') {
+          const near = Game.mobs.filter(m => m.def.hostile && !m.guardian && !m.customName && m.dying == null && Math.abs(m.x - p.x) < 55).length;
+          if (near < (B12.blood ? 22 : 14)) {
+            const x = Math.floor(p.x + (Math.random() < 0.5 ? -1 : 1) * (13 + Math.random() * 14)), sf2 = w.surfaceHeight(x);
+            const day = n;
+            if (sf2 < SEA_LEVEL && w.getTile(x, sf2 - 1) === AIR && solidAt(x, sf2) && lightAt(x, sf2 - 1) <= 9 && !w.placedWalls.get(x * WORLD_H + sf2 - 1)) {
+              const r = Math.random(); let type, count = 1;
+              if (B12.blood) { if (r < 0.36) type = 'crimsonhusk'; else if (r < 0.74) { type = 'bloodbat'; count = 3; } else if (r < 0.88) type = 'nightstalker'; else type = r < 0.95 ? 'husk' : 'crawler'; }
+              else { if (r < 0.34) type = 'husk'; else if (r < 0.56) type = 'crawler'; else if (r < 0.72) type = 'gloomwing'; else if (r < 0.88 && day >= 2) type = 'nightstalker'; else if (day >= 3 && r < 0.95) type = 'brute'; else type = 'husk'; }
+              for (let i = 0; i < count; i++) {
+                const d = MOB_TYPES[type], m = new Mob(type, x + i * 0.8, 0);
+                m.y = d.flying ? sf2 - 5 - i : sf2 - m.h;
+                if (!boxHitsSolid(w, m.x, m.y, m.w, m.h)) Game.mobs.push(m);
+              }
+            }
+          }
+        }
+      }
+      // moon moths drift out to the lamps
+      B12.mothT = (B12.mothT || 3) - dt;
+      if (B12.mothT <= 0) {
+        B12.mothT = 5 + Math.random() * 5;
+        if (B12.night && !B12.blood && surfaceish && Game.mobs.filter(m => m.type === 'moonmoth').length < 4) {
+          const x = Math.floor(p.x + (Math.random() - 0.5) * 36), sf2 = w.surfaceHeight(x);
+          if (sf2 < SEA_LEVEL - 1) { const m = new Mob('moonmoth', x, sf2 - 4 - Math.random() * 3); Game.mobs.push(m); }
+        }
+      }
+      // MOONBLOOMS only open at night, and close (wilt) at dawn
+      B12.bloomT = (B12.bloomT || 2) - dt;
+      if (B12.bloomT <= 0) {
+        B12.bloomT = 1.4;
+        if (B12.night && !B12.blood) {
+          let count = 0; for (const k of B12.blooms) { const [bx] = k.split(',').map(Number); if (Math.abs(bx - p.x) < 60) count++; }
+          if (count < 7) {
+            const x = Math.floor(p.x + (Math.random() - 0.5) * 70), sf2 = w.surfaceHeight(x), top = w.getTile(x, sf2);
+            if (sf2 < SEA_LEVEL - 1 && (top === 1 || top === REDWOOD_GRASS || top === 65) && w.getTile(x, sf2 - 1) === AIR) {
+              w.setTile(x, sf2 - 1, MOONBLOOM); B12.blooms.add(x + ',' + (sf2 - 1));
+              for (let i = 0; i < 6; i++) Game.particles.push({ x: x + 0.5, y: sf2 - 0.7, vx: (Math.random() - 0.5), vy: -1, life: 0.9, age: 0, size: 0.07, color: '#b8aaff', gravity: -0.4, kind: 'star' });
+            }
+          }
+        } else if (!B12.night) {
+          for (const k of [...B12.blooms]) { const [bx, by] = k.split(',').map(Number); if (w.getTile(bx, by) === MOONBLOOM) { w.setTile(bx, by, AIR); for (let i = 0; i < 6; i++) Game.particles.push({ x: bx + 0.5, y: by + 0.5, vx: (Math.random() - 0.5), vy: -0.5, life: 1, age: 0, size: 0.07, color: '#7a6ad0', gravity: 1 }); } B12.blooms.delete(k); }
+          B12.sweepT = (B12.sweepT || 0) - 1.4;   // blooms saved from a night before
+          if (B12.sweepT <= 0) { B12.sweepT = 4; const px = Math.floor(p.x); for (let x = px - 40; x <= px + 40; x++) { const sf2 = w.surfaceHeight(x); if (w.getTile(x, sf2 - 1) === MOONBLOOM) w.setTile(x, sf2 - 1, AIR); } }
+        }
+      }
+    });
+    B12.blooms = new Set();
+    // ---- the sky bleeds ----
+    B12.post.push(function bloodVignette12() {
+      const a = B12.bloodAmt; if (a < 0.02) return;
+      const g = ctx.createRadialGradient(VIEW.w / 2, VIEW.h / 2, Math.min(VIEW.w, VIEW.h) * 0.35, VIEW.w / 2, VIEW.h / 2, Math.max(VIEW.w, VIEW.h) * 0.75);
+      g.addColorStop(0, 'rgba(120,0,10,0)'); g.addColorStop(1, `rgba(110,0,12,${0.42 * a * (0.85 + 0.15 * Math.sin(Game.time * 1.7))})`);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, VIEW.w, VIEW.h);
+    });
+    function bloodSkyOverlay12(horizonY) {
+      const a = B12.bloodAmt; if (a < 0.02) return;
+      const g = ctx.createLinearGradient(0, 0, 0, horizonY);
+      g.addColorStop(0, `rgba(70,0,8,${0.7 * a})`); g.addColorStop(1, `rgba(190,25,20,${0.5 * a})`);
+      ctx.fillStyle = g; ctx.fillRect(0, 0, VIEW.w, VIEW.h);
+    }
+    // ---- the music turns into a drone ----
+    B12.bm = null;
+    function bloodMusicStart12() {
+      if (!actx || B12.bm) return;
+      const master = actx.createGain(); master.gain.value = 0; master.connect(actx.destination);
+      const nodes = [];
+      for (const [f, d] of [[41.2, 0], [41.9, 1], [58.3, -1], [82.4, 2]]) {
+        const o = actx.createOscillator(); o.type = 'sawtooth'; o.frequency.value = f; o.detune.value = d * 6;
+        const fl = actx.createBiquadFilter(); fl.type = 'lowpass'; fl.frequency.value = 180; fl.Q.value = 3;
+        const lfo = actx.createOscillator(); lfo.frequency.value = 0.05 + Math.random() * 0.06; const lg = actx.createGain(); lg.gain.value = 90; lfo.connect(lg); lg.connect(fl.frequency);
+        const g = actx.createGain(); g.gain.value = 0.11; o.connect(fl); fl.connect(g); g.connect(master); o.start(); lfo.start(); nodes.push(o, lfo);
+      }
+      const nz = actx.createBufferSource(); nz.buffer = noiseBuf12(); nz.loop = true; const nf = actx.createBiquadFilter(); nf.type = 'bandpass'; nf.frequency.value = 3800; nf.Q.value = 8;
+      const ng = actx.createGain(); ng.gain.value = 0.0; const nl = actx.createOscillator(); nl.frequency.value = 0.13; const nlg = actx.createGain(); nlg.gain.value = 0.02; nl.connect(nlg); nlg.connect(ng.gain);
+      nz.connect(nf); nf.connect(ng); ng.connect(master); nz.start(); nl.start(); nodes.push(nz, nl);
+      B12.bm = { master, nodes, beat: 0, bell: 2 };
+    }
+    function bloodMusicStop12() { const m = B12.bm; if (!m) return; B12.bm = null; try { for (const n of m.nodes) n.stop(); m.master.disconnect(); } catch (e) { } }
+    B12.updaters.push(function bloodMusic12(dt, p) {
+      const bossOn = Game.boss && !Game.boss.dead;
+      const want = B12.blood && !bossOn && Game.screen === 'play' && !Game.world.isInterior;
+      if (want && !B12.bm && actx && actx.state === 'running') bloodMusicStart12();
+      const m = B12.bm; if (!m) return;
+      const target = want ? Math.min(0.9, musicVolume() * 1.1) : 0;
+      m.master.gain.value = approach(m.master.gain.value, target, dt * 0.25);
+      if (!want && m.master.gain.value < 0.01) { bloodMusicStop12(); return; }
+      const t = actx.currentTime;
+      m.beat -= dt; m.bell -= dt;
+      if (m.beat <= 0) {   // a heartbeat
+        m.beat = 1.25;
+        for (const [d, v] of [[0, 0.5], [0.24, 0.35]]) { const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine'; o.frequency.setValueAtTime(70, t + d); o.frequency.exponentialRampToValueAtTime(34, t + d + 0.25); g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(v, t + d + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.3); o.connect(g); g.connect(m.master); o.start(t + d); o.stop(t + d + 0.35); }
+      }
+      if (m.bell <= 0) {   // a cold bell, always a little out of tune
+        m.bell = 2.5 + Math.random() * 4;
+        const f = [233.1, 246.9, 277.2, 311.1, 349.2, 370, 466.2][Math.floor(Math.random() * 7)];
+        for (const [mul, v] of [[1, 0.14], [2.01, 0.05], [3.2, 0.03]]) { const o = actx.createOscillator(), g = actx.createGain(); o.type = 'sine'; o.frequency.value = f * mul; g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(v, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 5); o.connect(g); g.connect(m.master); o.start(t); o.stop(t + 5.2); }
+      }
+    });
+    COMMANDS.bloodmoon = {
+      usage: '/bloodmoon [on|off|auto]', desc: 'Start or stop a Blood Moon (it also needs night: use /time night)', run: (a) => {
+        const v = (a[0] || 'on').toLowerCase();
+        B12.forceBlood = v === 'off' ? false : v === 'auto' ? undefined : true;
+        if (B12.forceBlood === true && !B12.night) { const f = 0.55; Game.time = Math.floor(dayClock() / DAY_LENGTH) * DAY_LENGTH + f * DAY_LENGTH - (Game.dayShift || 0); }
+        chatLine(v === 'off' ? 'The Blood Moon is cancelled.' : v === 'auto' ? 'Blood Moons are random again.' : 'The Blood Moon rises...', '#ff6a6a');
+      }
+    };
+
     let mobEyeGlows = [];
     function renderMobs(originX, originY) {
       mobEyeGlows = [];
@@ -17658,6 +17837,7 @@
     SOUNDS['spell.abyss'] = { files: ['boss/purpleorb_fire'], vol: 0.35, pitch: [1.5, 1.8], cat: 'volPlayers' };
     SOUNDS['spell.zap'] = { files: ['boss/beam', 'random/explode1'], vol: 0.7, pitch: [1.3, 1.6], cat: 'volPlayers' };
     SOUNDS['spell.boom'] = { files: n_('random/explode', 4), vol: 0.6, pitch: [0.7, 0.9], cat: 'volPlayers' };
+      SOUNDS['bloodmoon.rise'] = { files: ['mob/wither/spawn'], vol: 0.7, pitch: [0.6, 0.6], cat: 'volAmbient' };
       SOUNDS['mob.blaze'] = { files: ['mob/ghast/fireball4'], vol: 0.35, pitch: [1.5, 1.8], cat: 'volCreatures' };
     }
     // (1.2) the new blocks' sound groups

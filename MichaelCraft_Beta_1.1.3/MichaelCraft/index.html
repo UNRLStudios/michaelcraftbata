@@ -6228,7 +6228,7 @@
     class World {
       constructor(seed) {
         this.seed = seed | 0;
-        this.chunks = new Map();       // chunkX -> Uint8Array(CHUNK_W*WORLD_H)
+        this.chunks = new Map();       // chunkX -> Uint16Array(CHUNK_W*WORLD_H)   (1.2: 16-bit, so there can be more than 255 kinds of block)
         this.chunkLight = new Map();   // chunkX -> Array of {x,y,level} light sources
         this.modifications = new Map(); // "x,y" -> tileId
         this.containers = new Map();    // "x,y" -> chest / furnace contents
@@ -6543,7 +6543,7 @@
         return Math.abs(h - this.surfaceHeight(x - 1)) >= 3 || Math.abs(h - this.surfaceHeight(x + 1)) >= 3;
       }
       generateChunk(cx) {
-        const arr = new Uint8Array(CHUNK_W * WORLD_H);
+        const arr = new Uint16Array(CHUNK_W * WORLD_H);
         const lights = [];
         const baseX = cx * CHUNK_W;
         const s = this.seed;
@@ -7907,7 +7907,7 @@
     // ---------------------------------------------------------------------------
     const Light = {
       x0: 0, y0: 0, w: 0, h: 0,
-      tiles: new Uint8Array(0), level: new Uint8Array(0), walls: new Uint8Array(0),
+      tiles: new Uint16Array(0), level: new Uint8Array(0), walls: new Uint8Array(0),
       buckets: [], canvas: null, cctx: null, img: null,
     };
     for (let i = 0; i <= LIGHT_MAX * 2; i++) Light.buckets.push([]);
@@ -7919,7 +7919,7 @@
       const y1 = Math.min(WORLD_H - 1, Math.floor(Game.camY + VIEW.h / TILE) + LIGHT_MARGIN);
       const w = x1 - x0 + 1, h = Math.max(1, y1 - y0 + 1), n = w * h;
       if (Light.tiles.length < n) {
-        Light.tiles = new Uint8Array(n); Light.level = new Uint8Array(n); Light.walls = new Uint8Array(n);
+        Light.tiles = new Uint16Array(n); Light.level = new Uint8Array(n); Light.walls = new Uint8Array(n);
       }
       Light.x0 = x0; Light.y0 = y0; Light.w = w; Light.h = h;
       const tiles = Light.tiles, level = Light.level, walls = Light.walls, buckets = Light.buckets;
@@ -8437,7 +8437,7 @@
         return { action: 'exit', label: 'Leave ' + this.def.name, topY: this.doorY - 1, x: this.doorX };
       }
       generateChunk(cx) {
-        const arr = new Uint8Array(CHUNK_W * WORLD_H).fill(this.def.shell);
+        const arr = new Uint16Array(CHUNK_W * WORLD_H).fill(this.def.shell);
         const baseX = cx * CHUNK_W, lights = [];
         for (let lx = 0; lx < CHUNK_W; lx++) {
           const x = baseX + lx;

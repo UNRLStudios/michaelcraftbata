@@ -6455,6 +6455,7 @@
         this.villagersSpawned = new Set(); // houses whose villagers have appeared
         this.lastTouch = new Map();    // chunkX -> frame counter, for LRU eviction
         this.frame = 0;
+        this.gen12 = true;             // (1.2) the new biomes and ruins (off for worlds made before Beta 1.2, so their land doesn't change under their buildings)
       }
 
       // Biomes: a slow noise picks out wide desert regions; 0 = plains, 1 = desert,
@@ -6976,7 +6977,7 @@
         }
         if (tower) this.buildTower(arr, cx, tower);
         if (dojoHere) this.buildDojos(arr, cx);
-        this.biomes12(arr, cx, { chunkStruct, tower, dojoHere });   // (1.2)
+        if (this.gen12) { this.biomes12(arr, cx, { chunkStruct, tower, dojoHere }); this.buildRuins12(arr, cx); }   // (1.2)
         this.carveAbyss(arr, cx);
         // Apply any saved player modifications on top of the generated base.
         for (let lx = 0; lx < CHUNK_W; lx++) {
@@ -7673,6 +7674,7 @@
     const isSolidId = (id) => id !== AIR && BLOCKS[id] && BLOCKS[id].solid;
     Object.assign(World.prototype, {
       ashness(x) {
+        if (!this.gen12) return 0;
         if (!this._ashC) this._ashC = new Map();
         let a = this._ashC.get(x);
         if (a === undefined) {
@@ -7682,6 +7684,7 @@
         return a;
       },
       redwoodness(x) {
+        if (!this.gen12) return 0;
         if (!this._redwC) this._redwC = new Map();
         let r = this._redwC.get(x);
         if (r === undefined) {
@@ -7694,7 +7697,7 @@
       isRedwood(x) { return this.redwoodness(x) > 0.5; },
       isFrost(x) { return this.snowiness(x) > 0.5; },
       // which of the new biomes (or '') a column belongs to
-      biome12(x) { return this.isAsh(x) ? 'ash' : this.isRedwood(x) ? 'redwood' : this.isSnowy(x) ? 'frost' : ''; },
+      biome12(x) { return !this.gen12 ? '' : this.isAsh(x) ? 'ash' : this.isRedwood(x) ? 'redwood' : this.isSnowy(x) ? 'frost' : ''; },
       // A volcano: a cone of ash with a crater of lava on top, deep inside the Ashlands.
       volcanoAt(x) {
         const cell = Math.floor(x / 150);
@@ -7712,7 +7715,7 @@
       },
       // ICE CAVES: hollows under the Frostlands (a pure function, so a cave can cross chunks)
       iceCaveAt(x, y) {
-        if (!this.isSnowy(x)) return false;
+        if (!this.gen12 || !this.isSnowy(x)) return false;
         const sf = this.surfaceHeight(x);
         if (y < sf + 16 || y > sf + 84 || y >= WORLD_H - BEDROCK_ROWS - 4) return false;
         const n = noise2D(x, y * 1.55, this.seed + 4400, 0.036), n2 = noise2D(x * 1.3 + 50, y * 1.3, this.seed + 4410, 0.075);
@@ -8329,6 +8332,135 @@
     function glowCircle12(x, y, r, c, a) { const gr = ctx.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(${c},${a})`); gr.addColorStop(1, `rgba(${c},0)`); ctx.fillStyle = gr; ctx.fillRect(x - r, y - r, r * 2, r * 2); }
     function renderB12Pre(ox, oy) { for (const f of B12.pre) f(ox, oy); }
     function renderB12Glow(ox, oy, glow) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (const f of B12.glow) f(ox, oy, glow); ctx.restore(); }
+
+    // =============================================================================
+    // BETA 1.2 - THE ANCIENT RUINS (world generation). A buried temple, 48 x 30 blocks, one per ~350 columns.
+    //   Entry hall (reached by a LADDER SHAFT from a cracked-brick hatch on the surface, marked by two pillars)
+    //     -> trap corridor (spikes, dart traps in the ceiling)  -> statue hall (two statues wake up as
+    //     Sentinels; a treasure chest)  -> a ladder down to the antechamber  -> an ANCIENT DOOR that needs a RUIN KEY
+    //     -> the arena of THE HOLLOW KNIGHT.
+    //   The key is in a SECRET room under the corridor (break the cracked bricks between the runic tiles).
+    //   Another secret room behind the arena holds the Knight's hoard.
+    // Like the trees, the whole thing is a pure function of the world seed (ruinAt, ruinGrid): each chunk draws its slice.
+    // =============================================================================
+    const RUIN_W = 48, RUIN_H = 30, RUIN_CELL = 300, SHELL12 = -2;
+    Object.assign(World.prototype, {
+      ruinAt(cell) {
+        if (!this.gen12) return null;
+        if (!this._ruinC) this._ruinC = new Map();
+        if (this._ruinC.has(cell)) return this._ruinC.get(cell);
+        let R = null; const s = this.seed;
+        if (hash1(cell, s + 7701) < 0.85) {
+          const x0 = cell * RUIN_CELL + 40 + Math.floor(hash1(cell, s + 7702) * (RUIN_CELL - RUIN_W - 80));
+          let smax = 0, ok = true;
+          for (let x = x0 - 2; x < x0 + RUIN_W + 2; x += 3) { const h = this.surfaceHeight(x); smax = Math.max(smax, h); if (h >= SEA_LEVEL - 2 || this.lakeAt(x)) ok = false; }
+          const y0 = Math.min(WORLD_H - BEDROCK_ROWS - RUIN_H - 6, smax + 22 + Math.floor(hash1(cell, s + 7703) * 30));
+          for (let k = Math.floor((x0 - 10) / CHUNK_W); ok && k <= Math.floor((x0 + RUIN_W + 10) / CHUNK_W); k++) if (this.structureForChunk(k) || this.towerForChunk(k) || this.dojoInChunk(k)) ok = false;
+          if (ok && !this.isDesert(x0 + 24)) R = { id: cell, x0, y0, W: RUIN_W, H: RUIN_H, cx: x0 + 24 };
+        }
+        this._ruinC.set(cell, R);
+        return R;
+      },
+      ruinsNear(x, span) {
+        const out = [];
+        for (let c = Math.floor((x - (span || 0) - RUIN_W) / RUIN_CELL); c <= Math.floor((x + (span || 0)) / RUIN_CELL); c++) { const R = this.ruinAt(c); if (R && x >= R.x0 - (span || 0) && x < R.x0 + R.W + (span || 0)) out.push(R); }
+        return out;
+      },
+      ruinContaining(x, y) { for (const R of this.ruinsNear(x, 0)) if (y >= R.y0 && y < R.y0 + R.H) return R; return null; },
+      ruinGrid(R) {
+        if (R.g) return R.g;
+        const W = RUIN_W, H = RUIN_H, g = new Int16Array(W * H).fill(-1), s = this.seed;
+        const set = (x, y, id) => { if (x >= 0 && x < W && y >= 0 && y < H) g[y * W + x] = id; };
+        const rect = (x0, y0, x1, y1, id) => { for (let y = y0; y <= y1; y++) for (let x = x0; x <= x1; x++) set(x, y, id); };
+        const hh = (x, y, k) => hash2(R.x0 + x, R.y0 + y, s + k);
+        R.braziers = []; R.statues = []; R.rooms = {}; R.skel = {};
+        rect(0, 0, W - 1, H - 1, SHELL12);
+        // --- entry hall + the shaft's foot ---
+        rect(2, 3, 11, 9, AIR); rect(6, 0, 8, 2, AIR);
+        for (let y = 0; y <= 9; y++) set(7, y, 35);   // the ladder
+        rect(5, 10, 8, 10, RUNIC_TILE);
+        for (const x of [3, 10]) set(x, 9, RUIN_PILLAR);
+        for (const x of [4, 9]) { set(x, 9, BRAZIER); R.braziers.push([x, 9]); }
+        set(2, 3, COBWEB); set(11, 3, COBWEB); set(2, 4, COBWEB);
+        R.rooms.entry = [2, 3, 11, 9];
+        // --- trap corridor ---
+        rect(12, 7, 23, 9, AIR);
+        for (const [a, b] of [[14, 15], [20, 21]]) { set(a, 9, RUIN_SPIKES); set(b, 9, RUIN_SPIKES); set(a - 1, 10, RUNIC_TILE); set(b + 1, 10, RUNIC_TILE); }
+        for (const x of [13, 17, 22]) set(x, 6, DART_TRAP);
+        set(12, 7, COBWEB); set(23, 7, COBWEB);
+        // the secret hatch: three cracked bricks deep, between two runic tiles
+        for (let y = 10; y <= 12; y++) { set(17, y, CRACKED_RUIN); set(18, y, CRACKED_RUIN); }
+        set(16, 10, RUNIC_TILE); set(19, 10, RUNIC_TILE); set(16, 9, AIR);
+        R.rooms.corridor = [12, 7, 23, 9];
+        // --- the secret KEY ROOM below ---
+        rect(14, 13, 22, 18, AIR); R.keyChest = [21, 18]; set(21, 18, RUIN_CHEST);
+        for (const x of [15, 19]) { set(x, 18, BRAZIER); R.braziers.push([x, 18]); }
+        rect(16, 19, 20, 19, RUNIC_TILE); set(14, 13, COBWEB); set(22, 13, COBWEB); set(13, 17, DART_TRAP);
+        R.rooms.key = [14, 13, 22, 18]; R.skel.key = [[16, 18], [18, 18], [20, 18]];
+        // --- the statue hall ---
+        rect(24, 3, 38, 12, AIR);
+        for (const x of [28, 35]) for (const y of [3, 4, 5, 12]) set(x, y, RUIN_PILLAR);
+        for (const x of [26, 37]) { set(x, 12, ANCIENT_STATUE); R.statues.push([x, 12]); }
+        rect(31, 12, 33, 12, RUIN_BRICKS); set(32, 11, RUIN_CHEST); R.treasure = [[32, 11]];
+        for (const x of [31, 33]) { set(x, 11, BRAZIER); R.braziers.push([x, 11]); }
+        set(24, 4, RUNIC_TILE); set(24, 11, RUNIC_TILE); set(38, 4, RUNIC_TILE); set(25, 3, COBWEB); set(38, 3, COBWEB);
+        rect(38, 13, 38, 19, AIR); for (let y = 13; y <= 19; y++) set(38, y, 35);   // the ladder down
+        R.rooms.hall = [24, 3, 38, 12];
+        // --- the antechamber (and the locked door) ---
+        rect(34, 20, 43, 26, AIR); set(38, 20, AIR);
+        for (let y = 24; y <= 26; y++) set(33, y, ANCIENT_DOOR);
+        set(42, 26, RUIN_CHEST); R.treasure.push([42, 26]);
+        for (const x of [35, 41]) { set(x, 26, BRAZIER); R.braziers.push([x, 26]); }
+        rect(36, 27, 40, 27, RUNIC_TILE); set(34, 20, COBWEB); set(43, 20, COBWEB);
+        R.rooms.ante = [34, 20, 43, 26]; R.skel.ante = [[36, 26], [40, 26]];
+        // --- the Hollow Knight's arena ---
+        rect(8, 15, 32, 26, AIR);
+        for (const x of [13, 27]) { set(x, 26, RUIN_PILLAR); for (const y of [15, 16, 17]) set(x, y, RUIN_PILLAR); }
+        for (const x of [10, 16, 24, 30]) { set(x, 26, BRAZIER); R.braziers.push([x, 26]); }
+        for (let x = 14; x <= 26; x += 2) set(x, 27, RUNIC_TILE);
+        set(9, 26, ANCIENT_STATUE); set(9, 25, RUIN_PILLAR); set(9, 24, RUIN_PILLAR);
+        set(8, 15, COBWEB); set(32, 15, COBWEB); set(8, 16, COBWEB);
+        R.rooms.arena = [8, 15, 32, 26]; R.arena = { x0: R.x0 + 8, x1: R.x0 + 33, floor: R.y0 + 27, spawn: [R.x0 + 28, R.y0 + 26] };
+        // --- the secret hoard behind it ---
+        rect(2, 21, 6, 26, AIR); set(3, 26, RUIN_CHEST); set(5, 26, RUIN_CHEST); R.treasure.push([3, 26], [5, 26]);
+        set(4, 26, BRAZIER); R.braziers.push([4, 26]); set(2, 21, COBWEB);
+        for (let y = 24; y <= 26; y++) set(7, y, CRACKED_RUIN);
+        set(8, 27, RUNIC_TILE); set(6, 27, RUNIC_TILE);
+        R.rooms.hoard = [2, 21, 6, 26];
+        R.g = g;
+        return g;
+      },
+      ruinChestKind(x, y) {
+        const R = this.ruinContaining(x, y); if (!R) return 'treasure';
+        this.ruinGrid(R);
+        return R.x0 + R.keyChest[0] === x && R.y0 + R.keyChest[1] === y ? 'key' : 'treasure';
+      },
+      buildRuins12(arr, cx) {
+        const baseX = cx * CHUNK_W, s = this.seed;
+        for (let c = Math.floor((baseX - RUIN_W) / RUIN_CELL); c <= Math.floor((baseX + CHUNK_W) / RUIN_CELL); c++) {
+          const R = this.ruinAt(c); if (!R) continue;
+          if (R.x0 + RUIN_W <= baseX || R.x0 >= baseX + CHUNK_W) continue;
+          const g = this.ruinGrid(R);
+          for (let lx = 0; lx < CHUNK_W; lx++) {
+            const x = baseX + lx, rx = x - R.x0;
+            if (rx >= 0 && rx < RUIN_W) for (let ry = 0; ry < RUIN_H; ry++) {
+              let v = g[ry * RUIN_W + rx]; if (v === -1) continue;
+              if (v === SHELL12) { const r = hash2(x, R.y0 + ry, s + 7710); v = r < 0.04 ? CRACKED_RUIN : r < 0.09 ? 19 : RUIN_BRICKS; }
+              arr[lx * WORLD_H + R.y0 + ry] = v;
+            }
+            // the ladder shaft up to the surface, a cracked hatch, and two stub pillars to mark the place
+            if (rx >= 5 && rx <= 9) {
+              const sf = this.surfaceHeight(x);
+              if (rx >= 6 && rx <= 8) {
+                for (let y = sf + 1; y < R.y0; y++) arr[lx * WORLD_H + y] = (rx === 7 ? 35 : AIR);
+                arr[lx * WORLD_H + sf] = CRACKED_RUIN;
+                for (let y = sf - 1; y > sf - 3; y--) if (arr[lx * WORLD_H + y] !== AIR && !BLOCKS[arr[lx * WORLD_H + y]].replaceable) arr[lx * WORLD_H + y] = AIR;
+              } else { arr[lx * WORLD_H + sf] = RUIN_BRICKS; for (let y = sf - 1; y >= sf - 3; y--) arr[lx * WORLD_H + y] = y === sf - 3 ? CRACKED_RUIN : RUIN_PILLAR; }
+            }
+          }
+        }
+      },
+    });
 
     // ---------------------------------------------------------------------------
     // LAVA — thick and slow. It runs 3 blocks sideways from a source (water
@@ -10418,6 +10550,7 @@
         if (targetId === GEM_CUTTER) { openScreen('gemcutter', t.x, t.y); return; }
         if (targetId === ENCHANT_TABLE) { openScreen('enchant', t.x, t.y); return; }
         if (targetId === PARASITE_TOTEM) { useParasiteTotem(t.x, t.y); return; }   // (1.1.4)
+        if (targetId === ANCIENT_DOOR) { useAncientDoor12(t.x, t.y); return; }   // (1.2)
         if (targetId === WATER_PUMP) {   // (1.1.5) open the pump; a Water Bucket in your hand goes straight into its slot
           openScreen('waterpump', t.x, t.y);
           if (Game.ui.mode === 'waterpump' && def && slot.item === 141) {
@@ -11635,6 +11768,7 @@
     function bossDamageTaken(mob, dmg, kind) {
       const I = mob && mob.def && mob.def.boss && BOSSES[mob.type];
       if (!I) return dmg;
+      if (mob.type === 'hollowknight') dmg = hollowBlock12(mob, dmg);   // (1.2) its shield
       if (kind !== 'melee' || I.meleeTaken == null) return dmg;
       return Math.max(1, Math.round(dmg * I.meleeTaken));
     }
@@ -15046,7 +15180,7 @@
     }
     function lerp(a, b, t) { return a + (b - a) * t; }
 
-    const LIGHT_GLOW_COLOR = { 15: '255,170,80', 21: '190,140,255', 22: '255,220,140', 81: '255,160,60', 89: '160,225,255', 176: '255,110,50', 178: '255,60,60', 179: '255,60,80', 180: '190,110,255', 181: '255,200,80' };
+    const LIGHT_GLOW_COLOR = { [BRAZIER_LIT]: '255,150,60', [BURNING_LOG]: '255,140,50', [EMBER_ORE]: '255,140,40', [MAGMA_ROCK]: '255,110,30', [EMBER_LEAVES]: '255,120,40', [CINDER_WEED]: '255,150,50', [FROST_CRYSTAL_BLOCK]: '120,220,255', [FROST_ORE]: '120,230,255', [MOONBLOOM]: '170,150,255', [RUNIC_TILE]: '70,220,240', 15: '255,170,80', 21: '190,140,255', 22: '255,220,140', 81: '255,160,60', 89: '160,225,255', 176: '255,110,50', 178: '255,60,60', 179: '255,60,80', 180: '190,110,255', 181: '255,200,80' };
     // 8-stage pixel crack overlay, drawn on a 16x16 grid so it matches the art.
     const crackCache = [];
     function crackTexture(stage) {
@@ -16130,6 +16264,11 @@
         case 'emberwisp': return Math.floor(Game.time * 9 + m.id) % 3;
         case 'cindercrawler': return Math.abs(m.vx) > 0.2 ? Math.floor(m.legPhase * 1.1) % 3 : 0;
         case 'crimsonreaper': return m.castT > 0 ? 2 : Math.floor(Game.time * 2 + m.id) % 2;
+        case 'hollowknight': {
+          const mv = m.move, w2 = walkFrame12(m, 2);
+          if (m.phase < 2) { if (mv === 'wind') return 3; if (mv === 'slash') return 4; if (mv === 'block' || mv === 'bash') return 5; if (mv === 'break' || mv === 'intro') return 6; if (mv === 'summon') return 7; return w2; }
+          if (mv === 'wind' || mv === 'leap') return 11; if (mv === 'slash') return 12; if (mv === 'summon' || mv === 'break') return 13; return 8 + w2;
+        }
       }
       return 0;
     }
@@ -16138,10 +16277,10 @@
       return (g, m, u, eyes) => {
         if (!S.img.complete || !S.img.naturalWidth) return;
         const fr = Math.min(S.frames - 1, frameFor12(m));
-        const dh = m.h * 16 * u * (S.fit || 1.1), dw = S.w * dh / S.h;
+        const dh = m.h * 16 * u * (S.fit || 1.1), dw = S.w * dh / S.h, sc = dh / S.h, x0 = S.cx != null ? -S.cx * sc : -dw / 2;
         g.imageSmoothingEnabled = false;
         const bob = m.def.flying ? Math.sin(Game.time * 2.4 + m.id) * 0.4 * u : 0;
-        g.drawImage(S.img, fr * S.w, 0, S.w, S.h, -dw / 2, (m.def.flying ? -dh / 2 : -dh) + bob, dw, dh);
+        g.drawImage(S.img, fr * S.w, 0, S.w, S.h, x0, (m.def.flying ? -dh / 2 : -dh) + bob, dw, dh);
         if (m.def.eye && m.dying == null && !m.disguised) eyes.push({ x: m.def.eye[0] * u, y: (m.def.flying ? -dh / 2 : -dh) + m.def.eye[1] * dh, s: 2 * u, c: m.def.eye[2] });
       };
     }
@@ -16877,6 +17016,261 @@
       }
     };
 
+    // =============================================================================
+    // BETA 1.2 - THE ANCIENT RUINS (what happens inside) and THE HOLLOW KNIGHT
+    //   * rooms wake up the first time you walk in (skeletons climb out of the floor; two statues become Sentinels)
+    //   * ancient braziers light themselves at night (and when the Knight wakes)
+    //   * DART TRAPS fire along the line they face when you step into it; Ruin Spikes hurt
+    //   * the ANCIENT DOOR opens with a Ruin Key (right-click), found in the secret room
+    //   * THE HOLLOW KNIGHT (mini-boss, 430 health):
+    //       PHASE 1  slow, with a SHIELD: it blocks hits from the front (hit it from behind, or while it swings),
+    //                three-cut sword combos with a wind-up you can read, and a shield bash.
+    //       PHASE 2  at half health the shield SHATTERS: it's much faster, leaps and slams, hits harder,
+    //                and calls skeletons out of the floor.
+    //     It drops the Hollow Blade, Ancient Armor Plates, Ancient Metal, and (sometimes) a Hollow Signet.
+    // =============================================================================
+    Object.assign(MOB_TYPES, {
+      hollowknight: { name: 'The Hollow Knight', w: 1.7, h: 3.7, speed: 2.5, health: 430, hostile: true, boss: true, dmg: 7, kb: 0, custom: 'hollow', sunproof: true,
+        loot: [[HOLLOW_BLADE, 1, 1, 1], [ANCIENT_PLATE, 6, 9, 1], [ANCIENT_METAL, 3, 5, 1], [HOLLOW_SIGNET, 1, 1, 0.35], [DIAMOND, 2, 4, 1], [GOLD, 5, 9, 1], [134, 6, 10, 1], [MANA_POTION, 2, 3, 1], [245, 1, 2, 0.6]] },
+    });
+    BOSSES.hollowknight = {
+      name: 'The Hollow Knight', music: 'Sounds/music/final_stand.mp3',
+      home: (m) => m.arena ? { x: (m.arena.x0 + m.arena.x1) / 2, y: m.arena.floor - 6 } : { x: m.x, y: m.y },
+      chase: { x: 40, y: 22 }, summonAdv: 'ruins', killAdv: 'hollow', dmgMult: 1.0,
+      leaveMsg: 'The Hollow Knight sinks back onto its throne, waiting.', color: '#6fe8ff',
+    };
+    BOSS_AI.hollow = (m, dt, p) => hollowAI(m, dt, p);
+    MOBSPR12.hollowknight.cx = 26;
+    MOB_DRAW.hollowknight = mkDraw12('hollowknight');
+    Object.assign(MOB_TYPES.hollowknight, { eye: [2, 0.17, '70,230,250'] });
+    function spawnHollow(R) {
+      const ar = R.arena, m = new Mob('hollowknight', ar.spawn[0] + 0.5 - 0.85, ar.spawn[1] + 1 - 3.7);
+      Object.assign(m, { arena: ar, phase: 1, move: 'intro', moveT: 0, t: 0, shieldHp: 150, shieldUp: false, bossInvuln: 2.2, state: 'hostile', guardian: true, ruin: R.id, cd: 1, facingDir: -1, summonCd: 8 });
+      Game.mobs.push(m); bossSpawned(m);
+      sfx('hollowknight.say', { x: m.x, y: m.y, vol: 1.3 }); screenShake(0.9); flashDamage();
+      eventMessage('The Hollow Knight rises from its throne!', '#6fe8ff'); bigTitle12('The Hollow Knight', 'it has guarded this place for ages', '#6fe8ff');
+      for (let i = 0; i < 40; i++) { const a = Math.random() * 6.28, sp = 2 + Math.random() * 6; Game.particles.push({ x: m.x + m.w / 2, y: m.y + m.h * 0.7, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 1, life: 0.8 + Math.random() * 0.5, age: 0, size: 0.1, color: i % 2 ? '#6fe8ff' : '#5a6a7a', gravity: 4 }); }
+      Adv.grant('ruins');
+    }
+    function skelAt12(x, y) {
+      const m = new Mob('ruinskeleton', x + 0.5 - 0.325, y + 1 - 1.9); m.guardian = true; m.state = 'hostile'; Game.mobs.push(m);
+      for (let i = 0; i < 12; i++) Game.particles.push({ x: x + 0.5 + (Math.random() - 0.5), y: y + 0.9, vx: (Math.random() - 0.5) * 3, vy: -2 - Math.random() * 3, life: 0.7, age: 0, size: 0.1, color: i % 2 ? '#8e988a' : '#d6cfb4', gravity: 8 });
+      sfx('dig.stone', { x, y, vol: 1.2 }); return m;
+    }
+    function hollowAI(m, dt, p) {
+      const A = m.arena, mcx = m.x + m.w / 2, pcx = p.x + p.w / 2, dx = pcx - mcx, dist = Math.abs(dx), dir = dx > 0 ? 1 : -1;
+      m.t += dt; m.moveT += dt; m.bossInvuln = Math.max(0, (m.bossInvuln || 0) - dt); m.cd = Math.max(0, (m.cd || 0) - dt); m.summonCd = Math.max(0, m.summonCd - dt);
+      const p2 = m.phase >= 2, spd = p2 ? 4.7 : 2.5, dmg = p2 ? 10 : 7;
+      let tv = 0;
+      const go = (mv) => { m.move = mv; m.moveT = 0; m.hitDone = false; };
+      const swing = (reach) => {   // the sword's arc: in front, from head to knee
+        if (m.hitDone) return; m.hitDone = true;
+        const fx = mcx + m.facingDir * reach * 0.5;
+        sfx('katana.swing', { x: mcx, y: m.y + 1.5, pitch: 0.55, vol: 1.2 });
+        for (let i = 0; i < 12; i++) { const a = -1.3 + i * 0.22; Game.particles.push({ x: mcx + m.facingDir * (0.8 + Math.cos(a) * 1.8), y: m.y + 1.6 + Math.sin(a) * 1.6, vx: m.facingDir * 4, vy: 0, life: 0.25, age: 0, size: 0.14, color: p2 ? '#ff7a5a' : '#bff6ff', gravity: 0 }); }
+        if (Math.abs(p.x + p.w / 2 - fx) < reach * 0.5 + p.w / 2 && p.y + p.h > m.y + 0.6 && p.y < m.y + m.h && Math.sign(dx) === m.facingDir) { bossHitPlayer(dmg, mcx, p, 0, { kb: [9, 5], iframes: 0.35 }); }
+      };
+      if (!p2 && (m.health <= m.maxHealth * 0.5 || m.shieldHp <= 0) && m.move !== 'break') { go('break'); m.shieldUp = false; m.shieldBroke = true; }
+      switch (m.move) {
+        case 'intro': if (m.moveT > 1.7) go('walk'); break;
+        case 'break':
+          if (!m.brokeFx) { m.brokeFx = true; m.phase = 2; m.bossInvuln = 1.8; screenShake(1); flashDamage(); sfx('tool.break', { x: mcx, y: m.y + 1, vol: 1.4, pitch: 0.6 }); sfx('hollowknight.say', { x: m.x, y: m.y, vol: 1.3, pitch: 0.8 }); eventMessage("The Hollow Knight's shield shatters! It's faster now...", '#ff7a5a');
+            for (let i = 0; i < 30; i++) { const a = Math.random() * 6.28, sp = 3 + Math.random() * 6; Game.particles.push({ x: mcx - m.facingDir * 1.4, y: m.y + 1.8, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 2, life: 0.9, age: 0, size: 0.13, color: i % 3 ? '#72879c' : '#3fd8ee', gravity: 9 }); }
+            for (const sx of [A.x0 + 5, A.x1 - 6]) skelAt12(sx, A.floor - 1); }
+          if (m.moveT > 1.5) { go('walk'); m.cd = 0.3; }
+          break;
+        case 'walk': {
+          m.facingDir = dir; tv = dir * spd;
+          if (dist < (p2 ? 2.6 : 3.0)) tv = 0;
+          if (m.cd <= 0 && dist < 3.8) {
+            const r = Math.random();
+            if (!p2) { if (r < 0.55) { m.combo = 1 + (Math.random() < 0.5 ? 1 : 0); go('wind'); } else if (r < 0.85 && m.shieldHp > 0) go('block'); else go('bash'); }
+            else { if (m.summonCd <= 0 && Game.mobs.filter(q => q.type === 'ruinskeleton' && q.dying == null).length < 4) { go('summon'); m.summonCd = 13; } else { m.combo = 2 + (Math.random() < 0.5 ? 1 : 0); go('wind'); } }
+          } else if (m.cd <= 0 && p2 && dist > 5.5 && Math.random() < dt * 1.3) go('leap');
+          else if (m.cd <= 0 && !p2 && dist > 6 && Math.random() < dt * 0.6) go('bash');
+          if (p2 && m.summonCd <= 0 && m.cd <= 0 && Game.mobs.filter(q => q.type === 'ruinskeleton' && q.dying == null).length < 3) { go('summon'); m.summonCd = 13; }
+          break;
+        }
+        case 'wind': m.facingDir = dir; tv = 0; if (m.moveT >= (p2 ? 0.3 : 0.6)) { go('slash'); m.vx = dir * (p2 ? 7 : 4); m.kbTimer = 0.1; } break;
+        case 'slash': swing(p2 ? 4.3 : 3.7); if (m.moveT > 0.28) { if (--m.combo > 0) go('wind'); else { go('walk'); m.cd = p2 ? 0.5 : 1.3; } } break;
+        case 'block': m.shieldUp = true; m.facingDir = dir; tv = dir * spd * 0.35; if (m.moveT > 2.1) { m.shieldUp = false; if (dist < 4) go('bash'); else { go('walk'); m.cd = 0.4; } } break;
+        case 'bash': m.shieldUp = true; m.facingDir = dir; if (m.moveT < 0.35) tv = 0; else { tv = m.facingDir * 9.5; if (!m.hitDone && dist < 2.4) { m.hitDone = true; bossHitPlayer(dmg + 1, mcx, p, 0, { kb: [12, 6], iframes: 0.4 }); screenShake(0.4); sfx('fall.big', { x: mcx, y: m.y + 3, pitch: 0.7 }); } } if (m.moveT > 0.95) { m.shieldUp = false; go('walk'); m.cd = 1.4; } break;
+        case 'summon':
+          tv = 0; m.facingDir = dir;
+          if (m.moveT > 0.55 && !m.summoned) { m.summoned = true; sfx('hollowknight.say', { x: m.x, y: m.y, pitch: 0.7 }); for (const k of [-6, 0, 6]) { const sx = Math.max(A.x0 + 2, Math.min(A.x1 - 3, Math.floor(pcx + k))); skelAt12(sx, A.floor - 1); } screenShake(0.3); }
+          if (m.moveT > 1.2) { m.summoned = false; go('walk'); m.cd = 0.6; }
+          break;
+        case 'leap':
+          if (m.moveT < 0.4) { tv = 0; m.facingDir = dir; m.leapInit = false; }
+          else {
+            if (!m.leapInit) { m.leapInit = true; m.vy = -13; m.vx = dir * Math.min(9, dist * 1.4 + 2); m.kbTimer = 0.9; sfx('hollowknight.say', { x: m.x, y: m.y, pitch: 0.9 }); }
+            if (m.onGround && m.moveT > 0.6) {
+              screenShake(0.7); sfx('fall.big', { x: mcx, y: m.y + 3.7, pitch: 0.6 }); sfx('brute.slam', { x: mcx, y: m.y + 3.7 });
+              const gy = Math.floor(m.y + m.h);
+              for (const s2 of [-1, 1]) spawnProjectile({ x: mcx + s2 * 1.2, y: gy - 0.4, vx: s2 * 9, vy: 0, kind: 'wave', groundY: gy, r: 0.45, dmg: 8, life: 1.6, solidHit: false });
+              for (let i = 0; i < 20; i++) { const s2 = i % 2 ? 1 : -1; Game.particles.push({ x: mcx + s2 * (0.6 + i * 0.1), y: m.y + m.h - 0.1, vx: s2 * (3 + Math.random() * 5), vy: -2 - Math.random() * 3, life: 0.5, age: 0, size: 0.12, color: i % 3 ? '#8e988a' : '#6fe8ff', gravity: 10 }); }
+              if (Math.abs(pcx - mcx) < 3 && p.onGround) bossHitPlayer(dmg, mcx, p, 0, { kb: [10, 7], iframes: 0.4 });
+              go('walk'); m.cd = 0.7;
+            }
+          }
+          break;
+      }
+      m.shieldUp = (m.move === 'block' || m.move === 'bash');
+      m.blocking = m.shieldUp && !p2;
+      if (m.x < A.x0 + 0.3) { m.x = A.x0 + 0.3; m.vx = Math.max(0, m.vx); } if (m.x + m.w > A.x1 - 0.3) { m.x = A.x1 - 0.3 - m.w; m.vx = Math.min(0, m.vx); }
+      mobMove(m, tv, dt);
+      m.legPhase += dt * 0;
+      if (p2 && Math.random() < dt * 14 * particleMul()) Game.particles.push({ x: m.x + m.w / 2 + (Math.random() - 0.5), y: m.y + 0.8 + Math.random() * 2, vx: 0, vy: -1, life: 0.6, age: 0, size: 0.09, color: '#ff7a5a', gravity: -0.5 });
+    }
+    // the shield: hits from the front are mostly absorbed (and wear it down)
+    function hollowBlock12(mob, dmg) {
+      const p = Game.player;
+      if (mob.blocking && p && ((mob.facingDir > 0) === ((p.x + p.w / 2) > (mob.x + mob.w / 2)))) {
+        mob.shieldHp -= dmg;
+        const sx = mob.x + mob.w / 2 + mob.facingDir * 1.3, sy = mob.y + 1.9;
+        for (let i = 0; i < 8; i++) Game.particles.push({ x: sx, y: sy + (Math.random() - 0.5), vx: mob.facingDir * (2 + Math.random() * 4), vy: (Math.random() - 0.5) * 4, life: 0.3, age: 0, size: 0.07, color: '#ffe9a0', gravity: 6, kind: 'star' });
+        sfx('block.clang', { x: sx, y: sy, pitch: 1.5, vol: 0.9 });
+        spawnDamageNumber(sx, sy - 0.5, Math.max(1, Math.round(dmg * 0.12)), 'player');
+        return Math.max(1, Math.round(dmg * 0.12));
+      }
+      return dmg;
+    }
+    MOB_DEATH12.hollowknight = (m) => {
+      bossReward(m, 'hollow'); if (Game.boss === m) Game.boss = null;
+      const f = Game.flags; if (f) { f.ruinDone = f.ruinDone || []; if (!f.ruinDone.includes(m.ruin)) f.ruinDone.push(m.ruin); }
+      for (const q of Game.mobs) if (q.type === 'ruinskeleton' && q.guardian) { q.dead = true; deathPuff(q.x + q.w / 2, q.y + q.h / 2, ['#d6cfb4', '#8e988a']); }
+      eventMessage('The Hollow Knight crumbles. Its long watch is over.', '#6fe8ff'); sfx('toast.challenge'); stopBossMusic(true);
+      Game.shake = Math.max(Game.shake, 0.8);
+    };
+    // telegraph: a faint arc in front of the Knight while it winds up
+    B12.pre.push(function hollowTelegraph12(ox, oy) {
+      const m = Game.boss; if (!m || m.type !== 'hollowknight' || m.dying != null) return;
+      if (m.move === 'wind' || (m.move === 'leap' && m.moveT < 0.4) || m.move === 'summon') {
+        const x = ox + (m.x + m.w / 2) * TILE, y = oy + (m.y + 1.9) * TILE, k = Math.min(1, m.moveT / (m.phase >= 2 ? 0.3 : 0.6)), r = TILE * (m.phase >= 2 ? 4.3 : 3.7);
+        ctx.save(); ctx.fillStyle = `rgba(255,${m.phase >= 2 ? 90 : 220},${m.phase >= 2 ? 70 : 255},${0.12 + 0.2 * k})`; ctx.beginPath(); ctx.moveTo(x, y);
+        const f = m.facingDir > 0 ? 0 : Math.PI; ctx.arc(x, y, r, f - 0.9, f + 0.9); ctx.closePath(); ctx.fill(); ctx.restore();
+      }
+    });
+    // ---- inside the ruins ----
+    B12.updaters.push(function ruinSys12(dt, p) {
+      const w = Game.world; if (w.isInterior || netIsClient()) return;
+      const px = p.x + p.w / 2, py = p.y + p.h / 2;
+      const rs = w.ruinsNear(Math.floor(px), 60);
+      if (!rs.length) return;
+      const R = rs[0]; w.ruinGrid(R);
+      const f = Game.flags; if (!f) return; f.ruinRooms = f.ruinRooms || []; f.ruinDone = f.ruinDone || [];
+      // braziers: lit at night, or while the Knight is awake
+      B12.brT = (B12.brT || 0) - dt;
+      if (B12.brT <= 0) {
+        B12.brT = 1.5;
+        const active = B12.night || (Game.boss && Game.boss.type === 'hollowknight');
+        for (const [bx, by] of R.braziers) {
+          const ax = R.x0 + bx, ay = R.y0 + by; if (!w.chunks.has(Math.floor(ax / CHUNK_W))) continue;
+          const t = w.getTile(ax, ay), want = active ? BRAZIER_LIT : BRAZIER;
+          if ((t === BRAZIER || t === BRAZIER_LIT) && t !== want) w.setTile(ax, ay, want);
+        }
+      }
+      const inside = px > R.x0 && px < R.x0 + R.W && py > R.y0 - 2 && py < R.y0 + R.H;
+      if (!inside) return;
+      if (!B12.inRuin) { B12.inRuin = true; bigTitle12('Ancient Ruins', 'something old is still awake down here', '#a8c8b8'); Adv.grant('ruins'); }
+      const inRoom = (name) => { const r = R.rooms[name]; return !!r && px > R.x0 + r[0] && px < R.x0 + r[2] + 1 && py > R.y0 + r[1] && py < R.y0 + r[3] + 1; };
+      const once = (name, fn) => { const key = R.id + ':' + name; if (!f.ruinRooms.includes(key) && inRoom(name)) { f.ruinRooms.push(key); fn(); } };
+      once('hall', () => {
+        let n = 0; for (const [sx, sy] of R.statues) { const ax = R.x0 + sx, ay = R.y0 + sy; if (w.getTile(ax, ay) === ANCIENT_STATUE) { w.setTile(ax, ay, AIR); const m = new Mob('sentinel', ax + 0.5 - 0.65, ay + 1 - 2.5); m.state = 'hostile'; m.guardian = true; Game.mobs.push(m); n++; for (let i = 0; i < 14; i++) Game.particles.push({ x: ax + 0.5, y: ay + Math.random(), vx: (Math.random() - 0.5) * 4, vy: -2 - Math.random() * 2, life: 0.8, age: 0, size: 0.12, color: '#8e988a', gravity: 8 }); } }
+        if (n) { eventMessage('The statues move...', '#a8c8b8'); sfx('brute.roar', { x: px, y: py, pitch: 0.6 }); screenShake(0.5); }
+      });
+      once('key', () => { for (const [sx, sy] of R.skel.key) skelAt12(R.x0 + sx, R.y0 + sy); eventMessage('Bones rattle in the dark!', '#d6cfb4'); });
+      once('ante', () => { for (const [sx, sy] of R.skel.ante) skelAt12(R.x0 + sx, R.y0 + sy); });
+      if (inRoom('arena') && !f.ruinDone.includes(R.id) && !Game.boss && Settings.difficulty !== 'peaceful' && (B12.knightCd = (B12.knightCd || 0) - dt) <= 0) { B12.knightCd = 4; spawnHollow(R); }
+    });
+    B12.updaters.push(function inRuinReset12(dt, p) { const w = Game.world; if (B12.inRuin && !w.isInterior) { const R = w.ruinsNear(Math.floor(p.x), 0)[0]; if (!R || p.y < R.y0 - 4) B12.inRuin = false; } });
+    // ---- dart traps ----
+    B12.dart = { cd: new Map(), dir: new Map(), scanT: 0, list: [] };
+    B12.updaters.push(function darts12(dt, p) {
+      const w = Game.world; if (w.isInterior) return;
+      const D = B12.dart; D.scanT -= dt;
+      if (D.scanT <= 0) {
+        D.scanT = 0.5; D.list = [];
+        const px = Math.floor(p.x), py = Math.floor(p.y);
+        for (let x = px - 22; x <= px + 22; x++) for (let y = py - 14; y <= py + 14; y++) if (w.getTile(x, y) === DART_TRAP) D.list.push([x, y]);
+      }
+      for (const [x, y] of D.list) {
+        const key = x + ',' + y; let dir = D.dir.get(key);
+        if (!dir) { for (const d of [[-1, 0], [1, 0], [0, 1], [0, -1]]) if (w.getTile(x + d[0], y + d[1]) === AIR) { dir = d; break; } if (!dir) continue; D.dir.set(key, dir); }
+        const c = (D.cd.get(key) || 0) - dt; D.cd.set(key, c);
+        if (c > 0 && c < 100) continue;
+        // is the player in the line of fire?
+        let len = 0; for (; len < 14; len++) if (isSolidId(w.getTile(x + dir[0] * (len + 1), y + dir[1] * (len + 1)))) break;
+        const tx = x + 0.5 + dir[0] * (len + 0.5) / 2, ty = y + 0.5 + dir[1] * (len + 0.5) / 2;
+        const pcx = p.x + p.w / 2, pcy = p.y + p.h / 2;
+        const along = (pcx - (x + 0.5)) * dir[0] + (pcy - (y + 0.5)) * dir[1], across = Math.abs((pcx - (x + 0.5)) * dir[1]) + Math.abs((pcy - (y + 0.5)) * dir[0]);
+        if (along > 0.6 && along < len + 0.8 && across < 0.9 && !Game.creative) {
+          if (!D.arm || !D.arm.get(key)) { (D.arm = D.arm || new Map()).set(key, 0.25); for (let i = 0; i < 4; i++) Game.particles.push({ x: x + 0.5 + dir[0] * 0.6, y: y + 0.5 + dir[1] * 0.6, vx: 0, vy: 0, life: 0.25, age: 0, size: 0.09, color: '#ff3a3a', gravity: 0, kind: 'star' }); sfx('click', { x, y, pitch: 0.6 }); continue; }
+          const a = D.arm.get(key) - dt; D.arm.set(key, a);
+          if (a <= 0) {
+            D.arm.set(key, 0); D.cd.set(key, 1.6);
+            spawnBolt12({ x: x + 0.5 + dir[0] * 0.8, y: y + 0.5 + dir[1] * 0.8, vx: dir[0] * 17, vy: dir[1] * 17, kind: 'dart', dmg: 4, r: 0.2, life: 1.2, fx: (pp) => addFx12(pp, 'poison', 3) });
+            sfx('bow.shoot', { x, y, pitch: 1.3, vol: 0.6 });
+          }
+        } else if (D.arm) D.arm.set(key, 0);
+      }
+    });
+    BOLT_COL12.dart = ['210,210,190', '#e8e8d0'];
+    B12.glow.push(function drawDarts12(ox, oy) {
+      for (const b of Game.bolts12) if (b.kind === 'dart') { const x = ox + b.x * TILE, y = oy + b.y * TILE, a = Math.atan2(b.vy, b.vx); ctx.save(); ctx.globalCompositeOperation = 'source-over'; ctx.translate(x, y); ctx.rotate(a); ctx.fillStyle = '#d8d8c0'; ctx.fillRect(-TILE * 0.35, -2, TILE * 0.7, 4); ctx.fillStyle = '#3a3a30'; ctx.fillRect(TILE * 0.2, -3, TILE * 0.2, 6); ctx.fillStyle = '#c03030'; ctx.fillRect(-TILE * 0.38, -3, TILE * 0.1, 6); ctx.restore(); }
+    });
+    // ---- the Ancient Door ----
+    function useAncientDoor12(x, y) {
+      const p = Game.player, s = p.selectedSlot();
+      if (!s || s.item !== RUIN_KEY) { showToast('The door is sealed by old magic. It needs a Ruin Key.'); sfx('door.lock', { x, y }); return; }
+      const w = Game.world, seen = new Set(), q = [[x, y]];
+      while (q.length && seen.size < 24) {
+        const [cx2, cy2] = q.pop(), k = cx2 + ',' + cy2; if (seen.has(k) || w.getTile(cx2, cy2) !== ANCIENT_DOOR) continue; seen.add(k);
+        q.push([cx2 + 1, cy2], [cx2 - 1, cy2], [cx2, cy2 + 1], [cx2, cy2 - 1]);
+      }
+      consumeSelected(1); sfx('door.unlock', { x, y, vol: 1.3 }); sfx('toast.in');
+      for (const k of seen) { const [a, b] = k.split(',').map(Number); w.setTile(a, b, AIR); for (let i = 0; i < 10; i++) Game.particles.push({ x: a + 0.5, y: b + Math.random(), vx: (Math.random() - 0.5) * 4, vy: -1 - Math.random() * 3, life: 0.7, age: 0, size: 0.1, color: i % 2 ? '#3fd8ee' : '#8e988a', gravity: 6 }); }
+      eventMessage('The Ancient Door grinds open...', '#a8c8b8'); Adv.grant('ruinkey'); screenShake(0.4);
+    }
+
+    // ---- commands: /summon hollowknight, /locate and /tp for the new places ----
+    function findBiome12(kind) {
+      const w = Game.world, px = Math.floor(Game.player.x);
+      for (let d = 0; d < 30000; d += 6) for (const sg of [1, -1]) { const x = px + sg * d; if (w.biome12(x) === kind && w.surfaceHeight(x) < SEA_LEVEL - 1 && w.biome12(x + 8) === kind && w.biome12(x - 8) === kind) return x; }
+      return null;
+    }
+    function findRuin12() {
+      const w = Game.world, px = Game.player.x; let best = null;
+      for (let c = Math.floor(px / RUIN_CELL) - 25; c <= Math.floor(px / RUIN_CELL) + 25; c++) { const R = w.ruinAt(c); if (R && (!best || Math.abs(R.cx - px) < Math.abs(best.cx - px))) best = R; }
+      return best;
+    }
+    {
+      const sumRun = COMMANDS.summon.run;
+      COMMANDS.summon.run = (a) => {
+        const t = a.join('').toLowerCase();
+        if (t === 'hollowknight' || t === 'hollow' || t === 'knight') {
+          if (Game.boss && !Game.boss.dead) return cmdError('A boss is already here.');
+          const p = Game.player, fy = Math.floor(p.y + p.h), fx = Math.floor(p.x);
+          spawnHollow({ id: -1, arena: { x0: fx - 14, x1: fx + 15, floor: fy, spawn: [fx + 7, fy - 1] } }); return;
+        }
+        return sumRun(a);
+      };
+      const locRun = COMMANDS.locate.run, tpRun = COMMANDS.tp.run;
+      const names = { ruins: 'ruins', ruin: 'ruins', redwood: 'redwood', frost: 'frost', frostlands: 'frost', ash: 'ash', ashlands: 'ash' };
+      COMMANDS.locate.run = (a) => {
+        const k = names[(a[0] || '').toLowerCase()];
+        if (k === 'ruins') { const R = findRuin12(); if (!R) return cmdError('No Ancient Ruins nearby.'); return chatLine(`Ancient Ruins: X ${R.x0 + 7} (${Math.round(Math.abs(R.x0 + 7 - Game.player.x))} blocks away). A cracked-brick hatch between two pillars marks the ladder shaft. /tp ruins`, '#a8c8b8'); }
+        if (k) { const x = findBiome12(k); if (x == null) return cmdError('None found nearby.'); return chatLine(`The nearest ${k === 'redwood' ? 'Redwood Forest' : k === 'frost' ? 'Frostlands' : 'Ashlands'} is at X ${x} (${Math.abs(Math.round(x - Game.player.x))} blocks away). /tp ${k}`, '#ffd27a'); }
+        return locRun(a);
+      };
+      COMMANDS.tp.run = (a) => {
+        const k = names[(a[0] || '').toLowerCase()];
+        if (k === 'ruins') { const R = findRuin12(); if (!R) return cmdError('No Ancient Ruins nearby.'); teleport(R.x0 + 7.2, R.y0 + 9 - STAND_HEIGHT + 0.99); return chatLine('Teleported into the Ancient Ruins.', '#a8c8b8'); }
+        if (k) { const x = findBiome12(k); if (x == null) return cmdError('None found nearby.'); teleport(x + 0.2, surfaceSpot(x)); return chatLine('Teleported.', '#ffd27a'); }
+        return tpRun(a);
+      };
+      COMMANDS.locate.usage = '/locate abyss|tonio|dojo|ruins|redwood|frost|ash'; COMMANDS.tp.usage = '/tp <x> [y] | /tp abyss|tonio|dojo|spawn|surface|ruins|redwood|frost|ash';
+    }
     let mobEyeGlows = [];
     function renderMobs(originX, originY) {
       mobEyeGlows = [];
@@ -17143,6 +17537,17 @@
       { id: 'breadhat', name: 'Baguette Hat', adv: 'bread', slot: 'head', x: -5, y: -9, rows: ['.bBBBBBBb.'], pal: { B: '#d8a050', b: '#a87030' } },
     ];
     const ACC_BY_ID = {}, ACC_BY_ADV = {};
+    ACCESSORIES.push(   // (1.2)
+      { id: 'redwoodcone', name: 'Redwood Cone Crown', adv: 'redwood', slot: 'head', x: -4, y: -9, rows: ['.G.G.G.G', 'GgGgGgGg', 'bBbBbBbB'], pal: { G: '#2f7a3c', g: '#4fae55', B: '#8a3d26', b: '#b0553a' } },
+      { id: 'frostcrown', name: 'Icicle Crown', adv: 'frostlands', slot: 'head', x: -4, y: -10, rows: ['w.w..w.w', 'wiwwiwwi', 'iIiIiIiI'], pal: { w: '#e8fbff', i: '#8cc4ec', I: '#4cc2ea' }, glow: '150,220,255' },
+      { id: 'ashmask', name: 'Cinder Mask', adv: 'ashlands', slot: 'face', x: -4, y: -4, rows: ['kkkkkkkk', 'kokkkkok', '.kkkkkk.'], pal: { k: '#2a2428', o: '#ff8a1e' }, glow: '255,130,40' },
+      { id: 'anglerhat', name: "Angler's Hat", adv: 'fish', slot: 'head', x: -5, y: -9, rows: ['..YYYYY...', '.YYYYYYY..', 'yyyyyyyyyy'], pal: { Y: '#e8c24a', y: '#b0902a' } },
+      { id: 'spellstar', name: 'Apprentice Star', adv: 'cast', slot: 'head', x: -1, y: -11, rows: ['..B..', '.BBB.', 'BBWBB', '.BBB.', '..B..'], pal: { B: '#5a8aff', W: '#ffffff' }, glow: '120,160,255' },
+      { id: 'archmagehat', name: 'Archmage Hat', adv: 'archmage', slot: 'head', x: -5, y: -15, rows: ['.....V....', '....VVV...', '....VYV...', '...VVVVV..', '...VVSVV..', '..VVVVVVV.', 'VVVVVVVVVV'], pal: { V: '#3a2a9a', Y: '#ffd84a', S: '#ff8aff' }, glow: '160,120,255' },
+      { id: 'moonpin', name: 'Moonbloom Pin', adv: 'moonbloom', slot: 'neck', x: -3, y: 2, rows: ['.bvb.', 'bvVvb', '.bvb.'], pal: { b: '#5a4ac8', v: '#b8aaff', V: '#ffffff' }, glow: '170,150,255' },
+      { id: 'bloodcrescent', name: 'Blood Crescent', adv: 'bloodmoon', slot: 'head', x: -3, y: -11, rows: ['.RRR.', 'RR...', 'R....', 'RR...', '.RRR.'], pal: { R: '#d01828' }, glow: '255,40,50' },
+      { id: 'hollowhelm', name: 'Hollow Helm', adv: 'hollow', slot: 'head', x: -5, y: -12, rows: ['h........h', 'hH......Hh', '.hSSSSSSh.', '.hSkkkkSh.', '.hSkccKSh.'], pal: { h: '#eee8d0', H: '#cfc8ae', S: '#5f7387', k: '#07090c', c: '#3fd8ee', K: '#07090c' }, glow: '70,220,240' },
+    );
     for (const a of ACCESSORIES) { ACC_BY_ID[a.id] = a; ACC_BY_ADV[a.adv] = a; }
     const ACC_SLOTS = ['head', 'face', 'back', 'neck'];
 
@@ -17837,6 +18242,7 @@
     SOUNDS['spell.abyss'] = { files: ['boss/purpleorb_fire'], vol: 0.35, pitch: [1.5, 1.8], cat: 'volPlayers' };
     SOUNDS['spell.zap'] = { files: ['boss/beam', 'random/explode1'], vol: 0.7, pitch: [1.3, 1.6], cat: 'volPlayers' };
     SOUNDS['spell.boom'] = { files: n_('random/explode', 4), vol: 0.6, pitch: [0.7, 0.9], cat: 'volPlayers' };
+      SOUNDS['block.clang'] = { files: ['random/anvil_land'], vol: 0.5, pitch: [1.3, 1.7], cat: 'volBlocks' };
       SOUNDS['bloodmoon.rise'] = { files: ['mob/wither/spawn'], vol: 0.7, pitch: [0.6, 0.6], cat: 'volAmbient' };
       SOUNDS['mob.blaze'] = { files: ['mob/ghast/fireball4'], vol: 0.35, pitch: [1.5, 1.8], cat: 'volCreatures' };
     }
@@ -18466,7 +18872,7 @@
       if (id === 20 || id === 34 || id === FROZEN_CHEST || id === RUIN_CHEST) {
         c = { type: 'chest', slots: new Array(27).fill(null) };
         if (id === 20) fillLootChest(c, w.isInterior ? LOOT[w.def.loot] : (w.isCabinChest && w.isCabinChest(x, y) ? LOOT.cabin : w.isTowerChest && w.isTowerChest(x, y) ? LOOT.tower : w.isDojoChest && w.isDojoChest(x, y) ? LOOT.dojo : null));
-        else if (id === FROZEN_CHEST) fillLootChest(c, LOOT.frost);   // (1.2)
+        else if (id === FROZEN_CHEST) { fillLootChest(c, LOOT.frost); Adv.grant('frozenchest'); }   // (1.2)
         else if (id === RUIN_CHEST) fillLootChest(c, w.ruinChestKind && w.ruinChestKind(x, y) === 'key' ? LOOT.ruinKey : LOOT.ruins);   // (1.2)
       }
       else if (id === 26) c = { type: 'furnace', slots: [null, null, null], burn: 0, burnMax: 0, cook: 0 };
@@ -22263,7 +22669,7 @@
       if (!f || !Game.flags) return;
       Game.flags.tonioSold = Game.flags.tonioSold || !!f.tonioSold;
       for (let i = 0; i < 3; i++) Game.flags.sensei[i] = Game.flags.sensei[i] || !!(f.sensei && f.sensei[i]);
-      Game.flags.hollowDown = Game.flags.hollowDown || !!f.hollowDown;   // (1.2)
+      for (const k of ['ruinRooms', 'ruinDone']) if (Array.isArray(f[k])) { Game.flags[k] = Game.flags[k] || []; for (const x of f[k]) if (!Game.flags[k].includes(x)) Game.flags[k].push(x); }   // (1.2)
       Game.flags.bloodMoons = Math.max(Game.flags.bloodMoons | 0, f.bloodMoons | 0);
       if (Array.isArray(f.fish)) { Game.flags.fish = Game.flags.fish || []; for (const x of f.fish) if (!Game.flags.fish.includes(x)) Game.flags.fish.push(x); }
     }
@@ -22925,6 +23331,7 @@
           },
           boats: (ow.boats || []).map(b => [b.x, b.y, b.facing]),
           wet: ow.wetTiles ? [...ow.wetTiles] : [],   // (1.1.5) pipes sitting in water
+          gen12: ow.gen12 !== false,   // (1.2)
           adv: Adv.save(),
           mode: Game.creative ? 'creative' : 'survival',
           // ---- Alpha 1.3 ----
@@ -23016,6 +23423,8 @@
     }
     function startWorld(seed, saveData, mode, cheats) {
       Game.world = new World(seed);
+      Game.world.gen12 = saveData ? !!saveData.gen12 : true;   // (1.2)
+      if (saveData && !saveData.gen12) setTimeout(() => showToast('Made before Beta 1.2: its land has no new biomes. New worlds do!'), 1500);
       if (saveData) {
         if (saveData.sites) Game.world.savedSites = saveData.sites;   // Tonio and the dojos stay where they were
         else {   // a world from before 1.3: put them somewhere you haven't been yet
@@ -23030,7 +23439,7 @@
       // cheats: chosen when the world is made. Worlds from before 1.3 keep them on.
       Game.cheats = saveData ? (saveData.cheats ?? true) : !!cheats;
       const fl = (saveData && saveData.flags) || {};
-      Game.flags = { tonioSold: !!fl.tonioSold, sensei: [0, 1, 2].map(i => !!(fl.sensei && fl.sensei[i])), fish: Array.isArray(fl.fish) ? fl.fish.slice() : [], hollowDown: !!fl.hollowDown, bloodMoons: fl.bloodMoons | 0 };
+      Game.flags = { tonioSold: !!fl.tonioSold, sensei: [0, 1, 2].map(i => !!(fl.sensei && fl.sensei[i])), fish: Array.isArray(fl.fish) ? fl.fish.slice() : [], ruinRooms: Array.isArray(fl.ruinRooms) ? fl.ruinRooms.slice() : [], ruinDone: Array.isArray(fl.ruinDone) ? fl.ruinDone.slice() : [], bloodMoons: fl.bloodMoons | 0 };
       Game.netSaves = (saveData && saveData.netPlayers) || {};
       Game.rules = Object.assign(defaultRules(), (saveData && saveData.rules) || (!saveData && newWorldRules) || {});   // (1.0.2)
       Game.dayShift = (saveData && saveData.dayShift) || 0; Game._lastT = null;
@@ -23146,7 +23555,7 @@
       Game.world = new World((Math.random() * 1e9) | 0);
       Game.mobs = []; Game.drops = []; Game.particles = [];
       Game.projectiles = []; Game.arrows = []; Game.boss = null; Game.ritual = null; stopBossMusic(true);
-      Game.flags = { tonioSold: false, sensei: [false, false, false], fish: [], hollowDown: false, bloodMoons: 0 }; resetCombatState(); Game.cheats = false;
+      Game.flags = { tonioSold: false, sensei: [false, false, false], fish: [], ruinRooms: [], ruinDone: [], bloodMoons: 0 }; resetCombatState(); Game.cheats = false;
       Game.worldId = null; Game.worldName = null;
       el('chat-input').placeholder = 'Type a command, like /help';
       updateNetBadge();

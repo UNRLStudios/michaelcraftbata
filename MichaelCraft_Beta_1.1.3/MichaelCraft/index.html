@@ -3942,6 +3942,7 @@
     // ---- Background walls (drawn behind open tiles underground) ----
     const WALL_NONE = 0, WALL_DIRT = 1, WALL_STONE = 2, WALL_DEEP = 6, WALL_ABYSS = 14;
     // more background walls (the rest are defined with the structures):
+    const WALL_ASH = 20, WALL_FROST = 21, WALL_RUIN = 22;   // (1.2)
     const WALL_LOG = 7, WALL_COBBLE = 8, WALL_MOSSY = 9, WALL_CHISELED = 10, WALL_TERRACOTTA = 11, WALL_WINDOW = 12, WALL_CRACKED = 13;
 
     // Tool tiers, in progression order
@@ -4412,6 +4413,7 @@
         case 'dash': { const j = S.dash.airJumps[i] + 1; return `${['', '', 'Double', 'TRIPLE', 'QUADRUPLE', 'QUINTUPLE'][j]} jump; dash (R) every ${S.dash.cd[i]} s`; }
         case 'feather': return `Fall at ${S.feather.fall[i]} blocks a second (hold S to drop). No fall damage`;
         case 'power': return `Hold Space in the air: fly up about ${flight()} blocks`;
+        case 'ward': return `Take ${Math.round(S.ward.reduce[i] * 100)}% less damage from everything`;
         case 'regen': return `Heals a heart every ${S.regen.every[i]} seconds (even when you're hungry)`;
         case 'wings': return `Fly about ${flight()} blocks (hold Space in the air), then glide at ${S.feather.fall[i]} blocks a second`;
       }
@@ -4666,6 +4668,145 @@
       { result: ANGEL_WINGS, qty: 1, shape: ['GPG', 'DFD', 'G G'], key: { G: 83, P: 210, F: 207, D: DIAMOND } },
       ...storageRecipes(),
     ];
+    // =============================================================================
+    // BETA 1.2 - THE WILDS UPDATE
+    //   Three new biomes (Redwood Forest, Frostlands, Ashlands), fishing, MAGIC
+    //   weapons and a Mana bar, dangerous nights and the Blood Moon, Ancient Ruins
+    //   with a mini-boss (The Hollow Knight).
+    //   IDs: blocks 300+ (tiles are 16-bit now), items 400+.
+    //   The code for all of it is in the "BETA 1.2" sections further down.
+    // =============================================================================
+    const REDWOOD_GRASS = 300, REDWOOD_LOG = 301, REDWOOD_NEEDLES = 302, REDWOOD_PLANKS = 303, FALLEN_LOG = 304, BROWN_MUSHROOM = 305, RED_MUSHROOM = 306, REDWOOD_ORE = 307, COBWEB = 308;
+    const PACKED_ICE = 310, FROST_STONE = 311, ICICLE = 312, FROZEN_CHEST = 313, FROST_ORE = 314, BLUE_ICE = 315, FROST_CRYSTAL_BLOCK = 316;
+    const ASH_BLOCK = 320, ASHEN_STONE = 321, EMBER_ORE = 322, CHARRED_LOG = 323, BURNING_LOG = 324, EMBER_LEAVES = 325, MAGMA_ROCK = 326, CINDER_WEED = 327;
+    const RUIN_BRICKS = 330, CRACKED_RUIN = 331, RUIN_PILLAR = 332, RUNIC_TILE = 333, ANCIENT_DOOR = 334, DART_TRAP = 335, BRAZIER = 336, BRAZIER_LIT = 337, ANCIENT_STATUE = 338, RUIN_CHEST = 339, MOONBLOOM = 340, RUIN_SPIKES = 341;
+    const RAW_REDWOOD = 400, REDWOOD_INGOT = 401, FROST_CRYSTAL = 402, RAW_EMBER = 403, EMBER_INGOT = 404, ANCIENT_METAL = 405, RUIN_KEY = 406, MOONPETAL = 407, BLOOD_SHARD = 408, ANCIENT_PLATE = 409, ANCIENT_ARMOR = 410;
+    const HOLLOW_BLADE = 411, HOLLOW_SIGNET = 412, FROST_BLADE = 413, GLACIER_HAMMER = 414, REDWOOD_PICK = 415, REDWOOD_AXE = 416, REDWOOD_SHOVEL = 417, REDWOOD_SWORD = 418, EMBER_PICK = 419, EMBER_SWORD = 420;
+    const EMBER_STAFF = 421, FROST_WAND = 422, VOID_ORB = 423, LIGHTNING_ROD = 424, ABYSS_TOME = 425, MANA_POTION = 426, BROWN_MUSHROOM_ITEM = 427, RED_MUSHROOM_ITEM = 428;
+    const FISHING_ROD = 430, BASS = 431, TROUT = 432, ICEFISH = 433, FROST_KOI = 434, MAGMAFISH = 435, TUNA = 436, SHARK = 437, PUFFERFISH = 438;   // (+8: the cooked ones, 439-446)
+    const FISH_IDS = [BASS, TROUT, ICEFISH, FROST_KOI, MAGMAFISH, TUNA, SHARK, PUFFERFISH];
+    const COOKED_OF = {}; FISH_IDS.forEach((f, i) => { COOKED_OF[f] = 439 + i; });
+    // tool tiers: Redwood (between iron and diamond) and Ember (a little better than diamond)
+    TIERS.push('redwood', 'ember'); TIER_SPEED.push(7.5, 11); TIER_DURABILITY.push(400, 520); TIER_DAMAGE.push(5, 6); TIER_HARVEST.push(3, 4);
+    const REDWOOD_TIER = 9, EMBER_TIER = 10;
+    // ---- blocks ----
+    defBlock(REDWOOD_GRASS, 'Redwood Grass', { category: 'dirt', hardness: 0.6, drop: 2 });
+    defBlock(REDWOOD_LOG, 'Redwood Log', { category: 'wood', hardness: 1.8 });
+    defBlock(REDWOOD_NEEDLES, 'Redwood Needles', { category: 'leaf', hardness: 0.3, transparent: true, solid: false, drop: 0 });
+    defBlock(REDWOOD_PLANKS, 'Redwood Planks', { category: 'wood', hardness: 0.7 });
+    defBlock(FALLEN_LOG, 'Fallen Redwood Log', { category: 'wood', hardness: 1.0, transparent: true, drop: REDWOOD_LOG });
+    defBlock(BROWN_MUSHROOM, 'Brown Mushroom', { category: 'instant', hardness: 0.1, solid: false, transparent: true, attach: 'floor', drop: BROWN_MUSHROOM_ITEM });
+    defBlock(RED_MUSHROOM, 'Red Mushroom', { category: 'instant', hardness: 0.1, solid: false, transparent: true, attach: 'floor', drop: RED_MUSHROOM_ITEM });
+    defBlock(REDWOOD_ORE, 'Redwood Ore', { category: 'stone', hardness: 2.8, tier: 2, drop: RAW_REDWOOD });
+    defBlock(COBWEB, 'Cobweb', { category: 'instant', hardness: 0.3, solid: false, transparent: true, drop: 231, replaceable: false });
+    defBlock(PACKED_ICE, 'Packed Ice', { category: 'stone', hardness: 0.7 });
+    defBlock(FROST_STONE, 'Frost Stone', { category: 'stone', hardness: 1.7, tier: 1 });
+    defBlock(ICICLE, 'Icicle', { category: 'instant', hardness: 0.2, solid: false, transparent: true, drop: 0, attach: 'ceiling' });
+    defBlock(FROZEN_CHEST, 'Frozen Chest', { category: 'stone', hardness: 1.2, drop: 34, placeable: false, solid: false, transparent: true });
+    defBlock(FROST_ORE, 'Frost Ore', { category: 'stone', hardness: 3.0, tier: 3, drop: FROST_CRYSTAL, light: 3 });
+    defBlock(BLUE_ICE, 'Blue Ice', { category: 'stone', hardness: 0.9 });
+    defBlock(FROST_CRYSTAL_BLOCK, 'Frost Crystals', { category: 'instant', hardness: 0.3, solid: false, transparent: true, attach: 'floor', drop: FROST_CRYSTAL, light: 7 });
+    defBlock(ASH_BLOCK, 'Ash Block', { category: 'dirt', hardness: 0.5 });
+    defBlock(ASHEN_STONE, 'Ashen Stone', { category: 'stone', hardness: 2.0, tier: 1 });
+    defBlock(EMBER_ORE, 'Ember Ore', { category: 'stone', hardness: 3.2, tier: 3, drop: RAW_EMBER, light: 6 });
+    defBlock(CHARRED_LOG, 'Charred Trunk', { category: 'wood', hardness: 1.0, solid: false, drop: 117, placeable: false });
+    defBlock(BURNING_LOG, 'Burning Trunk', { category: 'wood', hardness: 1.0, solid: false, drop: 117, placeable: false, light: 13 });
+    defBlock(EMBER_LEAVES, 'Cinder Branches', { category: 'leaf', hardness: 0.3, transparent: true, solid: false, drop: 0, light: 8 });
+    defBlock(MAGMA_ROCK, 'Magma Rock', { category: 'stone', hardness: 2.2, tier: 1, light: 10 });
+    defBlock(CINDER_WEED, 'Cinder Weed', { category: 'instant', hardness: 0.05, solid: false, transparent: true, attach: 'floor', drop: 0, light: 5, replaceable: true });
+    defBlock(RUIN_BRICKS, 'Ruin Bricks', { category: 'stone', hardness: 3.4, tier: 2 });
+    defBlock(CRACKED_RUIN, 'Cracked Ruin Bricks', { category: 'stone', hardness: 0.9, tier: 0, drop: RUIN_BRICKS });
+    defBlock(RUIN_PILLAR, 'Ruin Pillar', { category: 'stone', hardness: 3.4, tier: 2 });
+    defBlock(RUNIC_TILE, 'Runic Tile', { category: 'stone', hardness: 3.4, tier: 2, light: 4 });
+    defBlock(ANCIENT_DOOR, 'Ancient Door', { category: 'stone', hardness: 500, tier: 9, placeable: false });
+    defBlock(DART_TRAP, 'Dart Trap', { category: 'stone', hardness: 3.0, tier: 2 });
+    defBlock(BRAZIER, 'Ancient Brazier', { category: 'stone', hardness: 1.2, tier: 0, solid: false, transparent: true, attach: 'floor' });
+    defBlock(BRAZIER_LIT, 'Lit Brazier', { category: 'stone', hardness: 1.2, tier: 0, solid: false, transparent: true, attach: 'floor', light: 14, drop: BRAZIER, placeable: false });
+    defBlock(ANCIENT_STATUE, 'Guardian Statue', { category: 'stone', hardness: 3.4, tier: 2, transparent: true });
+    defBlock(RUIN_CHEST, 'Ancient Chest', { category: 'stone', hardness: 1.5, drop: 34, placeable: false, solid: false, transparent: true });
+    defBlock(MOONBLOOM, 'Moonbloom', { category: 'instant', hardness: 0.05, solid: false, transparent: true, attach: 'floor', drop: MOONPETAL, light: 8 });
+    defBlock(RUIN_SPIKES, 'Ruin Spikes', { category: 'stone', hardness: 0.8, solid: false, transparent: true, attach: 'floor', drop: 0 });
+    for (const id of [REDWOOD_GRASS, REDWOOD_LOG, REDWOOD_NEEDLES, REDWOOD_PLANKS, FALLEN_LOG, BROWN_MUSHROOM, RED_MUSHROOM, REDWOOD_ORE, COBWEB, PACKED_ICE, FROST_STONE, ICICLE, FROZEN_CHEST, FROST_ORE, BLUE_ICE, FROST_CRYSTAL_BLOCK,
+      ASH_BLOCK, ASHEN_STONE, EMBER_ORE, CHARRED_LOG, BURNING_LOG, EMBER_LEAVES, MAGMA_ROCK, CINDER_WEED, RUIN_BRICKS, CRACKED_RUIN, RUIN_PILLAR, RUNIC_TILE, ANCIENT_DOOR, DART_TRAP, BRAZIER, BRAZIER_LIT, ANCIENT_STATUE, RUIN_CHEST, MOONBLOOM, RUIN_SPIKES])
+      defItem(id, BLOCKS[id].name, { kind: 'block', stack: 64 });
+    for (const id of [DART_TRAP, ANCIENT_STATUE, BRAZIER]) BLOCKS[id].chain = false;
+    // ---- materials ----
+    defItem(RAW_REDWOOD, 'Raw Redwood', { kind: 'material' });
+    defItem(REDWOOD_INGOT, 'Redwood Ingot', { kind: 'material' });
+    defItem(FROST_CRYSTAL, 'Frost Crystal', { kind: 'material' });
+    defItem(RAW_EMBER, 'Raw Ember', { kind: 'material' });
+    defItem(EMBER_INGOT, 'Ember Ingot', { kind: 'material' });
+    defItem(ANCIENT_METAL, 'Ancient Metal', { kind: 'material' });
+    defItem(RUIN_KEY, 'Ruin Key', { kind: 'material', stack: 16 });
+    defItem(MOONPETAL, 'Moonpetal', { kind: 'material' });
+    defItem(BLOOD_SHARD, 'Blood Shard', { kind: 'material' });
+    defItem(ANCIENT_PLATE, 'Ancient Armor Plate', { kind: 'material' });
+    defItem(BROWN_MUSHROOM_ITEM, 'Brown Mushroom', { kind: 'food', hunger: 3 });
+    defItem(RED_MUSHROOM_ITEM, 'Red Mushroom', { kind: 'food', hunger: 2, fx: { poison: 6 }, alwaysEat: false });
+    defItem(MANA_POTION, 'Mana Potion', { kind: 'food', hunger: 0, alwaysEat: true, drink: true, mana: 70, leaves: 201 });
+    // ---- tools, armor, weapons ----
+    defTool(REDWOOD_PICK, 'Redwood Pickaxe', 'pick', REDWOOD_TIER);
+    defTool(REDWOOD_AXE, 'Redwood Axe', 'axe', REDWOOD_TIER);
+    defTool(REDWOOD_SHOVEL, 'Redwood Shovel', 'shovel', REDWOOD_TIER);
+    defTool(REDWOOD_SWORD, 'Redwood Sword', 'sword', REDWOOD_TIER);
+    defTool(EMBER_PICK, 'Ember Pickaxe', 'pick', EMBER_TIER);
+    defTool(EMBER_SWORD, 'Ember Sword', 'sword', EMBER_TIER);
+    ITEMS[EMBER_PICK].smelts = true; ITEMS[EMBER_SWORD].burns = true;
+    defItem(ANCIENT_ARMOR, 'Ancient Armor', { kind: 'armor', defense: 12, stack: 1, bonusDmg: 2, bonusHearts: 2, samuraiLook: false, thorns: 0.25 });
+    defWeapon(HOLLOW_BLADE, 'Hollow Blade', 'katana', 7, 2000);
+    defWeapon(FROST_BLADE, 'Frost Blade', 'katana', 5, 900);
+    defWeapon(GLACIER_HAMMER, 'Glacier Hammer', 'hammer', 5, 900);
+    for (const [id, nm, dur] of [[EMBER_STAFF, 'Ember Staff', 1000], [FROST_WAND, 'Frost Wand', 1000], [VOID_ORB, 'Void Orb', 1000], [LIGHTNING_ROD, 'Lightning Rod', 1000], [ABYSS_TOME, 'Abyss Tome', 1000]]) defWeapon(id, nm, 'magic', 5, dur);
+    defItem(FISHING_ROD, 'Fishing Rod', { kind: 'tool', toolType: 'rod', tier: 1, stack: 1, durability: 200, maxDurability: 200, weapon: false });
+    // fish: raw ones are a little food; cooked ones are real meals with a bonus (see FISH_FX)
+    const FISH_INFO = [   // id, name, raw hunger, cooked hunger
+      [BASS, 'Bass', 2, 6], [TROUT, 'Trout', 2, 6], [ICEFISH, 'Icefish', 2, 6], [FROST_KOI, 'Frost Koi', 2, 8],
+      [MAGMAFISH, 'Magmafish', 1, 7], [TUNA, 'Tuna', 3, 9], [SHARK, 'Shark', 4, 11], [PUFFERFISH, 'Pufferfish', 1, 5]];
+    const FISH_FX = {   // eaten raw / cooked
+      [BASS]: [null, null], [TROUT]: [null, { speed: 40 }], [ICEFISH]: [null, { frostproof: 90 }], [FROST_KOI]: [null, { regen: 12 }],
+      [MAGMAFISH]: [{ burn: 4 }, { fireproof: 90 }], [TUNA]: [null, { strength: 60 }], [SHARK]: [null, { heal: 6, strength: 30 }], [PUFFERFISH]: [{ poison: 8 }, { breath: 120 }],
+    };
+    for (const [id, nm, h1, h2] of FISH_INFO) {
+      defItem(id, nm, { kind: 'food', hunger: h1, fish: true, fx: FISH_FX[id][0] });
+      defItem(COOKED_OF[id], 'Cooked ' + nm, { kind: 'food', hunger: h2, fish: true, fx: FISH_FX[id][1] });
+    }
+    ITEMS[SHARK].big = true;
+    // the Hollow Ward charm (the Hollow Knight's rare drop): see PERKS
+    defItem(HOLLOW_SIGNET, 'Hollow Signet', { kind: 'perk', perk: 'ward', stack: 1 });
+    // how each new weapon fights
+    Object.assign(WEAPONS, {
+      [HOLLOW_BLADE]: { type: 'katana', dmg: 15, cd: 0.26, reach: 3.3, dashDist: 7, dashCd: 1.0, dashDmg: 22, trail: '#6fe8ff', wave: true },
+      [FROST_BLADE]: { type: 'katana', dmg: 8, cd: 0.3, reach: 2.9, dashDist: 6, dashCd: 1.2, dashDmg: 12, trail: '#bfeaff', chill: true },
+      [GLACIER_HAMMER]: { type: 'hammer', dmg: 15, cd: 0.9, reach: 3.0, poundCd: 3.0, poundDmg: 18, trail: '#9fe0ff', chill: true },
+      // MAGIC: they cost MANA instead of durability. cd = seconds between casts
+      [EMBER_STAFF]: { type: 'magic', spell: 'ember', dmg: 9, cd: 0.6, mana: 9, color: '#ff8a1e' },
+      [FROST_WAND]: { type: 'magic', spell: 'frost', dmg: 7, cd: 0.45, mana: 7, color: '#8ee6ff' },
+      [VOID_ORB]: { type: 'magic', spell: 'void', dmg: 26, cd: 1.1, mana: 24, color: '#b070ff' },
+      [LIGHTNING_ROD]: { type: 'magic', spell: 'lightning', dmg: 18, cd: 1.0, mana: 18, color: '#fff27a' },
+      [ABYSS_TOME]: { type: 'magic', spell: 'abyss', dmg: 5, cd: 0.8, mana: 14, color: '#d060ff' },
+    });
+    // ---- recipes ----
+    RECIPES.push(
+      { result: REDWOOD_PLANKS, qty: 4, shapeless: [REDWOOD_LOG] },
+      ...toolRecipes(REDWOOD_INGOT, REDWOOD_PICK, REDWOOD_AXE, REDWOOD_SHOVEL, REDWOOD_SWORD),
+      { result: EMBER_PICK, qty: 1, shape: ['EEE', ' S ', ' S '], key: { E: EMBER_INGOT, S: STICK } },
+      { result: EMBER_SWORD, qty: 1, shape: ['E', 'E', 'S'], key: { E: EMBER_INGOT, S: STICK } },
+      { result: FROST_BLADE, qty: 1, shape: ['C', 'C', 'I'], key: { C: FROST_CRYSTAL, I: IRON } },
+      { result: GLACIER_HAMMER, qty: 1, shape: ['CIC', 'CIC', ' S '], key: { C: FROST_CRYSTAL, I: IRON, S: STICK } },
+      { result: EMBER_STAFF, qty: 1, shape: [' EE', ' SE', 'S  '], key: { E: EMBER_INGOT, S: STICK } },
+      { result: FROST_WAND, qty: 1, shape: [' CC', ' IC', 'S  '], key: { C: FROST_CRYSTAL, I: IRON, S: STICK } },
+      { result: VOID_ORB, qty: 1, shape: [' O ', 'ORO', ' O '], key: { O: OBSIDIAN, R: RUBY } },
+      { result: LIGHTNING_ROD, qty: 1, shape: [' GE', ' IG', 'I  '], key: { G: GOLD, E: EMBER_INGOT, I: IRON } },
+      { result: ABYSS_TOME, qty: 1, shapeless: [217, 217, 217, BLOOD_SHARD, MOONPETAL] },
+      { result: MANA_POTION, qty: 2, shapeless: [201, 201, MOONPETAL, FROST_CRYSTAL] },
+      { result: FISHING_ROD, qty: 1, shape: ['  S', ' SX', 'S X'], key: { S: STICK, X: STRING } },
+      { result: ANCIENT_ARMOR, qty: 1, shape: ['P P', 'PMP', 'PPP'], key: { P: ANCIENT_PLATE, M: ANCIENT_METAL } },
+      { result: RUIN_BRICKS, qty: 4, shape: ['SS', 'SS'], key: { S: 3 } },
+      { result: BRAZIER, qty: 1, shape: ['C C', ' I ', 'III'], key: { C: 117, I: IRON } },
+      { result: PACKED_ICE, qty: 1, shape: ['II', 'II'], key: { I: 67 } },
+    );
+    PERKS.ward = { item: HOLLOW_SIGNET, name: 'Hollow Ward', desc: 'Take less damage from everything', color: '#7fe8e0' };
+    PERK_STATS.ward = { reduce: [0.10, 0.14, 0.18, 0.22, 0.26, 0.30, 0.34, 0.38] };
     // Fill in each recipe's name, total ingredient list and grid size.
     for (const r of RECIPES) {
       r.name = ITEMS[r.result].name;
@@ -4686,6 +4827,57 @@
     const GEM_POWER_COAL = 88, GEM_POWER_IRON = 118, CUTS_PER_CHARGE = 3;
     const SMELTING = { 118: 128, 119: 129, 14: 3, 122: 132, 5: 117, 33: 117, 62: 117, 69: 117, 136: 137, 138: 139, 71: 3, 153: 154 };
     const FUEL = { 117: 32, 5: 8, 62: 8, 69: 8, 13: 6, 100: 2, 16: 6, 34: 6, 35: 2, 101: 4, 102: 4, 103: 4, 104: 4, 88: 290 };
+    // ---- Beta 1.2: smelting, fuel, art and tooltips for the new things ----
+    SMELTING[RAW_REDWOOD] = REDWOOD_INGOT; SMELTING[RAW_EMBER] = EMBER_INGOT;
+    for (const f of FISH_IDS) SMELTING[f] = COOKED_OF[f];
+    FUEL[REDWOOD_LOG] = 10; FUEL[REDWOOD_PLANKS] = 6; FUEL[FALLEN_LOG] = 10; FUEL[RAW_EMBER] = 70; FUEL[EMBER_INGOT] = 90;
+    const B12_BLOCK_TEX = {
+      [REDWOOD_GRASS]: 'Textures/blocks/redwood_grass.png', [REDWOOD_LOG]: 'Textures/blocks/redwood_log.png', [REDWOOD_NEEDLES]: 'Textures/blocks/redwood_needles.png',
+      [REDWOOD_PLANKS]: 'Textures/blocks/redwood_planks.png', [FALLEN_LOG]: 'Textures/blocks/fallen_log.png', [BROWN_MUSHROOM]: 'Textures/blocks/brown_mushroom.png',
+      [RED_MUSHROOM]: 'Textures/blocks/red_mushroom.png', [REDWOOD_ORE]: 'Textures/blocks/redwood_ore.png', [COBWEB]: 'Textures/blocks/cobweb.png',
+      [PACKED_ICE]: 'Textures/blocks/packed_ice.png', [FROST_STONE]: 'Textures/blocks/frost_stone.png', [ICICLE]: 'Textures/blocks/icicle.png',
+      [FROZEN_CHEST]: 'Textures/blocks/frozen_chest.png', [FROST_ORE]: 'Textures/blocks/frost_ore.png', [BLUE_ICE]: 'Textures/blocks/blue_ice.png',
+      [FROST_CRYSTAL_BLOCK]: 'Textures/blocks/frost_crystal.png', [ASH_BLOCK]: 'Textures/blocks/ash_block.png', [ASHEN_STONE]: 'Textures/blocks/ashen_stone.png',
+      [EMBER_ORE]: 'Textures/blocks/ember_ore.png', [CHARRED_LOG]: 'Textures/blocks/charred_log.png', [BURNING_LOG]: 'Textures/blocks/burning_log.png',
+      [EMBER_LEAVES]: 'Textures/blocks/ember_leaves.png', [MAGMA_ROCK]: 'Textures/blocks/magma_rock.png', [CINDER_WEED]: 'Textures/blocks/cinder_weed.png',
+      [RUIN_BRICKS]: 'Textures/blocks/ruin_bricks.png', [CRACKED_RUIN]: 'Textures/blocks/cracked_ruin_bricks.png', [RUIN_PILLAR]: 'Textures/blocks/ruin_pillar.png',
+      [RUNIC_TILE]: 'Textures/blocks/runic_tile.png', [ANCIENT_DOOR]: 'Textures/blocks/ancient_door.png', [DART_TRAP]: 'Textures/blocks/dart_trap.png',
+      [BRAZIER]: 'Textures/blocks/brazier.png', [BRAZIER_LIT]: 'Textures/blocks/brazier_lit.png', [ANCIENT_STATUE]: 'Textures/blocks/ancient_statue.png',
+      [RUIN_CHEST]: 'Textures/blocks/ruin_chest.png', [MOONBLOOM]: 'Textures/blocks/moonbloom.png', [RUIN_SPIKES]: 'Textures/blocks/ruin_spikes.png',
+    };
+    const B12_ITEM_TEX = {
+      [RAW_REDWOOD]: 'Textures/items/raw_redwood.png', [REDWOOD_INGOT]: 'Textures/items/redwood_ingot.png', [FROST_CRYSTAL]: 'Textures/items/frost_crystal.png',
+      [RAW_EMBER]: 'Textures/items/raw_ember.png', [EMBER_INGOT]: 'Textures/items/ember_ingot.png', [ANCIENT_METAL]: 'Textures/items/ancient_metal.png',
+      [RUIN_KEY]: 'Textures/items/ruin_key.png', [MOONPETAL]: 'Textures/items/moonpetal.png', [BLOOD_SHARD]: 'Textures/items/blood_shard.png',
+      [ANCIENT_PLATE]: 'Textures/items/ancient_plate.png', [ANCIENT_ARMOR]: 'Textures/items/ancient_armor.png', [HOLLOW_BLADE]: 'Textures/items/tools/hollow/hollow_blade.png',
+      [HOLLOW_SIGNET]: 'Textures/items/hollow_signet.png', [FROST_BLADE]: 'Textures/items/tools/frost/frost_blade.png', [GLACIER_HAMMER]: 'Textures/items/tools/frost/glacier_hammer.png',
+      [REDWOOD_PICK]: 'Textures/items/tools/redwood/redwood_pickaxe.png', [REDWOOD_AXE]: 'Textures/items/tools/redwood/redwood_axe.png',
+      [REDWOOD_SHOVEL]: 'Textures/items/tools/redwood/redwood_shovel.png', [REDWOOD_SWORD]: 'Textures/items/tools/redwood/redwood_sword.png',
+      [EMBER_PICK]: 'Textures/items/tools/ember/ember_pickaxe.png', [EMBER_SWORD]: 'Textures/items/tools/ember/ember_sword.png',
+      [EMBER_STAFF]: 'Textures/items/ember_staff.png', [FROST_WAND]: 'Textures/items/frost_wand.png', [VOID_ORB]: 'Textures/items/void_orb.png',
+      [LIGHTNING_ROD]: 'Textures/items/lightning_rod.png', [ABYSS_TOME]: 'Textures/items/abyss_tome.png', [FISHING_ROD]: 'Textures/items/fishing_rod.png',
+      [BROWN_MUSHROOM_ITEM]: 'Textures/items/mushroom_brown.png', [RED_MUSHROOM_ITEM]: 'Textures/items/mushroom_red.png', [MANA_POTION]: 'Textures/items/mana_potion.png',
+      [BASS]: 'Textures/items/fish/bass.png', [TROUT]: 'Textures/items/fish/trout.png', [ICEFISH]: 'Textures/items/fish/icefish.png', [FROST_KOI]: 'Textures/items/fish/frost_koi.png',
+      [MAGMAFISH]: 'Textures/items/fish/magmafish.png', [TUNA]: 'Textures/items/fish/tuna.png', [SHARK]: 'Textures/items/fish/shark.png', [PUFFERFISH]: 'Textures/items/fish/pufferfish.png',
+      [COOKED_OF[BASS]]: 'Textures/items/fish/cooked_bass.png', [COOKED_OF[TROUT]]: 'Textures/items/fish/cooked_trout.png', [COOKED_OF[ICEFISH]]: 'Textures/items/fish/cooked_icefish.png',
+      [COOKED_OF[FROST_KOI]]: 'Textures/items/fish/cooked_frost_koi.png', [COOKED_OF[MAGMAFISH]]: 'Textures/items/fish/cooked_magmafish.png', [COOKED_OF[TUNA]]: 'Textures/items/fish/cooked_tuna.png',
+      [COOKED_OF[SHARK]]: 'Textures/items/fish/cooked_shark.png', [COOKED_OF[PUFFERFISH]]: 'Textures/items/fish/cooked_pufferfish.png',
+    };
+    const B12_HINTS = {
+      [REDWOOD_ORE]: 'Found deep in the Redwood Forest. Smelt the Raw Redwood into ingots', [REDWOOD_INGOT]: 'Redwood tools: better than iron',
+      [FROST_CRYSTAL]: 'From Frost Ore and crystals in the ice caves of the Frostlands. Frost Blade, Glacier Hammer, Frost Wand', [EMBER_INGOT]: 'Ember tools and the Ember Staff, Lightning Rod',
+      [RAW_EMBER]: 'From Ember Ore in the Ashlands. Smelt it into an Ember Ingot', [ANCIENT_METAL]: 'The Hollow Knight guards it. Ancient Armor needs one',
+      [ANCIENT_PLATE]: '8 plates (and a bit of Ancient Metal) make Ancient Armor', [RUIN_KEY]: 'Opens an Ancient Door in the Ancient Ruins (right-click the door)',
+      [MOONPETAL]: 'Moonblooms only grow at night', [BLOOD_SHARD]: 'Dropped by Blood Moon monsters', [HOLLOW_BLADE]: 'The Hollow Knight\'s sword. Throws a wave of soul with every third cut',
+      [HOLLOW_SIGNET]: 'A ward charm: wear it like a charm. Less damage from everything', [FROST_BLADE]: 'Chills what it cuts: they move slowly',
+      [GLACIER_HAMMER]: 'A smash that freezes monsters to the spot', [EMBER_STAFF]: 'MAGIC. Right-click or hold: bouncing fireballs. Costs mana',
+      [FROST_WAND]: 'MAGIC. A freezing bolt that slows what it hits', [VOID_ORB]: 'MAGIC. A slow void sphere that explodes after a few seconds',
+      [LIGHTNING_ROD]: 'MAGIC. Calls lightning down on the monster you point at', [ABYSS_TOME]: 'MAGIC. Fires a spread of small shadow bolts',
+      [MANA_POTION]: 'Restores a lot of mana', [FISHING_ROD]: 'Right-click near water to cast, right-click again when the bobber dips',
+      [ANCIENT_ARMOR]: '12 armor, +2 damage, +2 hearts, and attackers get hurt back', [EMBER_SWORD]: 'Sets what it hits on fire', [EMBER_PICK]: 'Smelts ore as you mine it',
+      [ICICLE]: 'Mind your head', [COBWEB]: 'Slows everything that walks into it', [BRAZIER]: 'Ancient braziers light themselves at night',
+      [RED_MUSHROOM_ITEM]: 'Poisonous!', [MOONBLOOM]: 'Blooms at night',
+    };
 
 
     // ---------------------------------------------------------------------------
@@ -5484,6 +5676,7 @@
     // we just keep the procedural fallback instead of breaking the game.
     // ---------------------------------------------------------------------------
     const CUSTOM_BLOCK_TEXTURES = {
+      ...B12_BLOCK_TEX,   // (1.2)
       1: 'Textures/nature/grass_tile.png',        // Grass Block
       2: 'Textures/nature/dirt_tile.png',         // Dirt
       3: 'Textures/nature/stone_tile.png',        // Stone
@@ -5631,6 +5824,7 @@
     let furnaceLitTex = null;
 
     const CUSTOM_ITEM_TEXTURES = {
+      ...B12_ITEM_TEX,   // (1.2)
       100: 'Textures/items/stick.png',
       101: 'Textures/items/tools/wood/wood_pickaxe.png',
       102: 'Textures/items/tools/wood/wood_axe.png',
@@ -5765,6 +5959,7 @@
       wallTex[WALL_BRICKS] = darkened(blockTex[39], 0.45);
       wallTex[WALL_DEEP] = darkened(blockTex[71], 0.45);
       wallTex[WALL_ABYSS] = darkened(blockTex[175], 0.4);
+      wallTex[WALL_ASH] = darkened(blockTex[ASHEN_STONE] || blockTex[3], 0.5); wallTex[WALL_FROST] = darkened(blockTex[FROST_STONE] || blockTex[3], 0.42); wallTex[WALL_RUIN] = darkened(blockTex[RUIN_BRICKS] || blockTex[39], 0.5);   // (1.2)
       wallTex[WALL_LOG] = darkened(blockTex[5], 0.45);
       wallTex[WALL_COBBLE] = darkened(blockTex[14], 0.45);
       wallTex[WALL_MOSSY] = darkened(blockTex[19], 0.45);
@@ -6194,6 +6389,14 @@
       dojo: [[STRING, 2, 5, 0.7], [217, 3, 8, 0.6], [134, 2, 6, 0.6], [IRON_STICK, 1, 2, 0.4], [128, 2, 5, 0.5], [PAPER_LANTERN, 1, 3, 0.5],
       [127, 1, 3, 0.4], [TATAMI, 2, 6, 0.4], [DOJO_MAP, 1, 1, 0.25], [KATANA, 1, 1, 0.08]],
     };
+    // (1.2) loot of the new chests (item, min, max, chance). The Ancient Ruins' KEY chest always holds a Ruin Key.
+    LOOT.cabin = [[BROWN_MUSHROOM_ITEM, 2, 5, 0.6], [RED_MUSHROOM_ITEM, 1, 2, 0.25], [STRING, 1, 3, 0.5], [100, 2, 6, 0.5], [RAW_REDWOOD, 2, 4, 0.55], [REDWOOD_INGOT, 1, 3, 0.3],
+      [127, 1, 3, 0.5], [FISHING_ROD, 1, 1, 0.25], [BASS, 1, 2, 0.35], [15, 3, 6, 0.55], [MANA_POTION, 1, 1, 0.1], [121, 1, 3, 0.4], [135, 1, 1, 0.12]];
+    LOOT.frost = [[FROST_CRYSTAL, 2, 5, 0.85], [IRON, 2, 5, 0.6], [GOLD, 1, 3, 0.35], [ICEFISH, 1, 2, 0.35], [MANA_POTION, 1, 2, 0.35], [15, 4, 8, 0.6], [134, 1, 3, 0.2],
+      [FROST_BLADE, 1, 1, 0.07], [FROST_WAND, 1, 1, 0.09], [GLACIER_HAMMER, 1, 1, 0.04], [DIAMOND, 1, 2, 0.15], [127, 2, 4, 0.5]];
+    LOOT.ruins = [[ANCIENT_METAL, 1, 2, 0.3], [GOLD, 3, 6, 0.6], [DIAMOND, 1, 3, 0.4], [RUBY, 1, 2, 0.3], [134, 2, 5, 0.5], [MANA_POTION, 1, 3, 0.55], [245, 1, 2, 0.3], [15, 4, 8, 0.6],
+      [EMBER_STAFF, 1, 1, 0.06], [VOID_ORB, 1, 1, 0.05], [ABYSS_TOME, 1, 1, 0.08], [LIGHTNING_ROD, 1, 1, 0.06], [FROST_WAND, 1, 1, 0.05], [MOONPETAL, 1, 3, 0.4], [BLOOD_SHARD, 1, 2, 0.12]];
+    LOOT.ruinKey = [[RUIN_KEY, 1, 1, 1], [GOLD, 1, 3, 0.5], [MANA_POTION, 1, 2, 0.4], [15, 4, 8, 0.7], [127, 2, 4, 0.5], [134, 1, 3, 0.3]];
     const STRUCTURES = {
       cottage: {
         name: 'Cottage', biome: 'plains', chance: 0.14, shell: 13, floor: 5, wall: WALL_PLANKS, loot: 'house', door: 'wood',
@@ -6301,7 +6504,9 @@
       }
       biomeAt(x) {
         if (this.isDesert(x)) return 'desert';
-        if (this.isSnowy(x)) return this.isForest(x) ? 'snowy taiga' : 'snowy plains';
+        if (this.isAsh(x)) return 'ashlands';
+        if (this.isRedwood(x)) return 'redwood forest';
+        if (this.isSnowy(x)) return this.isForest(x) ? 'frozen taiga' : 'frostlands';
         if (this.oceanness(x) > 0.5 && this.surfaceHeight(x) > SEA_LEVEL) return 'ocean';
         if (this.mountainness(x) > 0.5) return 'mountains';
         return this.isForest(x) ? 'forest' : 'plains';
@@ -6346,6 +6551,19 @@
           const mesa = smoothstep(0.58, 0.66, noise1D(x, s + 4040, 2, 0.5, 0.007)) * smoothstep(0.44, 0.52, noise1D(x, s + 4041, 2, 0.5, 0.03));
           if (mesa > 0) dune -= Math.round(mesa * 18 / 3) * 3;
           h += (dune - h) * des;
+        }
+        // (1.2) redwood hills, jagged ashlands and volcano cones
+        const rwd = this.redwoodness(x);
+        if (rwd > 0) h -= rwd * (2 + noise1D(x, s + 5760, 3, 0.5, 0.03) * 9);
+        const ash = this.ashness(x);
+        if (ash > 0) {
+          const rug = noise1D(x, s + 6970, 3, 0.5, 0.05), rdg = 1 - Math.abs(noise1D(x, s + 6971, 3, 0.5, 0.017) * 2 - 1);
+          h -= ash * (4 + rug * 9 + rdg * rdg * 16);
+          const vol = this.volcanoAt(x);
+          if (vol) {
+            const d = Math.abs(x - vol.c), cone = (dd) => Math.round(vol.base - vol.peak * Math.pow(1 - dd / vol.R, 1.4));
+            h = d <= vol.hw ? cone(vol.hw) + 4 : Math.min(h, cone(d));   // a flat crater floor 4 below the rim
+          }
         }
         // oceans: now and then the land sinks away into a wide sea, 8-16
         // blocks deep, shelving gently up to sandy beaches
@@ -6550,7 +6768,7 @@
         for (let lx = 0; lx < CHUNK_W; lx++) {
           const x = baseX + lx;
           const surface = this.surfaceHeight(x);
-          const desertCol = this.isDesert(x), snowyCol = this.isSnowy(x);
+          const desertCol = this.isDesert(x), snowyCol = this.isSnowy(x), ashCol = this.isAsh(x);
           const lake = this.lakeAt(x);
           const mtn = this.mountainness(x);
           // bare rock on cliffs and high mountain slopes; snow on the peaks
@@ -6602,7 +6820,8 @@
             } else {
               // above the surface: sea and lake water (with ice on top in the cold)
               if (surface > SEA_LEVEL && y >= SEA_LEVEL) id = (y === SEA_LEVEL && snowyCol) ? 67 : 7;
-              else if (lake && y > lake.level && y < surface) id = (y === lake.level + 1 && snowyCol) ? 67 : 7;
+              else if (lake && y > lake.level && y < surface) id = (y === lake.level + 1 && snowyCol) ? 67 : ashCol ? LAVA_SRC : 7;   // (1.2: lava lakes in the Ashlands)
+              if (ashCol && id === AIR) { const vol = this.volcanoAt(x); if (vol && Math.abs(x - vol.c) <= vol.hw - 1 && y >= surface - 2) id = LAVA_SRC; }   // the crater
             }
             arr[lx * WORLD_H + y] = id;
           }
@@ -6695,6 +6914,7 @@
           if (dojoHere && this.dojoAt(x)) continue;                                                            // and the dojos
           const top = arr[lx * WORLD_H + surface];
           if (isWaterId(arr[lx * WORLD_H + surface - 1]) || arr[lx * WORLD_H + surface - 1] === 67) continue; // under a lake
+          if (this.isRedwood(x) || this.isAsh(x)) continue;   // (1.2) these have their own trees and plants: see biomes12
           if (this.isDesert(x)) {   // deserts: cacti and dead bushes instead of trees and grass
             if (top !== 4) continue;
             const r = hash1(x, this.seed + 78);
@@ -6756,6 +6976,7 @@
         }
         if (tower) this.buildTower(arr, cx, tower);
         if (dojoHere) this.buildDojos(arr, cx);
+        this.biomes12(arr, cx, { chunkStruct, tower, dojoHere });   // (1.2)
         this.carveAbyss(arr, cx);
         // Apply any saved player modifications on top of the generated base.
         for (let lx = 0; lx < CHUNK_W; lx++) {
@@ -7267,6 +7488,7 @@
         if (this.abyssMask(x, y)) return WALL_ABYSS;
         const s = this.surfaceHeight(x);
         if (y <= s) { const dw = this.dojoWall(x, y); return dw || this.towerWall(x, y); }
+        if (y > s + 1 && y <= DEEPSLATE_ROW) { const b12 = this.biome12(x); if (b12 === 'ash') return WALL_ASH; if (b12 === 'frost' && y > s + 4) return WALL_FROST; }   // (1.2)
         return y <= s + 4 ? WALL_DIRT : y > DEEPSLATE_ROW ? WALL_DEEP : WALL_STONE;
       }
 
@@ -7432,6 +7654,370 @@
         this.waterStep(x, y);
       }
     };
+
+    // =============================================================================
+    // BETA 1.2 - THE THREE NEW BIOMES (world generation)
+    //   REDWOOD FOREST  giant redwoods (3-4 wide, 28-50 tall, with branches), dark red-brown
+    //                   grass, ferns, mushrooms, fallen logs, abandoned cabins, Redwood Ore.
+    //   FROSTLANDS      the snowy biome, now frozen all the way down: Frost Stone, ICE CAVES
+    //                   lined with Blue Ice (icicles, frost crystals, frozen chests), Frost Ore.
+    //   ASHLANDS        black volcanic country: Ash Blocks, Ashen Stone, volcano cones with lava
+    //                   craters, lava lakes, burning trees, Ember Ore, and underneath, caves
+    //                   flooded with lava and pockets of lava hiding in the rock.
+    // Big features (trees, cabins, caves) are decided by pure functions of the column / the slot
+    // (redwoodSlot, cabinForChunk, iceCaveAt, ashCaveAt...), so every chunk draws its own slice
+    // of them and nothing ever has to write into a neighbouring chunk.
+    // =============================================================================
+    const ASH_LAVA_ROW = 112;   // below this row every cave in the Ashlands is flooded with lava
+    const RED_SLOT = 20;        // at most one giant redwood per 20 columns
+    const isSolidId = (id) => id !== AIR && BLOCKS[id] && BLOCKS[id].solid;
+    Object.assign(World.prototype, {
+      ashness(x) {
+        if (!this._ashC) this._ashC = new Map();
+        let a = this._ashC.get(x);
+        if (a === undefined) {
+          a = smoothstep(0.62, 0.69, noise1D(x, this.seed + 6969, 2, 0.5, 0.0026)) * (1 - this.desertness(x)) * (1 - this.snowiness(x));
+          this._ashC.set(x, a);
+        }
+        return a;
+      },
+      redwoodness(x) {
+        if (!this._redwC) this._redwC = new Map();
+        let r = this._redwC.get(x);
+        if (r === undefined) {
+          r = smoothstep(0.57, 0.63, noise1D(x, this.seed + 5757, 2, 0.5, 0.0031)) * (1 - this.desertness(x)) * (1 - this.snowiness(x)) * (1 - this.ashness(x));
+          this._redwC.set(x, r);
+        }
+        return r;
+      },
+      isAsh(x) { return this.ashness(x) > 0.5; },
+      isRedwood(x) { return this.redwoodness(x) > 0.5; },
+      isFrost(x) { return this.snowiness(x) > 0.5; },
+      // which of the new biomes (or '') a column belongs to
+      biome12(x) { return this.isAsh(x) ? 'ash' : this.isRedwood(x) ? 'redwood' : this.isSnowy(x) ? 'frost' : ''; },
+      // A volcano: a cone of ash with a crater of lava on top, deep inside the Ashlands.
+      volcanoAt(x) {
+        const cell = Math.floor(x / 150);
+        if (!this._volC) this._volC = new Map();
+        let v = this._volC.get(cell);
+        if (v === undefined) {
+          v = null; const s = this.seed;
+          if (hash1(cell, s + 6101) < 0.7) {
+            const c = cell * 150 + 40 + Math.floor(hash1(cell, s + 6102) * 70), R = 24 + Math.floor(hash1(cell, s + 6103) * 14);
+            if (this.ashness(c) > 0.95 && this.ashness(c - R) > 0.6 && this.ashness(c + R) > 0.6) v = { c, R, peak: 24 + Math.floor(hash1(cell, s + 6104) * 12), hw: 4, base: 66 };
+          }
+          this._volC.set(cell, v);
+        }
+        return v && Math.abs(x - v.c) < v.R ? v : null;
+      },
+      // ICE CAVES: hollows under the Frostlands (a pure function, so a cave can cross chunks)
+      iceCaveAt(x, y) {
+        if (!this.isSnowy(x)) return false;
+        const sf = this.surfaceHeight(x);
+        if (y < sf + 16 || y > sf + 84 || y >= WORLD_H - BEDROCK_ROWS - 4) return false;
+        const n = noise2D(x, y * 1.55, this.seed + 4400, 0.036), n2 = noise2D(x * 1.3 + 50, y * 1.3, this.seed + 4410, 0.075);
+        return n > 0.77 || (n > 0.70 && n2 > 0.74);
+      },
+      // ASHLANDS: wide extra caverns and tunnels, and pockets of lava hiding in the rock
+      ashCaveAt(x, y) {
+        if (!this.isAsh(x)) return false;
+        if (y < this.surfaceHeight(x) + 10 || y >= WORLD_H - BEDROCK_ROWS - 5) return false;
+        return Math.abs(noise2D(x, y * 1.2, this.seed + 4950, 0.05) * 2 - 1) < 0.045 || noise2D(x, y * 1.3, this.seed + 4960, 0.022) > 0.8;
+      },
+      lavaPocketAt(x, y) {
+        if (!this.isAsh(x) || y < this.surfaceHeight(x) + 10) return false;
+        return noise2D(x * 1.2, y * 1.2, this.seed + 4970, 0.11) > 0.85;
+      },
+      // ONE giant redwood in a 20-column slot (or null). All the numbers come from hashes.
+      redwoodSlot(sl) {
+        if (!this._redC) this._redC = new Map();
+        if (this._redC.has(sl)) return this._redC.get(sl);
+        let T = null; const s = this.seed;
+        if (hash1(sl, s + 5801) < 0.86) {
+          const c = sl * RED_SLOT + 6 + Math.floor(hash1(sl, s + 5802) * (RED_SLOT - 12));
+          const w = hash1(sl, s + 5803) < 0.4 ? 4 : 3, x0 = c - 1;
+          let ok = this.isRedwood(x0 - 2) && this.isRedwood(x0 + w + 2), lo = Infinity, hi = -Infinity;
+          for (let xx = x0 - 1; ok && xx <= x0 + w; xx++) {
+            const h = this.surfaceHeight(xx);
+            lo = Math.min(lo, h); hi = Math.max(hi, h);
+            if (this.lakeAt(xx) || h >= SEA_LEVEL - 1) ok = false;
+          }
+          if (ok && hi - lo > 3) ok = false;
+          for (let k = Math.floor((x0 - 9) / CHUNK_W); ok && k <= Math.floor((x0 + w + 9) / CHUNK_W); k++) if (this.structureForChunk(k) || this.towerForChunk(k) || this.dojoInChunk(k)) ok = false;
+          const H = 28 + Math.floor(hash1(sl, s + 5804) * 22), top = lo - H;
+          if (ok && top >= 4) {
+            const branches = [];
+            for (let r = 10 + Math.floor(hash1(sl, s + 5805) * 4), i = 0; r < H - 8; i++, r += 3 + Math.floor(hash1(sl * 31 + i, s + 5806) * 3))
+              branches.push({ y: lo - r, side: (i + Math.floor(hash1(sl, s + 5807) * 2)) % 2 ? 1 : -1, len: 2 + Math.floor(hash1(sl * 31 + i, s + 5808) * 3) });
+            T = { sl, c, w, x0, lo, hi, H, top, branches, canopyTop: top - 4, canopyBot: lo - Math.floor(H * 0.26), maxR: 6 + Math.floor(hash1(sl, s + 5809) * 4), mid: x0 + Math.floor(w / 2) };
+          }
+        }
+        this._redC.set(sl, T);
+        return T;
+      },
+      drawRedwood(arr, baseX, T) {
+        const s = this.seed;
+        const put = (x, y, id, onlyAir) => {
+          const lx = x - baseX;
+          if (lx < 0 || lx >= CHUNK_W || y < 0 || y >= WORLD_H) return;
+          const idx = lx * WORLD_H + y, cur = arr[idx];
+          if (onlyAir && cur !== AIR && !(BLOCKS[cur] && BLOCKS[cur].replaceable)) return;
+          if (cur === 12 || isWaterId(cur)) return;
+          arr[idx] = id;
+        };
+        // the canopy first, so the trunk and branches go over it
+        for (let y = T.canopyTop; y <= T.canopyBot; y++) {
+          const tt = (y - T.canopyTop) / Math.max(1, T.canopyBot - T.canopyTop);
+          let rad = Math.round(0.6 + tt * T.maxR);
+          if (Math.floor((y - T.canopyTop) / 2) % 2 === 1) rad = Math.max(1, rad - 1);   // tiers, like a conifer
+          for (let dx = -rad; dx <= rad; dx++) {
+            const xx = T.mid + dx;
+            if (Math.abs(dx) === rad && rad > 2 && hash2(xx, y, s + 5810) < 0.4) continue;   // ragged edge
+            put(xx, y, REDWOOD_NEEDLES, true);
+          }
+        }
+        put(T.mid, T.canopyTop - 1, REDWOOD_NEEDLES, true); put(T.mid, T.canopyTop - 2, REDWOOD_NEEDLES, true);
+        // trunk: from the ground up, every column down to its own ground
+        for (let xx = T.x0; xx < T.x0 + T.w; xx++) {
+          const sf = this.surfaceHeight(xx);
+          for (let y = T.top; y < sf; y++) put(xx, y, REDWOOD_LOG, false);
+        }
+        // flared roots
+        for (const side of [-1, 1]) {
+          const xx = side < 0 ? T.x0 - 1 : T.x0 + T.w, sf = this.surfaceHeight(xx);
+          put(xx, sf - 1, REDWOOD_LOG, false); put(xx, sf - 2, REDWOOD_LOG, false);
+          if (hash2(xx, sf, s + 5811) < 0.6) put(xx + side, sf - 1, REDWOOD_LOG, false);
+          if (hash2(xx, sf, s + 5812) < 0.5) put(xx, sf - 3, REDWOOD_LOG, false);
+        }
+        // branches (with a tuft of needles on the end)
+        for (const b of T.branches) {
+          for (let i = 0; i < b.len; i++) put(b.side < 0 ? T.x0 - 1 - i : T.x0 + T.w + i, b.y, REDWOOD_LOG, false);
+          const ex = b.side < 0 ? T.x0 - b.len : T.x0 + T.w - 1 + b.len;
+          for (let dx = -1; dx <= 1; dx++) for (let dy = -1; dy <= 0; dy++) if (hash2(ex + dx, b.y + dy, s + 5813) < 0.8) put(ex + dx, b.y + dy, REDWOOD_NEEDLES, true);
+        }
+      },
+      // an abandoned cabin in a redwood glade (1 in ~7 redwood chunks)
+      cabinForChunk(cx) {
+        if (!this._cabC) this._cabC = new Map();
+        if (this._cabC.has(cx)) return this._cabC.get(cx);
+        let C = null; const s = this.seed, baseX = cx * CHUNK_W;
+        if (Math.abs(cx) > 1 && structHash(cx, s, 5901) < 0.15 && !this.structureForChunk(cx) && !this.towerForChunk(cx) && !this.dojoInChunk(cx)) {
+          const lx0 = 2 + Math.floor(structHash(cx, s, 5902) * 3);
+          let lo = Infinity, hi = -Infinity, ok = true;
+          for (let c = 0; c < 11; c++) {
+            const x = baseX + lx0 + c, h = this.surfaceHeight(x);
+            lo = Math.min(lo, h); hi = Math.max(hi, h);
+            if (!this.isRedwood(x) || this.lakeAt(x) || h >= SEA_LEVEL - 1) ok = false;
+          }
+          if (ok && hi - lo <= 3) {
+            const mid = baseX + lx0 + 5;
+            for (let sl = Math.floor((mid - 24) / RED_SLOT); sl <= Math.floor((mid + 24) / RED_SLOT); sl++) {
+              const T = this.redwoodSlot(sl);
+              if (T && Math.abs(T.mid - mid) < 9) ok = false;
+            }
+            if (ok) C = { lx0, x0: baseX + lx0, F: lo, chest: { x: baseX + lx0 + 8, y: lo - 1 } };
+          }
+        }
+        this._cabC.set(cx, C);
+        return C;
+      },
+      isCabinChest(x, y) { const C = this.cabinForChunk(Math.floor(x / CHUNK_W)); return !!C && C.chest.x === x && C.chest.y === y; },
+      buildCabin(arr, cx, C) {
+        const baseX = cx * CHUNK_W, s = this.seed;
+        const rows = [
+          '.LLLLLLLLL.',
+          'RRRRRRRRRRR',
+          '.PPPPPPPPP.',
+          '.P.......w.',
+          '.d.......P.',
+          '.d.......P.',
+          'FFFFFFFFFFF'];
+        const F = C.F;
+        const ids = { L: REDWOOD_LOG, R: REDWOOD_PLANKS, P: REDWOOD_PLANKS, F: REDWOOD_PLANKS };
+        const set = (c, y, id) => { const lx = C.lx0 + c; if (lx >= 0 && lx < CHUNK_W && y >= 0 && y < WORLD_H) arr[lx * WORLD_H + y] = id; };
+        for (let r = 0; r < rows.length; r++) for (let c = 0; c < 11; c++) {
+          const ch = rows[r][c], y = F - (rows.length - 1 - r);
+          if (ch === '.' || ch === 'w' || ch === 'd') { set(c, y, AIR); continue; }
+          const h = hash2(baseX + C.lx0 + c, y, s + 5903);
+          if (ch === 'F') {
+            const sf = this.surfaceHeight(baseX + C.lx0 + c);
+            for (let yy = F + 1; yy <= sf; yy++) set(c, yy, REDWOOD_LOG);   // stilts down to the ground
+            if (h < 0.1) { set(c, y, AIR); continue; }                        // a rotten board
+          } else if (h < 0.1) { set(c, y, AIR); continue; }                  // a hole in the wall or roof
+          set(c, y, ids[ch]);
+        }
+        // the walls' corner posts
+        for (const c of [1, 9]) for (let y = F - 5; y < F; y++) if (rows[rows.length - 1 - (F - y)][c] === 'P') set(c, y, REDWOOD_LOG);
+        // inside: a crafting table, the chest, cobwebs and mushrooms
+        set(3, F - 1, 16);
+        set(8, F - 1, 20);
+        set(2, F - 4, COBWEB); set(8, F - 4, COBWEB); set(7, F - 3, COBWEB); set(4, F - 4, hash2(baseX, F, s + 5904) < 0.5 ? COBWEB : AIR);
+        for (const c of [2, 5, 6]) if (hash2(baseX + C.lx0 + c, F, s + 5905) < 0.45) set(c, F - 1, hash2(baseX + c, F, s + 5906) < 0.5 ? BROWN_MUSHROOM : RED_MUSHROOM);
+      },
+      // everything the three biomes add to a freshly made chunk
+      biomes12(arr, cx, ctx) {
+        const baseX = cx * CHUNK_W, s = this.seed, bottom = WORLD_H - BEDROCK_ROWS;
+        const A = (lx, y) => (lx >= 0 && lx < CHUNK_W && y >= 0 && y < WORLD_H) ? arr[lx * WORLD_H + y] : 12;
+        const S = (lx, y, id) => { if (lx >= 0 && lx < CHUNK_W && y >= 0 && y < WORLD_H) arr[lx * WORLD_H + y] = id; };
+        const rnd = seededRand((s * 6151) ^ (cx * 7919) ^ 0x2468ace);
+        const blocked = !!(ctx.chunkStruct || ctx.tower || ctx.dojoHere);
+        const cols = [];
+        for (let lx = 0; lx < CHUNK_W; lx++) cols[lx] = this.biome12(baseX + lx);
+        const hostOre = (id) => id === 3 || id === 71 || id === FROST_STONE || id === ASHEN_STONE;
+        // ---- 1. rock and ground of each biome ----
+        for (let lx = 0; lx < CHUNK_W; lx++) {
+          const t = cols[lx]; if (!t) continue;
+          const x = baseX + lx, surface = this.surfaceHeight(x);
+          if (t === 'redwood') { if (A(lx, surface) === 1) S(lx, surface, REDWOOD_GRASS); }
+          else if (t === 'ash') {
+            const lake = this.lakeAt(x);
+            for (let y = surface; y < bottom; y++) {
+              const id = A(lx, y);
+              if (lake && id === 4 && y < surface + 4) S(lx, y, y === surface ? MAGMA_ROCK : ASH_BLOCK);   // a lava lake's bed
+              else if (y < surface + 6 && (id === 1 || id === 2 || id === 65 || id === 66)) S(lx, y, ASH_BLOCK);
+              else if (id === 3) S(lx, y, ASHEN_STONE);
+            }
+          } else {   // frostlands: the rock is frozen, and cave stalactites turn to icicles
+            for (let y = surface; y < bottom; y++) {
+              const id = A(lx, y);
+              if (id === 3) S(lx, y, FROST_STONE);
+              else if (id === 23) S(lx, y, ICICLE);
+              else if (id === 24 && hash2(x, y, s + 4430) < 0.7) S(lx, y, FROST_CRYSTAL_BLOCK);
+            }
+          }
+        }
+        // ---- 2. ICE CAVES (carve, line with ice, decorate) ----
+        for (let lx = 0; lx < CHUNK_W; lx++) {
+          if (cols[lx] !== 'frost') continue;
+          const x = baseX + lx, surface = this.surfaceHeight(x);
+          for (let y = surface + 16; y <= surface + 84 && y < bottom - 4; y++) {
+            if (!this.iceCaveAt(x, y)) continue;
+            const id = A(lx, y); if (id !== 12 && !BLOCKS[id].liquid) S(lx, y, AIR);
+          }
+        }
+        for (let lx = 0; lx < CHUNK_W; lx++) {
+          const x = baseX + lx;
+          if (!this.isSnowy(x) && !this.isSnowy(x - 1) && !this.isSnowy(x + 1)) continue;
+          const surface = this.surfaceHeight(x);
+          for (let y = surface + 15; y <= surface + 85 && y < bottom - 2; y++) {
+            const id = A(lx, y);
+            if (id !== 3 && id !== 2 && id !== FROST_STONE && id !== 71) continue;
+            if (this.iceCaveAt(x, y)) continue;
+            if (this.iceCaveAt(x - 1, y) || this.iceCaveAt(x + 1, y) || this.iceCaveAt(x, y - 1) || this.iceCaveAt(x, y + 1)) {
+              const r = hash2(x, y, s + 4420);
+              S(lx, y, r < 0.45 ? BLUE_ICE : r < 0.8 ? PACKED_ICE : FROST_STONE);
+            }
+          }
+        }
+        for (let lx = 0; lx < CHUNK_W; lx++) {
+          if (cols[lx] !== 'frost') continue;
+          const x = baseX + lx, surface = this.surfaceHeight(x);
+          for (let y = surface + 16; y <= surface + 84 && y < bottom - 4; y++) {
+            if (A(lx, y) !== AIR || !this.iceCaveAt(x, y)) continue;
+            const r = hash2(x, y, s + 4431);
+            if (isSolidId(A(lx, y - 1)) && r < 0.3) S(lx, y, ICICLE);
+            else if (isSolidId(A(lx, y + 1)) && r > 0.93) S(lx, y, FROST_CRYSTAL_BLOCK);
+          }
+        }
+        if (cols.includes('frost') && rnd() < 0.55) {   // a frozen chest, on the floor of an ice cave
+          for (let tries = 0; tries < 30; tries++) {
+            const lx = 1 + Math.floor(rnd() * (CHUNK_W - 2));
+            if (cols[lx] !== 'frost') continue;
+            const x = baseX + lx, surface = this.surfaceHeight(x), y = surface + 18 + Math.floor(rnd() * 60);
+            if (A(lx, y) === AIR && A(lx, y - 1) === AIR && isSolidId(A(lx, y + 1)) && this.iceCaveAt(x, y)) { S(lx, y, FROZEN_CHEST); break; }
+          }
+        }
+        // ---- 3. ASHLANDS underground: wide caverns, lava floods and lava hiding in the rock ----
+        for (let lx = 0; lx < CHUNK_W; lx++) {
+          if (cols[lx] !== 'ash') continue;
+          const x = baseX + lx, surface = this.surfaceHeight(x);
+          for (let y = surface + 10; y < bottom - 4; y++) {
+            if (this.ashCaveAt(x, y)) { const id = A(lx, y); if (id !== 12 && !BLOCKS[id].liquid) S(lx, y, AIR); }
+          }
+          for (let y = surface + 10; y < bottom - 3; y++) {
+            const id = A(lx, y);
+            if (this.lavaPocketAt(x, y)) { if (id !== 12) S(lx, y, LAVA_SRC); continue; }
+            if (id === AIR) { if (y >= ASH_LAVA_ROW) S(lx, y, LAVA_SRC); continue; }
+            if ((id === ASHEN_STONE || id === 71 || id === ASH_BLOCK) && (this.lavaPocketAt(x - 1, y) || this.lavaPocketAt(x + 1, y) || this.lavaPocketAt(x, y - 1) || this.lavaPocketAt(x, y + 1))) S(lx, y, MAGMA_ROCK);
+          }
+        }
+        // ---- 4. ORES of the new biomes ----
+        const vein = (oreId, tries, yMin, yMax, size, hosts, kind) => {
+          for (let t = 0; t < tries; t++) {
+            const lx = Math.floor(rnd() * CHUNK_W); if (cols[lx] !== kind) continue;
+            const surface = this.surfaceHeight(baseX + lx);
+            let y = surface + yMin + Math.floor(rnd() * (yMax - yMin));
+            const cells = [[lx, y]], seen = new Set([lx + ',' + y]), n = 2 + Math.floor(rnd() * size);
+            let placed = 0;
+            for (let g = 0; g < 40 && cells.length && placed < n; g++) {
+              const k = Math.floor(rnd() * cells.length), [cx2, cy2] = cells[k];
+              if (hosts.includes(A(cx2, cy2))) { S(cx2, cy2, oreId); placed++; }
+              for (const [dx, dy] of [[1, 0], [-1, 0], [0, 1], [0, -1]]) {
+                const key = (cx2 + dx) + ',' + (cy2 + dy);
+                if (!seen.has(key) && rnd() < 0.6) { seen.add(key); cells.push([cx2 + dx, cy2 + dy]); }
+              }
+              cells.splice(k, 1);
+            }
+          }
+        };
+        vein(REDWOOD_ORE, 10, 8, 80, 5, [3, 71], 'redwood');
+        vein(FROST_ORE, 9, 16, 90, 4, [FROST_STONE, 3, BLUE_ICE, PACKED_ICE], 'frost');
+        vein(EMBER_ORE, 13, 6, 95, 6, [ASHEN_STONE], 'ash');
+        // ---- 5. GIANT REDWOODS (also those rooted in the next chunk, whose branches reach in) ----
+        for (let sl = Math.floor((baseX - 16) / RED_SLOT); sl <= Math.floor((baseX + CHUNK_W + 16) / RED_SLOT); sl++) {
+          const T = this.redwoodSlot(sl); if (T) this.drawRedwood(arr, baseX, T);
+        }
+        // ---- 6. surface: understory, fallen logs, cabins; burning trees ----
+        let lastBurn = -99;
+        for (let lx = 0; lx < CHUNK_W; lx++) {
+          const t = cols[lx]; if (t !== 'redwood' && t !== 'ash') continue;
+          const x = baseX + lx, surface = this.surfaceHeight(x);
+          if (surface >= SEA_LEVEL - 1 || blocked) continue;
+          if (A(lx, surface - 1) !== AIR) continue;
+          if (t === 'redwood') {
+            if (A(lx, surface) !== REDWOOD_GRASS) continue;
+            const r = hash1(x, s + 5900);
+            if (r < 0.34) S(lx, surface - 1, 17);
+            else if (r < 0.37) S(lx, surface - 1, 18);
+            else if (r < 0.43) S(lx, surface - 1, BROWN_MUSHROOM);
+            else if (r < 0.455) S(lx, surface - 1, RED_MUSHROOM);
+          } else {
+            if (A(lx, surface) !== ASH_BLOCK || lx < 2 || lx > CHUNK_W - 3) continue;
+            const r = hash1(x, s + 6001);
+            if (r > 0.9 && x - lastBurn >= 6) { lastBurn = x; this.burnTree(arr, lx, surface, hash1(x, s + 6002)); }
+            else if (r > 0.64 && r < 0.8) S(lx, surface - 1, CINDER_WEED);
+            else if (r > 0.6 && r < 0.64) { S(lx, surface - 1, hash2(x, surface, s + 6003) < 0.4 ? MAGMA_ROCK : ASHEN_STONE); if (r > 0.62) S(lx, surface - 2, ASHEN_STONE); }
+          }
+        }
+        if (!blocked && cols[7] === 'redwood' && rnd() < 0.4) {   // a fallen log (4-6 long) with mushrooms growing on it
+          const lx0 = 3 + Math.floor(rnd() * 4), len = 4 + Math.floor(rnd() * 3);
+          let ok = true; const sf0 = this.surfaceHeight(baseX + lx0);
+          for (let c = 0; c < len; c++) { const x = baseX + lx0 + c; if (cols[lx0 + c] !== 'redwood' || this.surfaceHeight(x) !== sf0 || A(lx0 + c, sf0 - 1) !== AIR || A(lx0 + c, sf0) !== REDWOOD_GRASS) ok = false; }
+          if (ok) for (let c = 0; c < len; c++) {
+            S(lx0 + c, sf0 - 1, FALLEN_LOG);
+            if (A(lx0 + c, sf0 - 2) === AIR && rnd() < 0.3) S(lx0 + c, sf0 - 2, rnd() < 0.6 ? BROWN_MUSHROOM : RED_MUSHROOM);
+          }
+        }
+        const cab = this.cabinForChunk(cx);
+        if (cab) this.buildCabin(arr, cx, cab);
+      },
+      burnTree(arr, lx, surface, r) {
+        const H = 5 + Math.floor(r * 5), s = this.seed, x = lx;
+        for (let t = 1; t <= H; t++) arr[lx * WORLD_H + surface - t] = (t === H || (t > 2 && hash2(lx, t + surface, s + 6010) < 0.28)) ? BURNING_LOG : CHARRED_LOG;
+        const top = surface - H;
+        for (let dy = -2; dy <= 0; dy++) for (let dx = -2; dx <= 2; dx++) {
+          const lx2 = lx + dx, y2 = top + dy;
+          if (lx2 < 0 || lx2 >= CHUNK_W || y2 < 0 || (dx === 0 && dy === 0)) continue;
+          if (Math.abs(dx) === 2 && dy !== -1) continue;
+          if (hash2(lx2 + surface, y2, s + 6011) < 0.62 && arr[lx2 * WORLD_H + y2] === AIR) arr[lx2 * WORLD_H + y2] = EMBER_LEAVES;
+        }
+        // a dead branch or two
+        for (const side of [-1, 1]) if (hash2(lx * side, surface, s + 6012) < 0.5) {
+          const by = surface - 2 - Math.floor(hash2(lx, side, s + 6013) * (H - 2)), bx = lx + side;
+          if (bx >= 0 && bx < CHUNK_W && arr[bx * WORLD_H + by] === AIR) arr[bx * WORLD_H + by] = CHARRED_LOG;
+        }
+      },
+    });
 
     // ---------------------------------------------------------------------------
     // LAVA — thick and slow. It runs 3 blocks sideways from a source (water
@@ -8237,8 +8823,11 @@
         this.lastCause = cause || null;
         const armorDef = this.armorSlot && itemDef(this.armorSlot.item);
         const reduced = armorDef && cause !== 'drown' ? Math.max(1, amount - armorDef.defense - enchLevel(this.armorSlot, 'prot')) : amount;   // armor can't stop drowning
-        this.health -= reduced;
-        spawnDamageNumber(this.x + this.w / 2, this.y, reduced, 'player');
+        if (this.fx12 && this.fx12.fireproof > 0 && (cause === 'lava' || cause === 'fire')) return;   // (1.2) fire-proof from a cooked Magmafish
+        const ward = hasPerk(this, 'ward') ? perkStat(this, 'ward', 'reduce', 0) : 0;   // (1.2) Hollow Ward
+        const reducedW = ward ? Math.max(1, Math.round(reduced * (1 - ward))) : reduced;
+        this.health -= reducedW;
+        spawnDamageNumber(this.x + this.w / 2, this.y, reducedW, 'player');
         this.invuln = 0.5;
         this.hurtTint = 0.35;   // red flash, like Minecraft
         this.sprinting = false; this.sprintLatched = false; this.sprintCharge = 0;
@@ -8409,6 +8998,16 @@
       mountainness() { return 0; }
       oceanness() { return 0; }
       lakeAt() { return null; }
+      ashness() { return 0; }
+      redwoodness() { return 0; }
+      isAsh() { return false; }
+      isRedwood() { return false; }
+      isFrost() { return false; }
+      biome12() { return ''; }
+      volcanoAt() { return null; }
+      iceCaveAt() { return false; }
+      cabinForChunk() { return null; }
+      isCabinChest() { return false; }
       towerForChunk() { return null; }
       structureForChunk() { return null; }
       dojoInChunk() { return false; }
@@ -9265,7 +9864,7 @@
       blockSound('break', id, x, y);
       const cx = x + 0.5, cy = y + 0.5;
       // chests and furnaces spill what's inside
-      if (id === 20 || id === 34 || id === 26 || id === GEM_CUTTER || id === GAS_FURNACE || id === WATER_PUMP) {
+      if (id === 20 || id === 34 || id === FROZEN_CHEST || id === RUIN_CHEST || id === 26 || id === GEM_CUTTER || id === GAS_FURNACE || id === WATER_PUMP) {
         // (1.0.2) someone else has it open: it can't be broken until they close it
         if (netIsHost() && netLockOwner(Game.world, x + ',' + y, true)) { showToast(netLockOwner(Game.world, x + ',' + y, true) + ' is using that'); return; }
         if (Game.ui.mode && Game.ui.x === x && Game.ui.y === y) closePanels();
@@ -9401,7 +10000,7 @@
 
     // --- Placing ---------------------------------------------------------------
     // Blocks that do something when right-clicked.
-    const INTERACTIVE_BLOCKS = new Set([16, 20, 26, 32, 34]);
+    const INTERACTIVE_BLOCKS = new Set([16, 20, 26, 32, 34, FROZEN_CHEST, RUIN_CHEST, ANCIENT_DOOR]);
     // Would right-clicking this mob do something right now?
     function canInteractMob(m) {
       if (!m || m.dying != null || m.isPlayerProxy) return false;
@@ -9418,7 +10017,7 @@
       return false;
     }
     // Non-solid things you can still build off (leaves, trunks, furniture).
-    const FURNITURE_ANCHORS = new Set([6, 33, 61, 63, 68, 70, 16, 20, 26, 34, 32, 98]);
+    const FURNITURE_ANCHORS = new Set([6, 33, 61, 63, 68, 70, 16, 20, 26, 34, 32, 98, FROZEN_CHEST, RUIN_CHEST]);
     // Returns true if a block of type `id` may be placed at (x,y):
     //  * the spot must be empty-ish (air, water, grass, moss)
     //  * solid blocks can't go inside the player or a mob
@@ -9502,7 +10101,7 @@
       if (t && !isRepeat) {
         if (targetId === 32) { trySleep(t.x, t.y); return; }
         if (targetId === 16) { openScreen('table', t.x, t.y); return; }
-        if (targetId === 20 || targetId === 34) { openScreen('chest', t.x, t.y); return; }
+        if (targetId === 20 || targetId === 34 || targetId === FROZEN_CHEST || targetId === RUIN_CHEST) { openScreen('chest', t.x, t.y); return; }
         if (targetId === 26) { openScreen('furnace', t.x, t.y); return; }
         if (targetId === GAS_FURNACE) { openScreen('gasfurnace', t.x, t.y); return; }   // (1.1)
         if (targetId === GEM_CUTTER) { openScreen('gemcutter', t.x, t.y); return; }
@@ -16057,6 +16656,13 @@
     for (const id of [77, 82, 83, 84, 85, 86, 87, 88]) BLOCK_SOUND_GROUP[id] = 'stone';
     BLOCK_SOUND_GROUP[78] = 'grass'; BLOCK_SOUND_GROUP[79] = 'gravel'; BLOCK_SOUND_GROUP[80] = 'wood'; BLOCK_SOUND_GROUP[81] = 'wood'; BLOCK_SOUND_GROUP[89] = 'glass';
     const STEP_COUNTS = { stone: 6, grass: 6, gravel: 4, sand: 5, wood: 6, cloth: 4, ladder: 5 };
+    // (1.2) the new blocks' sound groups
+    for (const id of [REDWOOD_LOG, REDWOOD_PLANKS, FALLEN_LOG, CHARRED_LOG, BURNING_LOG, FROZEN_CHEST]) BLOCK_SOUND_GROUP[id] = 'wood';
+    for (const id of [REDWOOD_GRASS, REDWOOD_NEEDLES, BROWN_MUSHROOM, RED_MUSHROOM, EMBER_LEAVES, CINDER_WEED, MOONBLOOM]) BLOCK_SOUND_GROUP[id] = 'grass';
+    for (const id of [ASH_BLOCK]) BLOCK_SOUND_GROUP[id] = 'gravel';
+    for (const id of [COBWEB]) BLOCK_SOUND_GROUP[id] = 'cloth';
+    for (const id of [PACKED_ICE, BLUE_ICE, ICICLE, FROST_CRYSTAL_BLOCK]) BLOCK_SOUND_GROUP[id] = 'glass';
+    for (const id of [REDWOOD_ORE, FROST_STONE, FROST_ORE, ASHEN_STONE, EMBER_ORE, MAGMA_ROCK, RUIN_BRICKS, CRACKED_RUIN, RUIN_PILLAR, RUNIC_TILE, ANCIENT_DOOR, DART_TRAP, BRAZIER, BRAZIER_LIT, ANCIENT_STATUE, RUIN_CHEST, RUIN_SPIKES]) BLOCK_SOUND_GROUP[id] = 'stone';
     for (const g of ['stone', 'grass', 'gravel', 'sand', 'wood', 'cloth']) {
       SOUNDS['dig.' + g] = { files: n_('dig/' + g, 4), vol: 1, pitch: [0.75, 0.85], cat: 'volBlocks', synth: 'break' };
       SOUNDS['step.' + g] = { files: n_('step/' + g, STEP_COUNTS[g]), vol: 0.18, pitch: [0.95, 1.05], cat: 'volBlocks' };
@@ -16620,7 +17226,7 @@
         if (!v || v.dying != null || !Game.mobs.includes(v) || v.panic > 0 || Math.hypot(v.x - p.x, v.y - p.y) > REACH + 2) closePanels();
         return;
       }
-      const want = { table: [16], chest: [20, 34], furnace: [26], gemcutter: [GEM_CUTTER], enchant: [ENCHANT_TABLE], merger: [CHARM_MERGER], gasfurnace: [GAS_FURNACE], waterpump: [WATER_PUMP] }[ui.mode];
+      const want = { table: [16], chest: [20, 34, FROZEN_CHEST, RUIN_CHEST], furnace: [26], gemcutter: [GEM_CUTTER], enchant: [ENCHANT_TABLE], merger: [CHARM_MERGER], gasfurnace: [GAS_FURNACE], waterpump: [WATER_PUMP] }[ui.mode];
       const far = Math.hypot(p.x + p.w / 2 - (ui.x + 0.5), p.y + 0.5 - (ui.y + 0.5)) > REACH + 1.5;
       if (far || !want.includes(Game.world.getTile(ui.x, ui.y))) closePanels();
     }
@@ -16673,9 +17279,11 @@
       if (netIsClient()) return null;
       let id = w.getTile(x, y);
       if (!CONTAINER_TILES.has(id) && w.isInterior && CONTAINER_TILES.has(tileHint)) id = tileHint;   // (a friend's own copy of a building)
-      if (id === 20 || id === 34) {
+      if (id === 20 || id === 34 || id === FROZEN_CHEST || id === RUIN_CHEST) {
         c = { type: 'chest', slots: new Array(27).fill(null) };
-        if (id === 20) fillLootChest(c, w.isInterior ? LOOT[w.def.loot] : (w.isTowerChest && w.isTowerChest(x, y) ? LOOT.tower : w.isDojoChest && w.isDojoChest(x, y) ? LOOT.dojo : null));
+        if (id === 20) fillLootChest(c, w.isInterior ? LOOT[w.def.loot] : (w.isCabinChest && w.isCabinChest(x, y) ? LOOT.cabin : w.isTowerChest && w.isTowerChest(x, y) ? LOOT.tower : w.isDojoChest && w.isDojoChest(x, y) ? LOOT.dojo : null));
+        else if (id === FROZEN_CHEST) fillLootChest(c, LOOT.frost);   // (1.2)
+        else if (id === RUIN_CHEST) fillLootChest(c, w.ruinChestKind && w.ruinChestKind(x, y) === 'key' ? LOOT.ruinKey : LOOT.ruins);   // (1.2)
       }
       else if (id === 26) c = { type: 'furnace', slots: [null, null, null], burn: 0, burnMax: 0, cook: 0 };
       // gem cutter slots: 0 chunk, 1 Block of Coal, 2 Raw Iron, 3 cut gem
@@ -16687,7 +17295,7 @@
       contDirty(w, key);
       return c;
     }
-    const CONTAINER_TILES = new Set([20, 34, 26, GEM_CUTTER, GAS_FURNACE, WATER_PUMP]);
+    const CONTAINER_TILES = new Set([20, 34, FROZEN_CHEST, RUIN_CHEST, 26, GEM_CUTTER, GAS_FURNACE, WATER_PUMP]);
     // Supply chests found on the surface start stocked with a few useful things.
     function fillLootChest(c, customTable) {
       const table = customTable || [[15, 4, 8, 0.8], [127, 1, 3, 0.5], [121, 1, 3, 0.5], [117, 2, 6, 0.6], [118, 1, 4, 0.45], [100, 2, 6, 0.5],
@@ -17464,6 +18072,7 @@
 
     // Tooltip text for an item stack: name plus a few useful Minecraft-style lines.
     const ITEM_HINTS = {
+      ...B12_HINTS,   // (1.2)
       [ABYSSAL_HEART]: 'Crafts Abyssal Armor and the Abyssal War Hammer',
       [PARASITE_TOTEM]: 'Place it on the surface of a desert and right-click it to wake the Apex Parasite',
       [WATER_PUMP]: 'Fill it with Water Buckets, run Water Pipes from it and put Sprinklers on them', [WATER_PIPE]: 'Joins up to pumps, sprinklers and other pipes. Can be buried in grass and dirt', [WATER_INTAKE]: 'Put it in a lake or sea and pipe it to a Water Pump: it fills the tank for you, no buckets needed', [SPRINKLER]: 'Waters 3 blocks to each side. Put it on a pipe next to your farmland',
@@ -17780,6 +18389,8 @@
       const mode = Game.ui.mode || 'inventory';
       const container = CONTAINER_SCREENS.includes(mode) ? getContainer(Game.ui.x, Game.ui.y) : null;
       el('panel-title').textContent = mode === 'chest' && Game.world.getTile(Game.ui.x, Game.ui.y) === 20 ? 'Supply Chest'
+        : mode === 'chest' && Game.world.getTile(Game.ui.x, Game.ui.y) === FROZEN_CHEST ? 'Frozen Chest'
+        : mode === 'chest' && Game.world.getTile(Game.ui.x, Game.ui.y) === RUIN_CHEST ? 'Ancient Chest'
         : mode === 'trade' ? `${Game.ui.mob.job.name}${Game.ui.mob.desert ? ' (Desert)' : ''}` : SCREEN_TITLES[mode];
       el('trade-section').style.display = mode === 'trade' ? 'flex' : 'none';
       if (mode === 'trade') renderTradeSection();

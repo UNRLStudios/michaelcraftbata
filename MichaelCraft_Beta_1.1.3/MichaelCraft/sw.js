@@ -2,7 +2,7 @@
 // Makes the game installable as an app and playable offline: everything the game
 // loads is kept in a cache on your phone. When a new version is uploaded, change
 // VERSION below so phones throw away the old copy.
-const VERSION = 'michaelcraft-beta-1.3';
+const VERSION = 'michaelcraft-beta-1.3.1';
 const PRECACHE = [
  "./",
  "index.html",

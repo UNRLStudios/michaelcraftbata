@@ -3883,7 +3883,7 @@
         <button class="mc-btn" id="btn-mp-back">Back</button>
       </div>
 
-      <div class="title-foot left">MichaelCraft Beta 1.3</div>
+      <div class="title-foot left">MichaelCraft Beta 1.3.1</div>
     </div>
 
     <div id="touch-controls">
@@ -3892,6 +3892,7 @@
         <div class="touch-btn" id="btn-right">&#9654;</div>
       </div>
       <div class="pad-right">
+        <div class="touch-btn" id="btn-cursor">&#10011;</div>
         <div class="touch-btn" id="btn-mode">&#9935;</div>
         <div class="touch-btn" id="btn-down">&#9660;</div>
         <div class="touch-btn" id="btn-jump">&#9650;</div>
@@ -4874,13 +4875,13 @@
     const LAUNCH_PAD = 350, ROCKET_HULL = 351, ROCKET_FIN_L = 352, ROCKET_FIN_R = 353, ROCKET_ENGINE = 354, ROCKET_TANK = 355, ROCKET_COCKPIT = 356, ROCKET_NOSE = 357;
     const ROCKET_PARTS = [ROCKET_HULL, ROCKET_FIN_L, ROCKET_FIN_R, ROCKET_ENGINE, ROCKET_TANK, ROCKET_COCKPIT, ROCKET_NOSE];
     defBlock(LAUNCH_PAD, 'Launch Platform', { category: 'stone', hardness: 2.2, tier: 1, drop: 0 });
-    defBlock(ROCKET_HULL, 'Rocket Hull', { category: 'stone', hardness: 1.6, tier: 1 });
-    defBlock(ROCKET_FIN_L, 'Rocket Fin (Left)', { category: 'stone', hardness: 1.6, tier: 1, transparent: true });
-    defBlock(ROCKET_FIN_R, 'Rocket Fin (Right)', { category: 'stone', hardness: 1.6, tier: 1, transparent: true });
-    defBlock(ROCKET_ENGINE, 'Rocket Engine', { category: 'stone', hardness: 1.8, tier: 1, transparent: true });
-    defBlock(ROCKET_TANK, 'Rocket Fuel Tank', { category: 'stone', hardness: 1.6, tier: 1 });
-    defBlock(ROCKET_COCKPIT, 'Rocket Cockpit', { category: 'stone', hardness: 1.6, tier: 1 });
-    defBlock(ROCKET_NOSE, 'Rocket Nose Cone', { category: 'stone', hardness: 1.6, tier: 1, transparent: true });
+    defBlock(ROCKET_HULL, 'Rocket Hull', { category: 'stone', hardness: 1.6, tier: 1, solid: false, transparent: true });   // (1.3.1) a background block, like the Crafting Table: you walk through it
+    defBlock(ROCKET_FIN_L, 'Rocket Fin (Left)', { category: 'stone', hardness: 1.6, tier: 1, solid: false, transparent: true });   // (1.3.1) a background block, like the Crafting Table: you walk through it
+    defBlock(ROCKET_FIN_R, 'Rocket Fin (Right)', { category: 'stone', hardness: 1.6, tier: 1, solid: false, transparent: true });   // (1.3.1) a background block, like the Crafting Table: you walk through it
+    defBlock(ROCKET_ENGINE, 'Rocket Engine', { category: 'stone', hardness: 1.8, tier: 1, solid: false, transparent: true });   // (1.3.1) a background block, like the Crafting Table: you walk through it
+    defBlock(ROCKET_TANK, 'Rocket Fuel Tank', { category: 'stone', hardness: 1.6, tier: 1, solid: false, transparent: true });   // (1.3.1) a background block, like the Crafting Table: you walk through it
+    defBlock(ROCKET_COCKPIT, 'Rocket Cockpit', { category: 'stone', hardness: 1.6, tier: 1, solid: false, transparent: true });   // (1.3.1) a background block, like the Crafting Table: you walk through it
+    defBlock(ROCKET_NOSE, 'Rocket Nose Cone', { category: 'stone', hardness: 1.6, tier: 1, solid: false, transparent: true });   // (1.3.1) a background block, like the Crafting Table: you walk through it
     for (const id of [LAUNCH_PAD, ...ROCKET_PARTS]) defItem(id, BLOCKS[id].name, { kind: 'block', stack: 64 });
     defItem(MANA_STAR, 'Mana Star', { kind: 'food', hunger: 0, alwaysEat: true, manaStar: true, stack: 16 });
     defItem(SHORT_BOW, 'Short Bow', { kind: 'bow', short: true, stack: 1, durability: 450, maxDurability: 450 });
@@ -9913,20 +9914,22 @@
     const DEFAULT_SETTINGS = {
       keys: {
         left: 'KeyA', right: 'KeyD', up: 'KeyW', down: 'KeyS', jump: 'Space', sprint: 'ShiftLeft', inventory: 'KeyE', drop: 'KeyQ',
-        zoomIn: 'KeyK', zoomOut: 'KeyL', advancements: 'KeyJ', dash: 'KeyR', chat: 'KeyT', map: 'KeyM'
+        zoomIn: 'KeyK', zoomOut: 'KeyL', advancements: 'KeyJ', dash: 'KeyR', chat: 'KeyT', map: 'KeyM',
+        cursorMode: 'KeyC', clickL: 'KeyZ', clickR: 'KeyX'   // (1.3.1 Cursor Mode)
       },
       zoom: ZOOM_DEFAULT,
       doubleTapSprint: true,
       volMaster: 80, volBlocks: 100, volCreatures: 100, volFriendly: 100, volPlayers: 100, volAmbient: 100, volUI: 100, volMusic: 80,
       brightness: 0, smoothLighting: true, particles: 'all', clouds: 'fancy', shake: 100,
       resolution: 'full', hudSize: 'normal', showFps: false, maxFps: 250, view: 'auto',
-      difficulty: 'normal', showCoords: true,
+      difficulty: 'normal', showCoords: true, cursorMode: false,
       username: '', showNameTag: true,
     };
     const KEY_ACTIONS = [
       ['left', 'Walk Left'], ['right', 'Walk Right'], ['up', 'Up (climb, jump, doors)'], ['down', 'Climb Down'],
       ['jump', 'Jump'], ['sprint', 'Sprint'], ['inventory', 'Inventory'], ['drop', 'Drop Item'],
       ['zoomIn', 'Zoom In'], ['zoomOut', 'Zoom Out'], ['advancements', 'Advancements'], ['dash', 'Dash (Cloud Charm)'], ['chat', 'Commands / Chat'], ['map', 'Map'],
+      ['cursorMode', 'Cursor Mode (on/off)'], ['clickL', 'Left Click (Cursor Mode)'], ['clickR', 'Right Click (Cursor Mode)'],
     ];
     let Settings = loadSettings();
     function loadSettings() {
@@ -9943,7 +9946,7 @@
     let KEY_MAP = {};
     function rebuildKeyMap() {
       KEY_MAP = { ArrowLeft: 'left', ArrowRight: 'right', ArrowUp: 'up', ArrowDown: 'down' };
-      for (const [action] of KEY_ACTIONS) if (!['inventory', 'drop', 'zoomIn', 'zoomOut', 'advancements', 'chat', 'map'].includes(action)) KEY_MAP[Settings.keys[action]] = action;
+      for (const [action] of KEY_ACTIONS) if (!['inventory', 'drop', 'zoomIn', 'zoomOut', 'advancements', 'chat', 'map', 'cursorMode', 'clickL', 'clickR'].includes(action)) KEY_MAP[Settings.keys[action]] = action;
       if (Settings.keys.sprint === 'ShiftLeft') KEY_MAP.ShiftRight = 'sprint';
     }
     function keyName(code) {
@@ -9996,6 +9999,7 @@
     // known screen position. (Previously it was only updated on mouse-move,
     // which made you mine/place the wrong block while walking or falling.)
     function refreshPointerWorld() {
+      if (Settings.cursorMode && Cur.inited) { Input.pointerScreenX = Cur.x; Input.pointerScreenY = Cur.y; Input.hasPointer = true; }   // (1.3.1)
       if (!Input.hasPointer || !canvas) return;
       const w = screenToWorld(Input.pointerScreenX, Input.pointerScreenY);
       Input.pointerWorldX = w.x; Input.pointerWorldY = w.y;
@@ -10028,6 +10032,8 @@
         if ((e.code === Settings.keys.chat || e.code === 'Slash') && Game.screen === 'play' && Game.player && !e.repeat) {
           e.preventDefault(); openChat(e.code === 'Slash' ? '/' : ''); return;
         }
+        if (e.code === Settings.keys.cursorMode && !e.repeat && Game.screen === 'play') { e.preventDefault(); setCursorMode13(!Settings.cursorMode); return; }   // (1.3.1)
+        if (Settings.cursorMode && Game.screen === 'play' && !e.repeat && (e.code === Settings.keys.clickL || e.code === Settings.keys.clickR)) { e.preventDefault(); cursorPress13(e.code === Settings.keys.clickR ? 'R' : 'L'); return; }
         // double-tap a direction to sprint (Shift works too)
         if (Settings.doubleTapSprint && !e.repeat && (KEY_MAP[e.code] === 'left' || KEY_MAP[e.code] === 'right')) {
           const now = performance.now();
@@ -10053,12 +10059,13 @@
         if (Game.screen === 'play' && e.code === Settings.keys.zoomOut) { e.preventDefault(); stepZoom(-1); }
         if (e.code === 'Escape') { togglePause(); }
       });
-      window.addEventListener('keyup', (e) => { if (KEY_MAP[e.code]) Input[KEY_MAP[e.code]] = false; });
+      window.addEventListener('keyup', (e) => { if (KEY_MAP[e.code]) Input[KEY_MAP[e.code]] = false; if (e.code === Settings.keys.clickL) cursorRelease13('L'); if (e.code === Settings.keys.clickR) cursorRelease13('R'); });
       window.addEventListener('blur', releaseAllInput); // no stuck keys after alt-tab
 
       canvas.addEventListener('pointerdown', (e) => {
         if (Game.screen !== 'play' || !Game.player || Game.player.dead) return;
         initAudio();
+        if (Settings.cursorMode && e.pointerType !== 'mouse') { Cur.ptr = e.pointerId; Cur.lx = e.clientX; Cur.ly = e.clientY; return; }   // (1.3.1) a touch only moves the cursor
         try { canvas.setPointerCapture(e.pointerId); } catch (err) { }
         Input.pointerScreenX = e.clientX; Input.pointerScreenY = e.clientY; Input.hasPointer = true;
         refreshPointerWorld();
@@ -10076,9 +10083,15 @@
         }
       });
       canvas.addEventListener('pointermove', (e) => {
+        if (Settings.cursorMode) {   // (1.3.1)
+          if (e.pointerType === 'mouse') { Cur.x = e.clientX; Cur.y = e.clientY; placeCursor13(); }
+          else if (e.pointerId === Cur.ptr) { Cur.x += (e.clientX - Cur.lx) * Cur.sens; Cur.y += (e.clientY - Cur.ly) * Cur.sens; Cur.lx = e.clientX; Cur.ly = e.clientY; clampCursor13(); placeCursor13(); }
+          return;
+        }
         Input.pointerScreenX = e.clientX; Input.pointerScreenY = e.clientY; Input.hasPointer = true;
       });
       window.addEventListener('pointerup', (e) => {
+        if (Settings.cursorMode && e.pointerType === 'touch') { if (e.pointerId === Cur.ptr) Cur.ptr = null; return; }   // (1.3.1) the L / R buttons let go by themselves
         if (e.button === 2) { Input.rightDown = false; return; }
         Input.pointerDown = false;
         if (e.pointerType === 'touch') Input.rightDown = false;
@@ -11083,6 +11096,7 @@
         x: ox + dx * 0.4, y: oy + dy * 0.4, vx: dx * speed, vy: dy * speed, type, dmg: Math.max(1, Math.round(dmg)), crit: full,
         pierce: A.pierce || 0, hits: new Set(), age: 0, stuck: false
       });
+      if (Net.active) netShot13({ k: 'a', t: type, x: r2(ox + dx * 0.4), y: r2(oy + dy * 0.4), vx: r2(dx * speed), vy: r2(dy * speed), c: full ? 1 : 0 });   // (1.3.1)
       if (!Game.creative) {
         if (idx >= 0) { const s = p.inventory[idx]; s.qty -= 1; if (s.qty <= 0) p.inventory[idx] = null; }
         if (bow.durability != null) { bow.durability -= 1; if (bow.durability <= 0) { p.inventory[p.hotbarIndex] = null; showToast('Bow broke!'); sfx('tool.break'); } }
@@ -11114,7 +11128,7 @@
         a.age += dt;
         if (a.stuck) {
           if (a.age > a.stuckUntil) { Game.arrows.splice(i, 1); continue; }
-          if (!Game.creative && !p.dead && boxDistToPoint(p, a.x, a.y) < 0.6) {   // walk over it to pick it up
+          if (!a.fake && !Game.creative && !p.dead && boxDistToPoint(p, a.x, a.y) < 0.6) {   // walk over it to pick it up
             giveOrDrop(makeStack(a.type, 1)); sfx('pop', { pitch: 1.4 }); Game.arrows.splice(i, 1);
           }
           continue;
@@ -11124,7 +11138,7 @@
         let gone = false;
         for (let s = 0; s < steps && !gone; s++) {
           a.x += a.vx * dt / steps; a.y += a.vy * dt / steps;
-          for (const m of combatTargets()) {
+          for (const m of (a.fake ? [] : combatTargets())) {
             if (!arrowHitsMob(a, m)) continue;
             a.hits.add(m.id);
             hurtMob(m, a.dmg, { x: a.x - Math.sign(a.vx) * 0.5, w: 0 }, a.crit, 'ranged');
@@ -11137,9 +11151,9 @@
           }
           if (gone) break;
           if (solidAt(Math.floor(a.x), Math.floor(a.y))) {
-            if (A.aoe) { arrowBurst(a); gone = true; break; }
+            if (A.aoe) { if (a.fake) { sfx('dig.glass', { x: a.x, y: a.y }); } else arrowBurst(a); gone = true; break; }
             a.x -= a.vx * dt / steps * 0.5; a.y -= a.vy * dt / steps * 0.5;
-            a.stuck = true; a.stuckUntil = a.age + 15; a.rot = Math.atan2(a.vy, a.vx);
+            a.stuck = true; a.stuckUntil = a.age + (a.fake ? 1.5 : 15); a.rot = Math.atan2(a.vy, a.vx);
             sfx('bow.hit', { x: a.x, y: a.y });
             break;
           }
@@ -16497,7 +16511,11 @@
     });
     // ---- bolts: everything that flies and hurts (magic is in the next section; the mobs' ice and fire is here) ----
     Game.bolts12 = [];
-    function spawnBolt12(o) { const b = Object.assign({ age: 0, life: 3, r: 0.25, dmg: 3, kind: 'ice', from: 'mob', vx: 0, vy: 0, grav: 0, bounce: 0 }, o); Game.bolts12.push(b); return b; }
+    function spawnBolt12(o) {
+      const b = Object.assign({ age: 0, life: 3, r: 0.25, dmg: 3, kind: 'ice', from: 'mob', vx: 0, vy: 0, grav: 0, bounce: 0 }, o); Game.bolts12.push(b);
+      if (!b.fake && Net.active && (b.from === 'player' || netIsHost())) netShot13({ k: 'b', f: b.from, kind: b.kind, x: r2(b.x), y: r2(b.y), vx: r2(b.vx), vy: r2(b.vy), g: b.grav, bn: b.bounce, life: b.life, r: b.r, tr: b.trail ? 1 : 0, p2: b.p2 ? 1 : 0, nh: b.noHit ? 1 : 0, d: b.from === 'mob' ? b.dmg : 0 });   // (1.3.1) everybody sees it fly
+      return b;
+    }
     function hurtPlayer12(dmg, push, dirFrom, cause) {
       const p = Game.player; if (!p || p.dead || Game.creative || p.invuln > 0) return false;
       dmg = Math.max(1, Math.round(dmg * (DIFFICULTY_DAMAGE[curDifficulty()] ?? 1)));
@@ -16513,7 +16531,7 @@
       const p = Game.player, w = Game.world; if (!w) return;
       for (let i = Game.bolts12.length - 1; i >= 0; i--) {
         const b = Game.bolts12[i];
-        b.age += dt; if (b.age > b.life) { if (b.onEnd) b.onEnd(b); Game.bolts12.splice(i, 1); continue; }
+        b.age += dt; if (b.age > b.life) { if (b.fake) fakeBoltEnd13(b); else if (b.onEnd) b.onEnd(b); Game.bolts12.splice(i, 1); continue; }
         b.vy += b.grav * dt;
         if (b.homing) { const t = b.homing(b); if (t) { const a = Math.atan2(t.y - b.y, t.x - b.x), sp = Math.hypot(b.vx, b.vy) || 1, ca = Math.atan2(b.vy, b.vx); let d = ((a - ca + Math.PI * 3) % (Math.PI * 2)) - Math.PI; const na = ca + Math.max(-4 * dt, Math.min(4 * dt, d)); b.vx = Math.cos(na) * sp; b.vy = Math.sin(na) * sp; } }
         const nx = b.x + b.vx * dt, ny = b.y + b.vy * dt;
@@ -16523,13 +16541,14 @@
             if (sx || !sy) b.vx *= -0.9; if (sy || !sx) b.vy *= -0.85;
             boltBurst12(b, 4); continue;
           }
-          boltBurst12(b, 8); if (b.onHitWorld) b.onHitWorld(b); Game.bolts12.splice(i, 1); continue;
+          boltBurst12(b, 8); if (b.fake) fakeBoltEnd13(b); else if (b.onHitWorld) b.onHitWorld(b); Game.bolts12.splice(i, 1); continue;
         }
         b.x = nx; b.y = ny;
         if (b.trail && Math.random() < dt * 40 * particleMul()) Game.particles.push({ x: b.x, y: b.y, vx: (Math.random() - 0.5) * 0.6, vy: (Math.random() - 0.5) * 0.6, life: 0.3, age: 0, size: 0.08, color: BOLT_COL12[b.kind] ? BOLT_COL12[b.kind][1] : '#fff', gravity: 0 });
-        if (b.well) for (const m of hostileNear12(b.x, b.y, b.well)) { if (m.def.boss || m.dying != null) continue; const d = Math.max(0.5, boxDistToPoint(m, b.x, b.y)); m.vx += Math.sign(b.x - (m.x + m.w / 2)) * 14 * dt / d * 2; if (m.def.flying) m.vy += Math.sign(b.y - (m.y + m.h / 2)) * 14 * dt / d * 2; }
-        if (b.touchBlast && b.age > 0.12 && hostileNear12(b.x, b.y, b.r + 0.1).length) { voidBlast12(b); Game.bolts12.splice(i, 1); continue; }   // (1.2.1) it bursts the moment it touches a monster
+        if (b.well && !b.fake) for (const m of hostileNear12(b.x, b.y, b.well)) { if (m.def.boss || m.dying != null) continue; const d = Math.max(0.5, boxDistToPoint(m, b.x, b.y)); m.vx += Math.sign(b.x - (m.x + m.w / 2)) * 14 * dt / d * 2; if (m.def.flying) m.vy += Math.sign(b.y - (m.y + m.h / 2)) * 14 * dt / d * 2; }
+        if (b.touchBlast && !b.fake && b.age > 0.12 && hostileNear12(b.x, b.y, b.r + 0.1).length) { voidBlast12(b); Game.bolts12.splice(i, 1); continue; }   // (1.2.1) it bursts the moment it touches a monster
         if (b.noHit) { if (b.trail && Math.random() < dt * 30) Game.particles.push({ x: b.x + (Math.random() - 0.5) * 2, y: b.y + (Math.random() - 0.5) * 2, vx: (b.x - b.x) , vy: 0, life: 0.4, age: 0, size: 0.07, color: '#c090ff', gravity: 0 }); continue; }
+        if (b.fake && b.from !== 'mob') continue;   // (1.3.1) a friend's shot: just for show
         let hit = false;
         if (b.from === 'mob') {
           if (p && !p.dead && boxDistToPoint(p, b.x, b.y) < b.r) {
@@ -16853,7 +16872,7 @@
       pts.push([cx, cy]); while (cy < y - 1) { cy += 1.6 + Math.random() * 1.4; cx += (x - cx) * 0.25 + (Math.random() - 0.5) * 1.6; pts.push([cx, Math.min(cy, y)]); } pts.push([x, y]);
       const st = { pts, age: 0, life: 0.45, branch: [] };
       for (let i = 4; i < pts.length - 2; i += 3) { const [bx, by] = pts[i], d = Math.random() < 0.5 ? -1 : 1; st.branch.push([[bx, by], [bx + d * (1.5 + Math.random() * 2), by + 1.5 + Math.random() * 1.5], [bx + d * (3 + Math.random() * 2), by + 3 + Math.random() * 2]]); }
-      B12.strikes.push(st);
+      pushStrike13(st);
       flashAt(x, y, 7, '255,250,200', 0.2); screenShake(0.3); sfx('spell.zap', { x, y, vol: 1.2 }); B12.skyFlash = 0.18;
       for (let i = 0; i < 18 * particleMul() + 4; i++) { const a = -Math.random() * 3.14, sp = 2 + Math.random() * 6; Game.particles.push({ x, y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.4 + Math.random() * 0.3, age: 0, size: 0.08 + Math.random() * 0.08, color: i % 2 ? '#fff6a0' : '#ffffff', gravity: 9, kind: 'star' }); }
       for (const m of hostileNear12(x, y, 1.9)) { hurtMob(m, dmg, Game.player, true); if (!m.def.boss && !m.def.fireproof) m.burn = Math.max(m.burn || 0, 2); if (!m.def.boss) m.kbTimer = Math.max(m.kbTimer, 0.3); }
@@ -16866,7 +16885,7 @@
       strikeAt12(tx, ty, dmg);
       if (t) {   // it jumps to up to two more monsters nearby
         hit.add(t.id); let px = tx, py = ty - t.h / 2;
-        for (let j = 0; j < 2; j++) { const n = nearestFoe12(px, py, 7, hit); if (!n) break; hit.add(n.id); const nx = n.x + n.w / 2, ny = n.y + n.h / 2; B12.strikes.push({ pts: [[px, py], [(px + nx) / 2 + (Math.random() - 0.5), (py + ny) / 2 + (Math.random() - 0.5)], [nx, ny]], age: 0, life: 0.3, branch: [] }); hurtMob(n, Math.ceil(dmg * 0.6), Game.player, false); if (!n.def.boss && !n.def.fireproof) n.burn = Math.max(n.burn || 0, 2); px = nx; py = ny; sfx('spell.zap', { x: nx, y: ny, vol: 0.5, pitch: 1.8 }); }
+        for (let j = 0; j < 2; j++) { const n = nearestFoe12(px, py, 7, hit); if (!n) break; hit.add(n.id); const nx = n.x + n.w / 2, ny = n.y + n.h / 2; pushStrike13({ pts: [[px, py], [(px + nx) / 2 + (Math.random() - 0.5), (py + ny) / 2 + (Math.random() - 0.5)], [nx, ny]], age: 0, life: 0.3, branch: [] }); hurtMob(n, Math.ceil(dmg * 0.6), Game.player, false); if (!n.def.boss && !n.def.fireproof) n.burn = Math.max(n.burn || 0, 2); px = nx; py = ny; sfx('spell.zap', { x: nx, y: ny, vol: 0.5, pitch: 1.8 }); }
       }
     };
     B12.updaters.push((dt) => { for (let i = B12.strikes.length - 1; i >= 0; i--) { B12.strikes[i].age += dt; if (B12.strikes[i].age > B12.strikes[i].life) B12.strikes.splice(i, 1); } B12.skyFlash = Math.max(0, (B12.skyFlash || 0) - dt); });
@@ -21251,6 +21270,7 @@
       const ox = p.x + p.w / 2 + p.lookX * 1.35, oy = p.y + 0.62 + p.lookY * 1.35;
       const sp = 85;
       Game.bullets.push({ x: p.x + p.w / 2, y: p.y + 0.62, vx: p.lookX * sp, vy: p.lookY * sp, dmg: weaponDamage(p, slot, W), age: 0, px: ox, py: oy, trail: [], hits: new Set(), pierce: 4, mult: 1 });
+      if (Net.active) netShot13({ k: 'u', x: r2(p.x + p.w / 2), y: r2(p.y + 0.62), vx: r2(p.lookX * sp), vy: r2(p.lookY * sp) });   // (1.3.1)
       slot.loaded = false;
       p.musketKick = 1; p.musketAuto = 0.45;
       p.vx -= p.lookX * 4.5; if (!p.onGround) p.vy -= p.lookY * 3;
@@ -21276,7 +21296,7 @@
         let gone = false;
         for (let s = 0; s < steps && !gone; s++) {
           b.x += b.vx * dt / steps; b.y += b.vy * dt / steps;
-          for (const m of combatTargets()) {
+          for (const m of (b.fake ? [] : combatTargets())) {
             if (m.dying != null || m.tamed || m.def.villager || (m.def.npc && !m.duel) || b.hits.has(m.id)) continue;
             if (b.x < m.x - 0.05 || b.x > m.x + m.w + 0.05 || b.y < m.y - 0.05 || b.y > m.y + m.h + 0.05) continue;
             b.hits.add(m.id);
@@ -22535,7 +22555,7 @@
     // Messages are small JSON objects { t: type, ... }. Big ones (the world sent to a
     // joining player) are split into pieces and put back together on arrival.
     // =============================================================================
-    const NET_VERSION = 'beta-1.3';
+    const NET_VERSION = 'beta-1.3.1';
     const NET_RATE = { state: 1 / 15, mobs: 1 / 8, drops: 1 / 5, cont: 0.4, flags: 1, inv: 5, spawn: 1.2, proj: 1 / 15 };
     const Net = {
       active: false, role: null, kind: 'online', code: '', myId: null, tx: null,
@@ -23004,6 +23024,7 @@
         case 'cclose': hostContainerUpdate(id, o, true); break;
         case 'cbreak': hostContainerBreak(id, r, o); break;
         case 'flags': mergeFlags(o.f); break;
+        case 'shot': { if (o.s) { netSend(null, { t: 'shot', s: o.s, from: id }); spawnShot13(o.s); } break; }   // (1.3.1) a friend's arrow / spell: show it to everyone else
         case 'chat': { const text = String(o.text || '').slice(0, 120); chatLine(`<${r.name}> ${text}`, '#ffffff'); netSend(null, { t: 'chat', name: r.name, text, from: id }); break; }
         case 'cmd': if (Game.cheats && !gameRule('friendCommands')) { netSend(id, { t: 'ev', text: 'The host has turned off commands for friends (Game Rules).', color: '#ff8a8a' }); break; }
           if (Game.cheats) {
@@ -23148,6 +23169,7 @@
           break;
         }
         case 'fx': playNetFx(o.l || []); break;
+        case 'shot': if (o.s && o.from !== Net.myId) spawnShot13(o.s); break;   // (1.3.1)
         case 'proj': {   // the boss's fireballs, orbs and meteors (drawn here, the host does the hitting)
           const old = new Map(Game.projectiles.map(q => [q.id, q]));
           Game.projectiles.length = 0;
@@ -25643,6 +25665,8 @@
           add(row);
         }
         add(optToggle('Double-tap to Sprint', 'doubleTapSprint'));
+        add(optButton('Cursor Mode: ' + (Settings.cursorMode ? 'ON' : 'OFF'), () => { setCursorMode13(!Settings.cursorMode); renderSettings(); }, Settings.cursorMode ? 'on' : ''));
+        add(sectionLabel('Cursor Mode (like Terraria): drag to move a crosshair, hold the L button to mine or attack and the R button to place or use. Keys: C, Z, X.'), true);
         add(optButton('Reset Keys', () => { Settings.keys = Object.assign({}, DEFAULT_SETTINGS.keys); saveSettings(); rebuildKeyMap(); renderSettings(); }));
         add(sectionLabel('Arrow keys also move and climb. Hotbar: 1-9 or scroll. Esc: pause.'), true);
       } else if (settingsTab === 'sound') {
@@ -26147,6 +26171,142 @@
       ctx.fillStyle = `rgba(255,255,255,${Math.min(1, R.flash)})`; ctx.fillRect(0, 0, VIEW.w, VIEW.h);
     });
 
+    // =============================================================================
+    // BETA 1.3.1 - SEE YOUR FRIENDS' SHOTS
+    //   Arrows, musket balls, spells (fireballs, frost, the Void Orb...), sword waves and lightning are made on the
+    //   machine of whoever fires them. Now each one is also sent to everybody else as a "shot": a look-alike that
+    //   flies, glows and bursts on their screen but does no damage (the shooter's own game does the hitting).
+    //   The monsters' spells are shown to friends the same way, and they DO hurt the friend they hit.
+    // =============================================================================
+    function netShot13(s) {
+      if (!Net.active || Game.world.isInterior) return;
+      if (netIsClient()) netSend(null, { t: 'shot', s });
+      else if (netIsHost() && Net.peers.size) netSend(null, { t: 'shot', s, from: 'host' });
+    }
+    const SHOT_SND13 = { pfire: 'spell.fire', pfrost: 'spell.frost', pvoid: 'spell.void', pabyss: 'spell.abyss', psoul: 'spell.zap' };
+    function spawnShot13(s) {
+      const p = Game.player; if (!p || Game.screen === 'title' || Game.outside || !s) return;
+      if (Math.hypot(s.x - p.x, s.y - p.y) > 90 && s.k !== 's') return;
+      if (s.k === 'a') {
+        if (!ARROWS[s.t]) return;
+        Game.arrows.push({ x: s.x, y: s.y, vx: s.vx, vy: s.vy, type: s.t, dmg: 0, crit: !!s.c, pierce: 0, hits: new Set(), age: 0, stuck: false, fake: true });
+        sfx('bow.shoot', { x: s.x, y: s.y, pitch: 1.05 });
+      } else if (s.k === 'u') {
+        const len = Math.hypot(s.vx, s.vy) || 1, ox = s.x + s.vx / len * 1.35, oy = s.y + s.vy / len * 1.0;
+        Game.bullets.push({ x: s.x, y: s.y, vx: s.vx, vy: s.vy, dmg: 0, age: 0, px: ox, py: oy, trail: [], hits: new Set(), pierce: 4, mult: 1, fake: true });
+        flashAt(ox, oy, 2.2, '255,220,140', 0.1); smokePuff(ox, oy, 8, s.vx / len * 2.5, s.vy / len * 2.5); sfx('musket.fire', { x: s.x, y: s.y }); sfx('musket.boom', { x: s.x, y: s.y });
+      } else if (s.k === 'b') {
+        Game.bolts12.push({ age: 0, life: s.life || 2, r: s.r || 0.3, dmg: s.f === 'mob' ? (s.d || 3) : 0, kind: s.kind || 'ice', from: s.f === 'mob' ? 'mob' : 'player', vx: s.vx, vy: s.vy, grav: s.g || 0, bounce: s.bn || 0, x: s.x, y: s.y, trail: !!s.tr, p2: !!s.p2, noHit: !!s.nh, fake: true });
+        if (s.f !== 'mob' && SHOT_SND13[s.kind]) sfx(SHOT_SND13[s.kind], { x: s.x, y: s.y });
+      } else if (s.k === 's') {
+        const q = (a) => (a || []).map(v => v.slice());
+        const st = { pts: q(s.pts), age: 0, life: s.life || 0.4, branch: (s.br || []).map(b2 => b2.map(v => v.slice())), fake: true };
+        B12.strikes.push(st);
+        const end = st.pts[st.pts.length - 1];
+        if (end && Math.hypot(end[0] - p.x, end[1] - p.y) < 80) { flashAt(end[0], end[1], 6, '255,250,200', 0.18); sfx('spell.zap', { x: end[0], y: end[1], vol: 0.9 }); }
+      }
+    }
+    // a look-alike spell reaches its end: a burst for show (the real one, on its owner's machine, does the damage)
+    function fakeBoltEnd13(b) {
+      if (b.kind === 'pvoid') {
+        for (let ring = 0; ring < 2; ring++) for (let i = 0; i < 24; i++) { const a = i / 24 * 6.28, sp = 6 + ring * 3; Game.particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.5, age: 0, size: 0.12, color: ring ? '#a060ff' : '#f0e0ff', gravity: 0, kind: 'star' }); }
+        flashAt(b.x, b.y, 5, '170,100,255', 0.3); sfx('spell.boom', { x: b.x, y: b.y, vol: 0.8, pitch: 0.55 });
+      } else boltBurst12(b, 6);
+    }
+    // lightning: the same bolt of light everyone sees
+    function pushStrike13(st) {
+      B12.strikes.push(st);
+      if (Net.active && !st.fake) netShot13({ k: 's', pts: st.pts.map(v => [r1(v[0]), r1(v[1])]), br: (st.branch || []).map(b2 => b2.map(v => [r1(v[0]), r1(v[1])])), life: st.life, x: st.pts[st.pts.length - 1][0], y: st.pts[st.pts.length - 1][1] });
+    }
+
+    // =============================================================================
+    // BETA 1.3.1 - CURSOR MODE (like Terraria's)
+    //   For touch screens and trackpads, where there is no real right button. A little crosshair is your pointer:
+    //   DRAG anywhere on the screen to move it (it keeps its place when you let go), then HOLD the red L button to
+    //   mine / attack (left click) or the blue R button to use / place / shoot a Short Bow (right click). You can
+    //   hold one with a thumb while you drag with the other. Pause > Options > Controls turns it on, or press C
+    //   (keys Z and X are left and right click on a keyboard), or tap the cross button next to the jump button.
+    // =============================================================================
+    const Cur = { x: 0, y: 0, ptr: null, lx: 0, ly: 0, inited: false, L: false, R: false, sens: 1.5 };
+    function clampCursor13() { Cur.x = Math.max(8, Math.min(window.innerWidth - 8, Cur.x)); Cur.y = Math.max(8, Math.min(window.innerHeight - 8, Cur.y)); }
+    function placeCursor13() {
+      const c = el('virt-cursor'); if (!c) return;
+      c.style.transform = `translate(${Math.round(Cur.x)}px, ${Math.round(Cur.y)}px)`;
+    }
+    function setCursorMode13(on) {
+      Settings.cursorMode = !!on; saveSettings();
+      document.body.classList.toggle('cursor-mode', !!on);
+      if (on && !Cur.inited) { Cur.inited = true; Cur.x = window.innerWidth / 2 + 120; Cur.y = window.innerHeight / 2 - 20; }
+      if (!on) { cursorRelease13('L'); cursorRelease13('R'); Cur.ptr = null; }
+      const b = el('btn-cursor'); if (b) b.classList.toggle('place', !!on);
+      placeCursor13(); syncCursorUi13();
+      if (Game.screen === 'play') showToast(on ? 'Cursor Mode: drag to aim, hold L to mine, hold R to place' : 'Cursor Mode off');
+    }
+    function syncCursorUi13() {
+      const on = !!Settings.cursorMode && Game.screen === 'play' && !!Game.player && !Game.player.dead;
+      const c = el('virt-cursor'), b = el('cursor-btns');
+      if (c) c.style.display = on ? 'block' : 'none';
+      if (b) b.style.display = on ? 'flex' : 'none';
+    }
+    function cursorPress13(which) {
+      const p = Game.player;
+      if (Game.screen !== 'play' || !p || p.dead) return;
+      initAudio(); Cur[which] = true;
+      Input.pointerScreenX = Cur.x; Input.pointerScreenY = Cur.y; Input.hasPointer = true; refreshPointerWorld(); updateTarget();
+      if (which === 'R') {
+        Input.rightDown = true; tryUseItem(false); p.useTimer = 0.28;
+        p.lastUseTile = Game.target ? { x: Game.target.x, y: Game.target.y } : null;
+      } else { Input.pointerDown = true; if (Game.targetMob) attackMob(Game.targetMob); }
+      const c = el('virt-cursor'); if (c) c.classList.add(which === 'R' ? 'r' : 'l');
+    }
+    function cursorRelease13(which) {
+      if (!Cur[which]) return; Cur[which] = false;
+      if (which === 'R') Input.rightDown = false;
+      else { Input.pointerDown = false; const p = Game.player; if (p) { p.mining = false; p.miningTarget = null; p.miningProgress = 0; } }
+      const c = el('virt-cursor'); if (c) c.classList.remove(which === 'R' ? 'r' : 'l');
+    }
+    function setupCursorMode13() {
+      const st = document.createElement('style');
+      st.textContent = `
+        #virt-cursor { position: fixed; left: 0; top: 0; width: 0; height: 0; display: none; pointer-events: none; z-index: 12; }
+        #virt-cursor i { position: absolute; left: -17px; top: -17px; width: 34px; height: 34px; border: 3px solid #fff; border-radius: 50%; box-sizing: border-box; box-shadow: 0 0 0 2px #000, inset 0 0 0 2px #000; transition: transform .08s, border-color .08s; }
+        #virt-cursor b { position: absolute; background: #fff; box-shadow: 0 0 0 1px #000; }
+        #virt-cursor b.h { left: -26px; top: -1px; width: 52px; height: 3px; } #virt-cursor b.v { top: -26px; left: -1px; height: 52px; width: 3px; }
+        #virt-cursor u { position: absolute; left: -5px; top: -5px; width: 10px; height: 10px; background: #000; border: 2px solid #fff; box-sizing: border-box; text-decoration: none; }
+        #virt-cursor.l i { border-color: #ff6a5a; transform: scale(0.82); } #virt-cursor.r i { border-color: #6ab4ff; transform: scale(0.82); }
+        #virt-cursor.l u { background: #ff6a5a; } #virt-cursor.r u { background: #6ab4ff; }
+        #cursor-btns { position: absolute; right: 18px; bottom: calc(176px + env(safe-area-inset-bottom, 0px)); display: none; gap: 14px; z-index: 9; pointer-events: none; }
+        #cursor-btns .cbtn { width: 70px; height: 70px; border-radius: 50%; pointer-events: auto; touch-action: none; user-select: none; display: flex; flex-direction: column; align-items: center; justify-content: center;
+          font-family: 'Press Start 2P', monospace; font-size: 20px; color: #fff; border: 3px solid #000; text-shadow: 2px 2px 0 #000; box-shadow: inset 0 3px 0 rgba(255,255,255,.3), inset 0 -4px 0 rgba(0,0,0,.35); }
+        #cursor-btns .cbtn small { font-size: 8px; margin-top: 4px; opacity: .9; }
+        #cbtn-l { background: rgba(190, 54, 44, 0.82); } #cbtn-r { background: rgba(44, 104, 200, 0.82); }
+        #cursor-btns .cbtn.down { filter: brightness(1.35); transform: scale(0.94); }
+        body.cursor-mode #world-canvas { cursor: none; }
+        body.cursor-mode #btn-mode { display: none; }
+        #btn-cursor { font-size: 24px; }
+        #btn-cursor.place { background: rgba(60, 110, 160, 0.8); }
+        @media (max-width: 640px) { #cursor-btns { bottom: calc(204px + env(safe-area-inset-bottom, 0px)); } #cursor-btns .cbtn { width: 62px; height: 62px; } }`;
+      document.head.appendChild(st);
+      const c = document.createElement('div'); c.id = 'virt-cursor'; c.innerHTML = '<i></i><b class="h"></b><b class="v"></b><u></u>'; el('ui-layer').appendChild(c);
+      const bt = document.createElement('div'); bt.id = 'cursor-btns';
+      bt.innerHTML = '<div class="cbtn" id="cbtn-l">L<small>MINE</small></div><div class="cbtn" id="cbtn-r">R<small>USE</small></div>'; el('ui-layer').appendChild(bt);
+      for (const [id, w] of [['cbtn-l', 'L'], ['cbtn-r', 'R']]) {
+        const b = el(id);
+        b.addEventListener('pointerdown', (e) => { e.preventDefault(); e.stopPropagation(); try { b.setPointerCapture(e.pointerId); } catch (err) { } b.classList.add('down'); cursorPress13(w); });
+        const up = (e) => { b.classList.remove('down'); cursorRelease13(w); };
+        b.addEventListener('pointerup', up); b.addEventListener('pointercancel', up); b.addEventListener('lostpointercapture', up);
+        b.addEventListener('contextmenu', (e) => e.preventDefault());
+      }
+      const tb = el('btn-cursor');
+      if (tb) tb.addEventListener('pointerdown', (e) => { e.preventDefault(); setCursorMode13(!Settings.cursorMode); });
+      document.body.classList.toggle('cursor-mode', !!Settings.cursorMode);
+      if (Settings.cursorMode) { Cur.inited = true; Cur.x = window.innerWidth / 2 + 120; Cur.y = window.innerHeight / 2 - 20; }
+      if (tb) tb.classList.toggle('place', !!Settings.cursorMode);
+      placeCursor13(); syncCursorUi13();
+      setInterval(syncCursorUi13, 120);
+      window.addEventListener('resize', () => { clampCursor13(); placeCursor13(); });
+    }
+
     window.addEventListener('DOMContentLoaded', async () => {
       buildBlockTextures();
       buildItemIcons();
@@ -26161,6 +26321,7 @@
       preloadSounds();
       setupInput(canvas);
       setupTouchControls();
+      setupCursorMode13();   // (1.3.1)
       setupInstall();   // (1.1)
       wireUIButtons();
       setupTitleScreen();

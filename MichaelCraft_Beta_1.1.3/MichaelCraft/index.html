@@ -9416,11 +9416,14 @@
     //  * solid blocks can't go inside the player or a mob
     //  * attached blocks (torches, plants...) need their support
     //  * everything else needs a neighbour to build off, or a background wall
+    // (1.1.5) Water Pipes can be placed IN grass and dirt (the dirt block is swapped for the pipe, and you keep the dirt),
+    // so irrigation can run underground, under your farmland
+    function buryablePipeAt(world, x, y, id) { const t = world.getTile(x, y); return id === WATER_PIPE && (t === 1 || t === 2); }
     function canPlaceAt(x, y, id) {
       const world = Game.world, b = BLOCKS[id];
       if (!b || !b.placeable || y < 0 || y >= WORLD_H) return false;
       const here = BLOCKS[world.getTile(x, y)];
-      if (!here || !here.replaceable) return false;
+      if (!here || !(here.replaceable || buryablePipeAt(world, x, y, id))) return false;   // (1.1.5: a Water Pipe can be buried in grass and dirt)
       if (b.waterlogged && world.getTile(x, y) !== WATER_SRC) return false;   // seaweed only goes in still water
       if (b.solid) {
         const hits = (e) => x + 1 > e.x && x < e.x + e.w && y + 1 > e.y && y < e.y + e.h;
@@ -9541,6 +9544,7 @@
       if (slot.item === DOOR_BASE) { placeDoor(x, y); return; }
       if (def.kind !== 'block') return;
       if (!canPlaceAt(x, y, slot.item)) return;
+      if (buryablePipeAt(Game.world, x, y, slot.item)) giveOrDrop(makeStack(2, 1));   // (1.1.5) the dirt you dug out for the pipe
       Game.world.setTile(x, y, slot.item);
       blockSound('place', slot.item, x, y);
       spawnPlaceDust(x, y, slot.item);   // (1.0.5: a little puff, so every placement is felt)
@@ -14465,7 +14469,7 @@
         }
         const slot = p.selectedSlot();
         const def = slot && itemDef(slot.item);
-        const placing = def && def.kind === 'block' && BLOCKS[slot.item] && BLOCKS[slot.item].placeable && BLOCKS[tid].replaceable;
+        const placing = def && def.kind === 'block' && BLOCKS[slot.item] && BLOCKS[slot.item].placeable && (BLOCKS[tid].replaceable || buryablePipeAt(Game.world, tx, ty, slot.item));
         if (placing) {
           // ghost preview of the block that would be placed here (red = not allowed)
           const ok = canPlaceAt(tx, ty, slot.item);
@@ -16891,6 +16895,9 @@
     function drawWPipe(world, x, y, sx, sy) {
       let mask = 0;
       N4.forEach(([dx, dy], i) => { if (wpipeJoins(world.getTile(x + dx, y + dy))) mask |= 1 << i; });
+      // a pipe running through earth shows dirt behind it (at least two of its sides are grass, dirt or farmland)
+      let earth = 0; for (const [dx, dy] of N4) { const t = world.getTile(x + dx, y + dy); if (t === 1 || t === 2 || t === 27) earth++; }
+      if (earth >= 2 && wallTex[WALL_DIRT]) ctx.drawImage(wallTex[WALL_DIRT], 0, 0, TEX, TEX, sx, sy, TILE, TILE);
       ctx.drawImage(pipeSprite(mask, false, true), 0, 0, TEX, TEX, sx, sy, TILE, TILE);
       const d = Sprk.pipes.get(x + ',' + y);
       if (d != null) {   // water running down the pipe, away from the pump

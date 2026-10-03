@@ -19,7 +19,9 @@ HOW IT WORKS
      100 units and you get the empty Bucket back out of the slot on the right. The tank holds
      16 buckets.
   2. Run Water Pipes away from the pump, touching it on any side, in any shape you like:
-     up, down, round corners, through walls (up to 96 pipes). Pipes join up to whatever they
+     up, down, round corners, through walls (up to 96 pipes). They can also be BURIED:
+     place a pipe right into grass or dirt (you keep the dirt) and run your irrigation
+     underground, under the farmland. Pipes join up to whatever they
      touch, with flanges at every joint. They light up aqua with running water when the pump
      has some.
   3. Put Sprinklers on the pipes (a sprinkler is a pipe joint too, so pipe - sprinkler -

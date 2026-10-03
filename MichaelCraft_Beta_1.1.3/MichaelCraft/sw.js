@@ -235,7 +235,8 @@ const PRECACHE = [
  "Textures/HUD/hearts/no_heart.png",
  "Textures/HUD/hearts/full_heart.png",
  "Sounds/music/desperation_BGM.mp3",
- "Sounds/music/final_stand.mp3"
+ "Sounds/music/final_stand.mp3",
+ "Sounds/music/apex_parasite.mp3"
 ];
 
 self.addEventListener('install', (e) => {

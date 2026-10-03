@@ -691,6 +691,45 @@
       text-transform: uppercase;
     }
 
+    #craft-search {
+      width: 100%;
+      box-sizing: border-box;
+      margin-bottom: 5px;
+      padding: 3px 6px;
+      font: inherit;
+      font-size: 15px;
+      color: var(--gui-text);
+      background: #d4d4d4;
+      border: 2px solid #5a5a5a;
+      border-radius: 3px;
+      outline: none;
+    }
+
+    #craft-search:focus {
+      border-color: var(--amber-dim);
+    }
+
+    .recipe.picked {
+      border-color: var(--amber-dim);
+      background: #b6b6b6;
+      opacity: 1;
+    }
+
+    .slot .ghost {
+      position: absolute;
+      inset: 0;
+      opacity: 0.32;
+      pointer-events: none;
+      background-size: 70%;
+      background-position: center;
+      background-repeat: no-repeat;
+      image-rendering: pixelated;
+    }
+
+    .craft-hint .need-ok { color: #2a7a2a; }
+    .craft-hint .need-no { color: #a33; }
+    .craft-hint .shape { margin-top: 4px; }
+
     #craft-list {
       max-height: 176px;
       overflow-y: auto;
@@ -2524,6 +2563,7 @@
           </div>
           <div class="craft-list-wrap">
             <div class="craft-list-title">Recipes</div>
+            <input id="craft-search" type="text" maxlength="30" autocomplete="off" spellcheck="false" placeholder="Search recipes...">
             <div id="craft-list"></div>
           </div>
         </div>
@@ -3485,6 +3525,8 @@
     defWeapon(WAR_HAMMER, 'Abyssal War Hammer', 'hammer', 5, 1600);
     defItem(CHARM_FRAME, 'Gold Charm Frame', { kind: 'material', stack: 16 });
     // How each weapon fights (damage before Sharpness and charms).
+    // (1.1.4) BLEED: 1 damage every second for 3 seconds (it used to be every half second)
+    const BLEED = { time: 3, tick: 1 };
     const WEAPONS = {
       // (1.0.4) both katanas: one attack every 0.5 s (was 0.22 / 0.19)
       [KATANA]: { type: 'katana', dmg: 6, cd: 0.5, reach: 2.6, dashDist: 5.5, dashCd: 1.6, dashDmg: 8, trail: '#e8f2ff' },
@@ -3599,7 +3641,7 @@
       { result: ABYSSAL_ARMOR, qty: 1, shape: ['BAB', 'BHB', 'BBB'], key: { B: 86, A: SAMURAI_ARMOR, H: ABYSSAL_HEART } },   // 7 Blocks of Ruby
       { result: WAR_HAMMER, qty: 1, shape: ['BBB', 'BHB', ' S '], key: { B: 86, H: ABYSSAL_HEART, S: SLEDGEHAMMER } },       // 5 Blocks of Ruby, hammer as the handle
       // ---- Beta 1.1.4: the Apex Parasite ----
-      { result: PARASITE_TOTEM, qty: 1, shape: ['GGG', 'GHG', 'GGG'], key: { G: GOLD, H: ABYSSAL_HEART } },                   // Abyssal Heart in the middle, 8 Gold Ingots around it
+      { result: PARASITE_TOTEM, qty: 1, shape: ['GEG', 'GRG', 'GEG'], key: { G: 83, E: 134, R: RUBY } },                      // Ruby in the middle, an Emerald above and below it, 3 Blocks of Gold down each side
       // ---- Beta 1.0.2: gold ----
       ...toolRecipes(GOLD, GOLD_PICK, GOLD_AXE, GOLD_SHOVEL, GOLD_SWORD),
       { result: GOLDEN_APPLE, qty: 1, shape: ['GGG', 'GAG', 'GGG'], key: { G: GOLD, A: 121 } },               // golden apple
@@ -8845,7 +8887,7 @@
             hurtMob(m, a.dmg, { x: a.x - Math.sign(a.vx) * 0.5, w: 0 }, a.crit, 'ranged');
             sfx('bow.hit', { x: a.x, y: a.y }); sfx('bow.ding');
             Adv.grant('archer');
-            if (A.bleed && m.dying == null) { m.bleed = { t: 3, tick: 0.5, src: 'ranged' }; netPushMob(m, { bleed: 'ranged' }); }   // (ruby arrows still hurt the King)
+            if (A.bleed && m.dying == null) { const bm = m.segOf || m; bm.bleed = { t: BLEED.time, tick: BLEED.tick, src: 'ranged' }; netPushMob(bm, { bleed: 'ranged' }); }   // (ruby arrows still hurt the King)
             if (A.aoe) { arrowBurst(a); gone = true; break; }
             if (a.pierce > 0) { a.pierce--; a.vx *= 0.85; a.vy *= 0.85; continue; }
             gone = true; break;
@@ -9071,12 +9113,12 @@
       if (mob.bleed) {
         mob.bleed.t -= dt; mob.bleed.tick -= dt;
         if (mob.bleed.tick <= 0 && !(mob.bossInvuln > 0)) {
-          mob.bleed.tick = 0.5;
+          mob.bleed.tick = BLEED.tick;
           if (bossBleedHeals(mob)) {
             // (1.0.3) he feeds on his own blood: a katana bleed heals him 40-50 over its 3 s
             const B = mob.bleed, [lo, hi] = BOSSES[mob.type].bleedHeal;
             if (B.healLeft == null) {
-              B.healLeft = lo + Math.floor(Math.random() * (hi - lo + 1)); B.ticks = Math.max(1, Math.round(B.t / 0.5) + 1);
+              B.healLeft = lo + Math.floor(Math.random() * (hi - lo + 1)); B.ticks = Math.max(1, Math.round(B.t / BLEED.tick) + 1);
               if (!mob.bleedTipped) { mob.bleedTipped = true; eventMessage(`The ${bossInfo(mob).name} feeds on the bleeding! Bleed heals him.`, '#ff6a8a'); }
             }
             const h = Math.min(B.healLeft, Math.ceil(B.healLeft / Math.max(1, B.ticks)));
@@ -9147,7 +9189,7 @@
       if (mob.bleed) {   // ruby arrows: 1 damage every half second for 3 seconds
         mob.bleed.t -= dt; mob.bleed.tick -= dt;
         if (mob.bleed.tick <= 0 && !(mob.bossInvuln > 0)) {
-          mob.bleed.tick = 0.5; mob.health -= 1; mob.hurtFlash = 0.15;
+          mob.bleed.tick = BLEED.tick; mob.health -= 1; mob.hurtFlash = 0.15;
           spawnDamageNumber(mob.x + mob.w / 2, mob.y, 1, 'player');
           for (let i = 0; i < 3; i++) Game.particles.push({ x: mob.x + Math.random() * mob.w, y: mob.y + Math.random() * mob.h, vx: 0, vy: 1, life: 0.5, age: 0, size: 0.07, color: '#c8142a', gravity: 6 });
           if (mob.health <= 0) { mob.bleed = null; if (def.npc) { mob.health = 1; if (mob.duel) npcHurt(mob, 1, { x: mob.x, w: 0 }, false); } else { killMob(mob); return; } }
@@ -9608,7 +9650,7 @@
         dmgMult: 1.6,                     // (1.0.4) every hit he lands does 60% more
       },
       apexparasite: {
-        name: 'The Apex Parasite', music: 'Sounds/music/final_stand.mp3',
+        name: 'The Apex Parasite', music: 'Sounds/music/apex_parasite.mp3',
         home: (m) => m.pHome || { x: m.x, y: m.y },
         chase: { x: 90, y: 70 },
         summonAdv: 'totem', killAdv: 'parasite',
@@ -10463,8 +10505,8 @@
     // =============================================================================
     // THE APEX PARASITE (Beta 1.1.4) — the desert's boss
     // -----------------------------------------------------------------------------
-    // Craft a PARASITE TOTEM (an Abyssal Heart in the middle, 8 Gold Ingots around it),
-    // stand it on the sand in a DESERT, under the open sky, and right-click it.
+    // Craft a PARASITE TOTEM (a Ruby in the middle, an Emerald above and below it, 3 Blocks
+    // of Gold down each side), stand it on the sand in a DESERT, under the open sky, and right-click it.
     //
     // It is a huge armored worm (22 plates long) that flies through the air AND swims
     // through the sand. Its head is the only part with the usual hitbox - but every
@@ -10482,7 +10524,7 @@
     //            dives, triple acid, the most larvae.
     // The less health it has, the faster it gets (up to 1.6x).
     // It leaves if everyone dies or runs away (the totem drops back for another try).
-    // Beating it gives gold, diamonds, emeralds, rubies and gives your Abyssal Heart back.
+    // Beating it gives gold, diamonds, emeralds and rubies.
     //
     // How it is built (for whoever adds the next boss):
     //   * the boss itself is ONE Mob (the head). Everything about the body is derived
@@ -10866,8 +10908,8 @@
     function parasiteLoot(m, mx, my) {
       bossReward(m, 'parasite');
       const r = Math.random;
-      // gold, diamonds, emeralds, rubies - and the Abyssal Heart it was feeding on
-      const drops = [[129, 10 + Math.floor(r() * 7)], [120, 5 + Math.floor(r() * 5)], [134, 14 + Math.floor(r() * 9)], [145, 3 + Math.floor(r() * 3)], [ABYSSAL_HEART, 1]];
+      // gold, diamonds, emeralds and rubies
+      const drops = [[129, 10 + Math.floor(r() * 7)], [120, 5 + Math.floor(r() * 5)], [134, 14 + Math.floor(r() * 9)], [145, 3 + Math.floor(r() * 3)]];
       for (const [it, q] of drops) { const d = spawnDrop(it, q, mx, my); if (d) { d.vx = (r() - 0.5) * 8; d.vy = -4 - r() * 4; } }
       Game.boss = null;
       for (const x of Game.mobs) if (x.type === 'broodlarva') { x.dead = true; deathPuff(x.x + x.w / 2, x.y + x.h / 2, ['#b6ff3a', '#5b2415']); }
@@ -15392,6 +15434,7 @@
       if (CONTAINER_SCREENS.includes(mode) && Net.active && !granted) { netOpenContainer(mode, x, y); return; }
       if (CONTAINER_SCREENS.includes(mode) && !getContainer(x, y)) return;
       if (Game.ui.mode) returnCraftGrid();
+      craftGhost = null; { const cs = el('craft-search'); if (cs) cs.value = ''; }   // (1.1.4)
       Game.ui = { mode, x, y, mob: mob || null };
       Game.screen = 'inventory';
       releaseAllInput();
@@ -16042,6 +16085,7 @@
     }
     // Recipe book: click crafts one from your inventory, shift-click crafts as
     // many as you can afford.
+    let craftGhost = null;   // (1.1.4) a recipe you clicked to look at (shown faintly in the grid)
     function canCraft(recipe, inv) { return recipe.needs.every(n => countItem(inv, n.item) >= n.qty); }
     function craftRecipe(recipe, inv) {
       if (!canCraft(recipe, inv) || inventoryRoomFor(inv, recipe.result) < recipe.qty) return false;
@@ -16078,7 +16122,7 @@
 
     // Tooltip text for an item stack: name plus a few useful Minecraft-style lines.
     const ITEM_HINTS = {
-      [ABYSSAL_HEART]: 'Crafts Abyssal Armor, the Abyssal War Hammer and the Parasite Totem',
+      [ABYSSAL_HEART]: 'Crafts Abyssal Armor and the Abyssal War Hammer',
       [PARASITE_TOTEM]: 'Place it on the surface of a desert and right-click it to wake the Apex Parasite',
       241: 'Lucky: sometimes a second drop from ore', 244: 'Lucky: monsters sometimes drop double loot', 245: 'Heals 4 hearts, then keeps healing',
       246: 'Craft it with a gem or gear to make a charm', 129: 'Gold tools, Golden Apples, Charm Frames, lanterns',
@@ -16470,8 +16514,23 @@
         const cgrid = el('craft-grid');
         cgrid.innerHTML = '';
         cgrid.className = 'craft-grid ' + (n === 3 ? 'size3' : 'size2');
-        for (const idx of activeGridIndices()) cgrid.appendChild(makeSlotEl(p.craftGrid, idx, 'big'));
-        el('craft-table-hint').innerHTML = '';   // (1.1: no tip text in station screens)
+        const ghostAt = craftGhost && craftGhost.w <= n && craftGhost.h <= n ? ghostCells(craftGhost, n) : {};
+        for (const idx of activeGridIndices()) {
+          const slotEl = makeSlotEl(p.craftGrid, idx, 'big');
+          if (ghostAt[idx] && !p.craftGrid[idx]) { const gh = document.createElement('div'); gh.className = 'ghost'; gh.style.cssText = iconStyleFor(ghostAt[idx]); slotEl.appendChild(gh); }
+          cgrid.appendChild(slotEl);
+        }
+        // (1.1.4) the recipe you clicked: what it needs, what you have
+        const hint = el('craft-table-hint');
+        hint.innerHTML = '';
+        if (craftGhost) {
+          const r = craftGhost, t = document.createElement('div'); t.style.fontWeight = 'bold'; t.textContent = r.name + (r.qty > 1 ? ' x' + r.qty : ''); hint.appendChild(t);
+          for (const nd of r.needs) {
+            const have = countItem(p.inventory, nd.item), line = document.createElement('div');
+            line.className = have >= nd.qty ? 'need-ok' : 'need-no'; line.textContent = `${itemDef(nd.item).name}: ${have} / ${nd.qty}`; hint.appendChild(line);
+          }
+          if (r.w > n || r.h > n) { const tag = document.createElement('div'); tag.className = 'need-no'; tag.textContent = 'Needs a Crafting Table (3x3)'; hint.appendChild(tag); hint.appendChild(shapePreview(r)); }
+        }
 
         const match = computeCraftMatch();
         const outSlot = el('craft-output');
@@ -16496,12 +16555,15 @@
         // recipe book with the shape of each recipe
         const list = el('craft-list');
         list.innerHTML = '';
-        const rows = RECIPES.map(r => ({ r, locked: r.table && n < 3, afford: canCraft(r, p.inventory) }))
+        const words = ((el('craft-search') || { value: '' }).value || '').toLowerCase().split(/\s+/).filter(Boolean);   // (1.1.4) the search bar
+        const rows = RECIPES.filter(r => !words.length || words.every(w => recipeText(r).includes(w)))
+          .map(r => ({ r, locked: r.table && n < 3, afford: canCraft(r, p.inventory) }))
           .sort((a, b) => (b.afford && !b.locked) - (a.afford && !a.locked));
+        if (!rows.length) { const none = document.createElement('div'); none.className = 'recipe-needs'; none.textContent = 'No recipes match.'; list.appendChild(none); }
         for (const { r, locked, afford } of rows) {
           const ok = afford && !locked;
           const row = document.createElement('div');
-          row.className = 'recipe' + (ok ? '' : ' disabled');
+          row.className = 'recipe' + (ok ? '' : ' disabled') + (craftGhost === r ? ' picked' : '');
           row.appendChild(shapePreview(r));
           const icon = document.createElement('div'); icon.className = 'slot-icon recipe-icon'; icon.style.cssText = iconStyleFor(r.result);
           const info = document.createElement('div'); info.className = 'recipe-info';
@@ -16511,9 +16573,10 @@
           info.appendChild(title); info.appendChild(needs);
           if (locked) { const tag = document.createElement('div'); tag.className = 'recipe-tag'; tag.textContent = 'needs a Crafting Table'; info.appendChild(tag); }
           row.appendChild(icon); row.appendChild(info);
-          row.title = ok ? 'Click to craft one, shift-click to craft as many as you can' : '';
+          row.title = ok ? 'Click to craft one, shift-click to craft as many as you can' : 'Click to see the recipe';
           row.addEventListener('click', (e) => {
-            if (!ok) return;
+            if (!ok) { craftGhost = craftGhost === r ? null : r; renderInventoryScreen(); return; }   // (1.1.4) can't make it yet: show how
+            craftGhost = null;
             let made = 0;
             do { if (!craftRecipe(r, p.inventory)) break; made++; } while (e.shiftKey && made < 64);
             refreshInventoryUI();
@@ -16524,11 +16587,24 @@
       updateCursorItem();
     }
     // Tiny 3x3 picture of where each ingredient goes.
-    function shapePreview(r) {
-      const g = document.createElement('div'); g.className = 'shape';
+    function recipeCells(r) {
       const cells = new Array(9).fill(null);
       if (r.shapeless) r.shapeless.forEach((it, i) => { cells[i] = it; });
       else r.shape.forEach((row, y) => { for (let x = 0; x < row.length; x++) if (row[x] !== ' ') cells[y * 3 + x] = r.key[row[x]]; });
+      return cells;
+    }
+    // (1.1.4) which crafting-grid slot (by index) holds which ingredient, for a grid n x n
+    function ghostCells(r, n) {
+      const out = {}, cells = recipeCells(r), act = n === 3 ? [0, 1, 2, 3, 4, 5, 6, 7, 8] : [0, 1, 3, 4];
+      if (r.shapeless) r.shapeless.forEach((it, i) => { if (act[i] != null) out[act[i]] = it; });
+      else cells.forEach((it, i) => { if (it) out[i] = it; });
+      return out;
+    }
+    // (1.1.4) what the search bar looks through: the recipe's name and its ingredients
+    function recipeText(r) { return (r.name + ' ' + r.needs.map(nd => itemDef(nd.item).name).join(' ')).toLowerCase(); }
+    function shapePreview(r) {
+      const g = document.createElement('div'); g.className = 'shape';
+      const cells = recipeCells(r);
       for (const it of cells) { const d = document.createElement('div'); if (it) d.style.cssText = iconStyleFor(it); g.appendChild(d); }
       return g;
     }
@@ -16900,6 +16976,7 @@
       const victims = target && target.dying == null ? [target] : [];
       for (const m of combatTargets()) {
         if (m === target || !canWeaponHit(m) || !inFront(p, m, c)) continue;
+        if (victims.some(v => v.id === m.id)) continue;   // (1.1.4: the rings of the Parasite's body all share its id: one cut, not twenty)
         if (boxDistToPoint(m, c.x, c.y) <= W.reach + (p.kCombo === 2 ? 0.6 : 0) && canSeeBox(c, m)) victims.push(m);
       }
       if (!victims.length) return;
@@ -16910,7 +16987,7 @@
         hurtMob(m, Math.round(crit ? base * CRIT_MULT : base), p, crit, 'melee');
         slashMark(m.x + m.w / 2, m.y + m.h / 2, W.trail);
         if (crit) spawnCritParticles(m.x + m.w / 2, m.y + m.h / 2);
-        if (W.bleed && m.dying == null && !m.def.npc && !(m.bossInvuln > 0)) { m.bleed = { t: 3, tick: 0.5, src: 'melee' }; netPushMob(m, { bleed: 'melee' }); }
+        if (W.bleed && m.dying == null && !m.def.npc && !(m.bossInvuln > 0)) { const bm = m.segOf || m; bm.bleed = { t: BLEED.time, tick: BLEED.tick, src: 'melee' }; netPushMob(bm, { bleed: 'melee' }); }
         if (W.petals) petalBurst(m.x + m.w / 2, m.y + m.h / 2, 5);
         if (!m.tamed && !m.def.villager && !m.def.npc) sendDogsAfter(m);
       }
@@ -16946,7 +17023,8 @@
         const slot = K.slot, p0 = Game.player;
         const dmg = Math.round(weaponDamage(p0, slot, { dmg: K.W.dashDmg }) * 1);
         let n = 0;
-        for (const m of combatTargets()) if (K.hit.has(m.id)) { Game.cuts.push({ m, t: 0.16 + n * 0.05, dmg, W: K.W, dir: K.dir }); n++; }
+        const cut = new Set();
+        for (const m of combatTargets()) if (K.hit.has(m.id) && !cut.has(m.id)) { cut.add(m.id); Game.cuts.push({ m, t: 0.16 + n * 0.05, dmg, W: K.W, dir: K.dir }); n++; }   // (1.1.4: once per monster)
         if (n) { wearWeapon(p0, slot); Adv.grant('dash'); }
         p.vx = K.dir * 5; p.kDash = null;
         sfx('katana.sheathe', { pitch: 1.3 });
@@ -16964,7 +17042,7 @@
         slashMark(m.x + m.w / 2, m.y + m.h / 2, c.W.trail, true);
         flashAt(m.x + m.w / 2, m.y + m.h / 2, 1.2, c.W.petals ? '255,60,80' : '220,235,255', 0.14);
         hurtMob(m, c.dmg, { x: m.x + m.w / 2 - c.dir, w: 0 }, true, 'melee');
-        if (c.W.bleed && m.dying == null && !m.def.npc && !(m.bossInvuln > 0)) { m.bleed = { t: 3, tick: 0.5, src: 'melee' }; netPushMob(m, { bleed: 'melee' }); }
+        if (c.W.bleed && m.dying == null && !m.def.npc && !(m.bossInvuln > 0)) { const bm = m.segOf || m; bm.bleed = { t: BLEED.time, tick: BLEED.tick, src: 'melee' }; netPushMob(bm, { bleed: 'melee' }); }
         if (c.W.petals) petalBurst(m.x + m.w / 2, m.y + m.h / 2, 10);
         sfx('katana.cut', { x: m.x + m.w / 2, y: m.y + m.h / 2 });
         screenShake(0.2);
@@ -17057,6 +17135,7 @@
         if (!canSeeBox({ x: ix, y: iy - 0.6 }, m)) continue;   // (1.0.3: the shockwave doesn't go through walls)
         const d = boxDistToPoint(m, ix, iy - 0.6);
         const onGround = Math.abs(m.y + m.h - iy) < 1.4 && Math.abs(m.x + m.w / 2 - ix) <= wave;
+        if (victims.some(v => v[0].id === m.id)) continue;   // (1.1.4: a smash hits the Parasite once, not once per ring)
         if (d <= radius) victims.push([m, d]);
         else if (onGround) victims.push([m, radius * 1.6]);
       }
@@ -18895,7 +18974,7 @@
           const m = netOverMobs().find(q => q.id === o.i);
           if (!m) break;
           if (!m.def.boss) for (const k of ['vx', 'vy', 'kbTimer', 'squashT', 'dizzyT']) if (o[k] != null) m[k] = o[k];   // (a friend can't shove the boss around)
-          if (o.bleed && m.dying == null && !m.def.npc) m.bleed = { t: 3, tick: 0.5, src: o.bleed === 'ranged' ? 'ranged' : 'melee' };
+          if (o.bleed && m.dying == null && !m.def.npc) m.bleed = { t: BLEED.time, tick: BLEED.tick, src: o.bleed === 'ranged' ? 'ranged' : 'melee' };
           if (o.yeet && m.dying != null && !m.def.boss) { m.yeet = o.yeet; m.vx = o.yeet * 7; m.vy = -17; }
           break;
         }
@@ -21115,6 +21194,12 @@
       el('btn-zoom-in').addEventListener('click', () => stepZoom(1));
       el('btn-zoom-out').addEventListener('click', () => stepZoom(-1));
       el('inv-close').addEventListener('click', closePanels);
+      {   // (1.1.4) the recipe search bar
+        const cs = el('craft-search');
+        cs.addEventListener('input', () => renderInventoryScreen());
+        cs.addEventListener('focus', () => releaseAllInput());
+        cs.addEventListener('keydown', (e) => { if (e.code === 'Escape') { e.preventDefault(); e.stopPropagation(); if (cs.value) { cs.value = ''; renderInventoryScreen(); } else cs.blur(); } });
+      }
       el('btn-resume').addEventListener('click', closePanels);
       el('btn-save').addEventListener('click', () => { saveGame(); showToast('World saved'); });
       // ---- Beta 1.0: multiplayer menus ----

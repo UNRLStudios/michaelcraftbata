@@ -11,10 +11,11 @@ THE APEX PARASITE - the desert's boss
   gets (up to 60% faster). Touching ANY part of it hurts.
 
   WAKING IT
-    Craft a PARASITE TOTEM: an Abyssal Heart in the middle and 8 Gold Ingots around it
-    (Crafting Table):          G G G
-                               G H G        G = Gold Ingot,  H = Abyssal Heart
-                               G G G
+    Craft a PARASITE TOTEM at a Crafting Table:
+                               G E G
+                               G R G        G = Block of Gold,  E = Emerald,  R = Ruby
+                               G E G
+    (a Ruby in the middle, an Emerald above and below it, 3 Blocks of Gold down each side)
     Place the totem on dry sand on the SURFACE of a DESERT, under the open sky, and
     right-click it. The ground trembles... and it bursts out from underneath.
     (Anywhere else the totem just says it only stirs in a desert.)
@@ -46,8 +47,7 @@ THE APEX PARASITE - the desert's boss
     Each has 14 health. They all vanish when the Parasite dies or leaves.
 
   REWARDS
-    Gold Ingots, Diamonds, Emeralds, Rubies - and your Abyssal Heart back (so you only
-    ever pay the 8 gold). Two new advancements: "Something Stirs Below" (wake it) and
+    Gold Ingots, Diamonds, Emeralds and Rubies. Two new advancements: "Something Stirs Below" (wake it) and
     "Exterminator" (beat it).
 
   FOR TESTING
@@ -55,6 +55,29 @@ THE APEX PARASITE - the desert's boss
     /summon larva 5      a few Brood Larvae on their own
     Multiplayer: everyone sees and fights the same worm (it gets +50% health for each
     extra player near it, like the King - see Game Rules > Boss Scaling).
+
+
+BOSS MUSIC
+----------
+  The Apex Parasite has its own song now (Sounds/music/apex_parasite.mp3, 3:45).
+
+
+BLEED IS GENTLER
+----------------
+  Bleeding (the Sensei's Katana, Ruby Arrows) now does 1 damage every SECOND for 3 seconds
+  (it was every half second, so twice as much). And on the Apex Parasite a katana hit
+  now cuts the worm ONCE - it used to count a hit for every ring of its body, so the
+  katana's dash did ~20 hits at once. Same for the Hammer's smash.
+
+
+RECIPE SEARCH
+-------------
+  The Recipes list (inventory AND crafting table) has a SEARCH BAR: type part of a name
+  or an ingredient ("totem", "emerald", "pick"). Esc clears it.
+  Recipes you can't make yet can be CLICKED too: the recipe shows faintly in the
+  crafting grid, with what you have / what you need under it (red = missing).
+  Click it again to hide it. (3x3 recipes in the inventory's 2x2 grid show their
+  ingredients and a picture of the shape instead.)
 
 
 FOR WHOEVER ADDS THE NEXT BOSS
@@ -66,4 +89,4 @@ FOR WHOEVER ADDS THE NEXT BOSS
       combatTargets()), and hurtMob() forwards those hits to the head.
     * its helpers (wormSteer = chase a point by turning) are reusable for any worm.
   The long comment above "THE APEX PARASITE" in index.html explains it all.
-  (It plays the same boss song as the King - there is only one boss track so far.)
+  (It has its own boss song, like the King.)

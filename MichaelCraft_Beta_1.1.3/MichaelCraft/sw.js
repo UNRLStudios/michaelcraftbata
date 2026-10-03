@@ -17,6 +17,7 @@ const PRECACHE = [
  "Textures/blocks/water_pump.png",
  "Textures/blocks/water_pipe.png",
  "Textures/blocks/sprinkler.png",
+ "Textures/blocks/water_intake.png",
  "Textures/items/parasite_ingot.png",
  "Textures/items/parasite_chestplate.png",
  "Textures/items/tools/katana/parasite_katana.png",

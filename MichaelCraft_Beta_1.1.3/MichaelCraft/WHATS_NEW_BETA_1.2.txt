@@ -1,0 +1,124 @@
+MICHAELCRAFT BETA 1.2 - THE WILDS UPDATE
+========================================
+
+NOTE: the version is now beta-1.2, so everyone in a multiplayer game needs 1.2.
+WORLDS MADE BEFORE 1.2 keep their old land (so your buildings don't end up floating): they get all the new
+ITEMS, MONSTERS, FISHING, MAGIC, NIGHTS and the BLOOD MOON, but not the new biomes or the Ancient Ruins.
+Make a NEW WORLD to explore those.
+
+
+THREE NEW BIOMES  (/locate redwood|frost|ash, then /tp redwood|frost|ash)
+------------------------------------------------------------------------
+  REDWOOD FOREST   Giant redwoods, 3-4 blocks thick and 28-50 tall, with branches and a dark green crown.
+                   Dark red-brown grass, ferns, mushrooms (the red ones are poisonous), fallen logs,
+                   and small abandoned CABINS (cobwebs, a chest). REDWOOD ORE hides in the rock: smelt
+                   Raw Redwood into Redwood Ingots for Redwood tools (better than iron).
+                   Sounds: birds by day, owls and creaking trunks at night, wind in the needles.
+                   Monsters: BARKLING (looks like a stump until you step close!), SPORELING (hops at you;
+                   its spores POISON), GLOOM OWL (night).
+  FROSTLANDS       The snowy biome, now frozen all the way down: Frost Stone, ICE CAVES lined with Blue Ice,
+                   hanging ICICLES (walk under one and it DROPS on you), Frost Crystals that glow, FROZEN
+                   CHESTS with ice weapons, and FROST ORE (Frost Crystals). An aurora dances at night.
+                   Monsters: ICE HUSK (its hits chill you), FROST WRAITH (throws ice shards), ICE GOLEM
+                   (rare, in the ice caves, slams the ground).
+                   New ice gear: FROST BLADE (chills what it cuts), GLACIER HAMMER (freezes monsters solid),
+                   and the Frost Wand (magic).
+  ASHLANDS         Black volcanic land under a smoky sky, with falling ash and rising embers. Ash Blocks,
+                   Ashen Stone, VOLCANOES with lava craters, lava lakes, BURNING TREES (don't touch), cinder
+                   weeds. Underground it is EXTREMELY dangerous: huge caverns, lava hiding inside the rock,
+                   and every cave deeper than Y 112 is flooded with lava. EMBER ORE gives Raw Ember -> Ember
+                   Ingots -> the Ember Pickaxe (smelts ore as you mine!), Ember Sword (sets things alight),
+                   Ember Staff and Lightning Rod.
+                   Monsters: EMBER WISP (shoots fireballs), CINDER CRAWLER (sets you alight), MAGMA BRUTE.
+  Each biome shows its name when you walk in, has its own sky, particles and sounds, and unlocks a
+  cosmetic accessory with its advancement.
+
+
+FISHING
+-------
+  Fishing Rod: 3 sticks + 2 string (see the recipe book). RIGHT-CLICK to cast, wait for the bobber to
+  dip and a "!" to pop up, then RIGHT-CLICK again to reel in. In the Ashlands you can fish in LAVA.
+    Forest and lakes   Bass, Trout
+    Frostlands         Icefish, Frost Koi
+    Ashlands           Magmafish
+    The sea            Tuna, Pufferfish, and rarely a Shark
+  Now and then you reel in treasure (or junk). Eat them raw (a little food - Magmafish burn you and the
+  Pufferfish poisons you!) or COOK them in a furnace for real meals with a bonus:
+    Cooked Trout swift  - Cooked Icefish frostproof - Cooked Frost Koi regeneration - Cooked Magmafish
+    FIREPROOF (lava and fire can't hurt you!) - Cooked Tuna strength - Cooked Shark heals and strength -
+    Cooked Pufferfish water breathing.
+  Butchers buy fish for emeralds and sell Fishing Rods.
+  New status effects show on the right of the screen: Poisoned, Chilled, Swift, Strong, Fireproof,
+  Frostproof, Water Breathing, Regeneration.
+
+
+MAGIC AND THE MANA BAR
+----------------------
+  The blue MANA bar appears above your hotbar when you hold a magic weapon (or when it isn't full).
+  Casting costs mana, not durability. It refills by itself (about 5 a second after a short pause) and from
+  MANA POTIONS (2 Glass Bottles + Moonpetal + Frost Crystal -> 2 potions).  LEFT-CLICK (hold) to cast.
+    Ember Staff     bouncing fireballs that set monsters on fire and burst when they hit
+    Frost Wand      a fast freezing bolt: chills monsters, and sometimes freezes them solid
+    Void Orb        a slow sphere that drags monsters in, then EXPLODES after a few seconds
+    Lightning Rod   calls lightning down onto the monster you aim at - and it jumps to two more
+    Abyss Tome      a fan of five small shadow bolts that curve toward monsters
+  All five can be crafted (see the recipe book) or found in Ancient Ruins chests and as monster drops.
+
+
+DANGEROUS NIGHTS
+----------------
+  After dark there are more monsters, rarer ones (the NIGHT STALKER - tall, fast, and it BLINKS behind you),
+  night-only creatures (Moon Moths that flutter around lamps, Gloom Owls) and plants that only exist at
+  night: MOONBLOOMS open on grass after dark and wilt at dawn (pick them for Moonpetals). Villagers whisper
+  warnings and wait at their doors. Ancient braziers light themselves.
+
+
+THE BLOOD MOON
+--------------
+  Every few nights (never the first three) the night is a BLOOD MOON: the sky bleeds, the moon is huge and
+  red, the music turns into a dark drone with a heartbeat, swarms of BLOOD BATS and CRIMSON HUSKS pour out
+  of the dark, villagers panic and refuse to talk, and after half a minute the CRIMSON REAPER comes for you:
+  a floating reaper with a scythe that blinks after you and calls bats. Survive until dawn.
+  Rewards: Blood Shards (needed for the Abyss Tome), diamonds, rubies, golden apples, Mana Potions, and
+  sometimes magic weapons. Test it with /bloodmoon (and /bloodmoon off).
+
+
+ANCIENT RUINS  (/locate ruins, /tp ruins)
+-----------------------------------------
+  Buried temples, one every few hundred blocks, deep underground. Look for TWO STUB PILLARS with a hatch of
+  cracked bricks between them: dig it open and climb down the LADDER SHAFT.
+    * a trap corridor: Ruin Spikes (jump them!) and DART TRAPS that fire when you step in their line
+    * a secret room under the corridor: break the 3 cracked bricks between the two glowing runic tiles
+      (bones rattle in there) and open the chest for the RUIN KEY
+    * the statue hall: two of the statues wake up as SENTINELS; a treasure chest
+    * a ladder down to the antechamber and the ANCIENT DOOR: right-click it holding the Ruin Key
+    * the arena of THE HOLLOW KNIGHT, and behind a cracked wall, his hoard
+  THE HOLLOW KNIGHT (mini-boss, 430 health)
+    PHASE 1  slow, with a SHIELD. It blocks everything from the front (hit it from behind or while it
+             swings - the wind-up shows a red arc), does 3-cut sword combos and shield bashes.
+    PHASE 2  at half health the shield SHATTERS. Much faster, hits harder, leaps and slams the floor
+             (two shockwaves), and calls skeletons up out of the ground.
+    Drops: the HOLLOW BLADE (every third cut throws a wave of soul), 6-9 Ancient Armor Plates and Ancient
+    Metal (Ancient Armor: 12 armor, +2 damage, +2 hearts, hurts whoever hits you), and sometimes the
+    HOLLOW SIGNET (a charm: less damage from everything).
+  /summon hollowknight  fights it anywhere.
+
+
+OTHER THINGS
+------------
+  * Tiles are 16-bit now, so there is room for hundreds of new blocks.
+  * 16 new advancements (and 9 new accessories to wear: see Skins > Accessories).
+  * New commands: /bloodmoon, /locate ruins|redwood|frost|ash, /tp ruins|redwood|frost|ash,
+    /summon <any new monster>.
+
+
+FOR WHOEVER ADDS THE NEXT THING
+-------------------------------
+  Everything in 1.2 hangs off a few small registries in index.html (search for "BETA 1.2"):
+    B12.updaters / B12.pre / B12.glow / B12.post   per-frame hooks (update, draw, additive glow, overlay)
+    MOB_TYPES + MOB_AI12 + MOBSPR12                a monster = a MOB_TYPES line (ai: 'melee' ...), a strip of
+                                                   frames in Textures/entities/mobs12/, a loot list
+    WEAPONS type 'magic' + SPELL12                 a spell = a WEAPONS line and a function
+    spawnBolt12                                    anything that flies (monsters' and your spells)
+    addFx12 / spendMana                            status effects and mana
+    World.biome12 / redwoodSlot / iceCaveAt / ruinAt   how the new land is made (pure functions of the seed)

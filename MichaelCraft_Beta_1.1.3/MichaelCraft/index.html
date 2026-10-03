@@ -4756,7 +4756,7 @@
     defWeapon(HOLLOW_BLADE, 'Hollow Blade', 'katana', 7, 2000);
     defWeapon(FROST_BLADE, 'Frost Blade', 'katana', 5, 900);
     defWeapon(GLACIER_HAMMER, 'Glacier Hammer', 'hammer', 5, 900);
-    for (const [id, nm, dur] of [[EMBER_STAFF, 'Ember Staff', 1000], [FROST_WAND, 'Frost Wand', 1000], [VOID_ORB, 'Void Orb', 1000], [LIGHTNING_ROD, 'Lightning Rod', 1000], [ABYSS_TOME, 'Abyss Tome', 1000]]) defWeapon(id, nm, 'magic', 5, dur);
+    for (const [id, nm, dur] of [[EMBER_STAFF, 'Ember Staff', 1000], [FROST_WAND, 'Frost Wand', 1000], [VOID_ORB, 'Void Orb', 1000], [LIGHTNING_ROD, 'Lightning Rod', 1000], [ABYSS_TOME, 'Abyss Tome', 1000]]) { defWeapon(id, nm, 'magic', 5, dur); ITEMS[id].durability = 0; ITEMS[id].maxDurability = 0; }
     defItem(FISHING_ROD, 'Fishing Rod', { kind: 'tool', toolType: 'rod', tier: 1, stack: 1, durability: 200, maxDurability: 200, weapon: false });
     // fish: raw ones are a little food; cooked ones are real meals with a bonus (see FISH_FX)
     const FISH_INFO = [   // id, name, raw hunger, cooked hunger
@@ -8019,6 +8019,317 @@
       },
     });
 
+    // =============================================================================
+    // BETA 1.2 - THE CORE: status effects, MANA, the new hazards, the atmosphere of the
+    // new biomes (sky tints, ash and needles, aurora, light shafts) and their sounds.
+    //   B12.updaters / B12.pre / B12.glow let the other 1.2 sections hook in:
+    //     updaters  fn(dt, player) every frame while you play
+    //     pre       fn(originX, originY) drawn with the world (before the darkness)
+    //     glow      fn(originX, originY, glow) additive glows, drawn after the darkness
+    // =============================================================================
+    const B12 = { updaters: [], pre: [], glow: [], t: 0, hudBuilt: false, last: '' };
+    const MANA_REGEN = 5.5, MANA_DELAY = 0.8;
+    const FX_INFO = {
+      poison: { name: 'Poisoned', ico: '☠', col: '#7ad84a', bad: true }, slow: { name: 'Chilled', ico: '❄', col: '#8ee6ff', bad: true },
+      speed: { name: 'Swift', ico: '»', col: '#35c9f0' }, strength: { name: 'Strong', ico: '✦', col: '#ff6a4a' }, fireproof: { name: 'Fireproof', ico: '♨', col: '#ff9a3a' },
+      frostproof: { name: 'Frostproof', ico: '❄', col: '#d8f4ff' }, breath: { name: 'Water Breathing', ico: '○', col: '#5ad0ff' }, regen: { name: 'Regeneration', ico: '♥', col: '#ff6aa8' },
+      bloodlust: { name: 'Blood Moon', ico: '☾', col: '#ff3a4a', bad: true },
+    };
+    function ensureFx12(p) {
+      if (!p.fx12) p.fx12 = {};
+      if (p.mana == null) { p.mana = MANA_MAX_DEFAULT; p.maxMana = MANA_MAX_DEFAULT; p.manaDelay = 0; }
+      return p.fx12;
+    }
+    const MANA_MAX_DEFAULT = 100;
+    function addFx12(p, key, secs, quiet) {
+      const f = ensureFx12(p);
+      if (key === 'slow' && f.frostproof > 0) return;
+      if (key === 'poison' && f.regen > 0) secs *= 0.5;
+      const had = f[key] > 0;
+      f[key] = Math.max(f[key] || 0, secs);
+      if (!had && !quiet && FX_INFO[key]) { for (let i = 0; i < 8; i++) Game.particles.push({ x: p.x + p.w / 2 + (Math.random() - 0.5) * 0.6, y: p.y + Math.random() * p.h, vx: (Math.random() - 0.5), vy: -1.2, life: 0.7, age: 0, size: 0.09, color: FX_INFO[key].col, gravity: -0.6, kind: 'star' }); }
+    }
+    const hasFx12 = (p, key) => !!(p && p.fx12 && p.fx12[key] > 0);
+    function speedMul12(p) {
+      let m = 1; const f = p.fx12;
+      if (f) { if (f.speed > 0) m *= 1.3; if (f.slow > 0) m *= 0.55; }
+      if (p.inWeb12) m *= 0.3;
+      return m;
+    }
+    function spendMana(p, n) {
+      ensureFx12(p);
+      if (Game.creative) return true;
+      if (p.mana < n) { if (!p.manaWarnT || Game.time - p.manaWarnT > 1) { p.manaWarnT = Game.time; showToast('Not enough mana'); } B12.manaFlash = 0.5; return false; }
+      p.mana -= n; p.manaDelay = MANA_DELAY; return true;
+    }
+    function applyEatFx12(p, def) {
+      const f = def.fx;
+      if (f) for (const k in f) {
+        if (k === 'heal') p.heal(f[k]);
+        else if (k === 'burn') { p.fireT = Math.max(p.fireT || 0, f[k]); }
+        else addFx12(p, k, f[k]);
+      }
+      if (def.mana) { ensureFx12(p); p.mana = Math.min(p.maxMana, p.mana + def.mana); for (let i = 0; i < 12; i++) Game.particles.push({ x: p.x + p.w / 2, y: p.y + 0.8, vx: (Math.random() - 0.5) * 2, vy: -1.5 - Math.random(), life: 0.8, age: 0, size: 0.09, color: '#6ab4ff', gravity: -0.5, kind: 'star' }); }
+    }
+    // ---- the per-frame update ----
+    function updateB12(dt) {
+      const p = Game.player; if (!p || p.dead) return;
+      ensureFx12(p);
+      B12.t += dt;
+      const f = p.fx12;
+      for (const k in f) { if (f[k] > 0) { f[k] -= dt; if (f[k] <= 0) delete f[k]; } }
+      if (f.poison > 0) {
+        p.poisonT = (p.poisonT || 0) - dt;
+        if (p.poisonT <= 0) { p.poisonT = 1.1; if (p.health > 2) { p.invuln = 0; p.damage(1, 'poison'); } if (Math.random() < 0.8) for (let i = 0; i < 4; i++) Game.particles.push({ x: p.x + Math.random() * p.w, y: p.y + Math.random() * p.h, vx: 0, vy: -0.8, life: 0.6, age: 0, size: 0.08, color: '#7ad84a', gravity: -0.3 }); }
+      }
+      if (f.regen > 0) { p.fxRegenT = (p.fxRegenT || 0) - dt; if (p.fxRegenT <= 0) { p.fxRegenT = 1.3; p.heal(1); } }
+      if (f.slow > 0 && Math.random() < dt * 8 * particleMul()) Game.particles.push({ x: p.x + Math.random() * p.w, y: p.y + Math.random() * p.h, vx: 0, vy: 0.4, life: 0.5, age: 0, size: 0.07, color: '#cfeeff', gravity: 1 });
+      // mana
+      if (Game.creative) p.mana = p.maxMana;
+      else if (p.manaDelay > 0) p.manaDelay -= dt;
+      else if (p.mana < p.maxMana) p.mana = Math.min(p.maxMana, p.mana + MANA_REGEN * dt);
+      B12.manaFlash = Math.max(0, (B12.manaFlash || 0) - dt);
+      hazards12(p, dt);
+      for (const fn of B12.updaters) fn(dt, p);
+      hud12(dt, p);
+    }
+    // ---- hazards: webs, spikes, fire ----
+    function hazards12(p, dt) {
+      const w = Game.world; if (!w || w.isInterior) { p.inWeb12 = false; return; }
+      let web = false, spikes = false, fire = false;
+      for (let tx = Math.floor(p.x); tx <= Math.floor(p.x + p.w - 0.001); tx++)
+        for (let ty = Math.floor(p.y); ty <= Math.floor(p.y + p.h - 0.001); ty++) {
+          const id = w.getTile(tx, ty);
+          if (id === COBWEB) web = true;
+          else if (id === RUIN_SPIKES) spikes = true;
+          else if (id === BURNING_LOG) fire = true;
+        }
+      p.inWeb12 = web;
+      if (web) { p.vy = Math.min(p.vy, 2.5); p.vx *= Math.pow(0.02, dt); }
+      p.spikeT = Math.max(0, (p.spikeT || 0) - dt);
+      if (spikes && p.spikeT <= 0 && !Game.creative && p.invuln <= 0) { p.spikeT = 0.7; p.damage(4, 'spikes'); p.vy = -6; sfx('hurt'); for (let i = 0; i < 6; i++) Game.particles.push({ x: p.x + p.w / 2, y: p.y + p.h, vx: (Math.random() - 0.5) * 3, vy: -2, life: 0.4, age: 0, size: 0.07, color: '#c01830', gravity: 8 }); }
+      const under = w.getTile(Math.floor(p.x + p.w / 2), Math.floor(p.y + p.h + 0.1));
+      if ((fire || under === MAGMA_ROCK) && !hasFx12(p, 'fireproof') && !Game.creative) { p.fireT = Math.max(p.fireT || 0, under === MAGMA_ROCK ? 2 : 3); }
+    }
+    // ---- ICICLES: they drop when you walk under them ----
+    B12.icicles = [];
+    B12.updaters.push(function icicles12(dt, p) {
+      const w = Game.world; if (!w || w.isInterior) return;
+      B12.icicleScan = (B12.icicleScan || 0) - dt;
+      if (B12.icicleScan <= 0) {
+        B12.icicleScan = 0.12;
+        const px = Math.floor(p.x + p.w / 2), py = Math.floor(p.y);
+        for (let dx = -1; dx <= 1; dx++) for (let dy = 1; dy <= 12; dy++) {
+          const tx = px + dx, ty = py - dy;
+          if (ty < 0) break;
+          const id = w.getTile(tx, ty);
+          if (id === ICICLE) { w.setTile(tx, ty, AIR); B12.icicles.push({ x: tx + 0.5, y: ty + 0.1, vy: 0, delay: 0.55, shake: 0 }); sfx('dig.glass', { x: tx, y: ty, pitch: 1.6, vol: 0.6 }); break; }
+          if (isSolidId(id)) break;
+        }
+      }
+      for (let i = B12.icicles.length - 1; i >= 0; i--) {
+        const c = B12.icicles[i];
+        if (c.delay > 0) { c.delay -= dt; c.shake = (Math.random() - 0.5) * 0.12; continue; }
+        c.vy = Math.min(22, c.vy + 28 * dt); c.y += c.vy * dt;
+        const tx = Math.floor(c.x), ty = Math.floor(c.y + 0.5);
+        const shatter = () => {
+          for (let k = 0; k < 10; k++) Game.particles.push({ x: c.x, y: c.y + 0.4, vx: (Math.random() - 0.5) * 5, vy: -1 - Math.random() * 3, life: 0.5, age: 0, size: 0.1, color: k % 2 ? '#e8f8ff' : '#8cc4ec', gravity: 12 });
+          sfx('dig.glass', { x: c.x, y: c.y, pitch: 1.3 }); B12.icicles.splice(i, 1);
+        };
+        if (isSolidId(w.getTile(tx, ty)) || c.y > WORLD_H) { shatter(); continue; }
+        if (!Game.creative && p.invuln <= 0 && Math.abs(c.x - (p.x + p.w / 2)) < p.w / 2 + 0.25 && c.y + 0.5 > p.y && c.y - 0.5 < p.y + p.h) { p.damage(5, 'icicle'); addFx12(p, 'slow', 4); shatter(); continue; }
+        for (const m of Game.mobs) if (m.def.hostile && m.dying == null && Math.abs(c.x - (m.x + m.w / 2)) < m.w / 2 + 0.25 && c.y + 0.5 > m.y && c.y - 0.5 < m.y + m.h) { hurtMob(m, 8, p, false); shatter(); break; }
+      }
+    });
+    B12.pre.push(function drawIcicles12(ox, oy) {
+      for (const c of B12.icicles) {
+        const tex = blockTex[ICICLE]; if (!tex) continue;
+        const sx = ox + (c.x - 0.5 + (c.shake || 0)) * TILE, sy = oy + (c.y - 0.1) * TILE;
+        ctx.drawImage(tex, 0, 0, TEX, TEX, sx, sy, TILE, TILE);
+      }
+    });
+    // ---- HUD: the mana bar and the status chips ----
+    function hud12(dt, p) {
+      if (!B12.hudBuilt) {
+        B12.hudBuilt = true;
+        const st = document.createElement('style');
+        st.textContent = `
+          #mana-hud { display:none; width: calc(var(--gs,2px) * 96); margin: 0 auto calc(var(--gs,2px) * 2); position: relative; }
+          #mana-hud .mb { height: calc(var(--gs,2px) * 8); background: rgba(8,12,34,.78); border: calc(var(--gs,2px)) solid #070b22; box-shadow: 0 0 calc(var(--gs,2px) * 3) rgba(90,140,255,.35); position: relative; overflow: hidden; }
+          #mana-hud .mf { height: 100%; width: 100%; background: linear-gradient(180deg,#a8d4ff 0%,#4a86ff 45%,#2b52d6 100%); transition: width .08s linear; position: relative; }
+          #mana-hud .mf::after { content:''; position:absolute; inset:0; background: repeating-linear-gradient(90deg, rgba(255,255,255,.28) 0 calc(var(--gs,2px)*1), transparent calc(var(--gs,2px)*1) calc(var(--gs,2px)*8)); animation: b12mana 1.6s linear infinite; }
+          @keyframes b12mana { from { background-position: 0 0 } to { background-position: calc(var(--gs,2px)*16) 0 } }
+          #mana-hud .ml { position:absolute; left:50%; top: 50%; transform: translate(-50%,-50%); z-index: 2; font-size: calc(var(--gs,2px) * 5.5); color:#ffffff; text-shadow: calc(var(--gs,2px)) calc(var(--gs,2px)) 0 #000; white-space: nowrap; }
+          #mana-hud.low .mf { background: linear-gradient(180deg,#7d86a8,#4a5278); }
+          #mana-hud.flash .mb { border-color:#ff5a5a; }
+          #fx-hud { position: absolute; right: calc(var(--gs,2px) * 4); top: calc(var(--gs,2px) * 34); display:flex; flex-direction:column; gap: calc(var(--gs,2px) * 2); align-items:flex-end; pointer-events:none; z-index: 5; }
+          #fx-hud .chip { display:flex; align-items:center; gap: calc(var(--gs,2px) * 2); background: rgba(0,0,0,.45); padding: calc(var(--gs,2px)) calc(var(--gs,2px) * 3); font-size: calc(var(--gs,2px) * 6); color:#fff; text-shadow: calc(var(--gs,2px)) calc(var(--gs,2px)) 0 #000; border-left: calc(var(--gs,2px) * 2) solid var(--c); }
+          #fx-hud .chip.bad { background: rgba(60,0,0,.45); }
+          #fx-hud .chip i { font-style: normal; color: var(--c); font-size: calc(var(--gs,2px) * 8); }
+          #b12-title { position:absolute; left:0; right:0; top:22%; text-align:center; pointer-events:none; opacity:0; transition: opacity .8s; z-index: 6; }
+          #b12-title.show { opacity:1; }
+          #b12-title .t1 { font-size: calc(var(--gs,2px) * 16); color:#fff; text-shadow: calc(var(--gs,2px)*2) calc(var(--gs,2px)*2) 0 #000; letter-spacing: 2px; }
+          #b12-title .t2 { font-size: calc(var(--gs,2px) * 7); color:#d8d8d8; text-shadow: calc(var(--gs,2px)) calc(var(--gs,2px)) 0 #000; margin-top: calc(var(--gs,2px) * 3); }`;
+        document.head.appendChild(st);
+        const bar = document.createElement('div'); bar.id = 'mana-hud'; bar.innerHTML = '<div class="ml"></div><div class="mb"><div class="mf"></div></div>';
+        const hb = el('hud-bottom'), status = el('hud-status');
+        hb.insertBefore(bar, status.nextSibling);
+        const fx = document.createElement('div'); fx.id = 'fx-hud'; el('ui-layer').appendChild(fx);
+        const ti = document.createElement('div'); ti.id = 'b12-title'; ti.innerHTML = '<div class="t1"></div><div class="t2"></div>'; el('ui-layer').appendChild(ti);
+      }
+      const s = p.selectedSlot(), W = s && WEAPONS[s.item];
+      const showMana = !!(W && W.type === 'magic') || p.mana < p.maxMana - 0.5 || (B12.manaFlash > 0);
+      const bar = el('mana-hud');
+      bar.style.display = showMana ? 'block' : 'none';
+      if (showMana) {
+        bar.querySelector('.mf').style.width = Math.max(0, Math.min(100, p.mana / p.maxMana * 100)) + '%';
+        bar.querySelector('.ml').textContent = 'MANA ' + Math.floor(p.mana) + '/' + p.maxMana;
+        bar.classList.toggle('low', W && W.type === 'magic' && p.mana < W.mana);
+        bar.classList.toggle('flash', B12.manaFlash > 0);
+      }
+      let sig = '';
+      const f = p.fx12;
+      for (const k in f) if (f[k] > 0 && FX_INFO[k]) sig += k + Math.ceil(f[k]) + '|';
+      if (sig !== B12.last) {
+        B12.last = sig;
+        let h = '';
+        for (const k in f) if (f[k] > 0 && FX_INFO[k]) { const I = FX_INFO[k]; h += `<div class="chip${I.bad ? ' bad' : ''}" style="--c:${I.col}"><i>${I.ico}</i>${I.name} ${Math.ceil(f[k])}s</div>`; }
+        el('fx-hud').innerHTML = h;
+      }
+    }
+    // a big title in the middle of the screen ("Redwood Forest"), shown when you cross into a new place
+    function bigTitle12(t1, t2, color) {
+      const ti = el('b12-title'); if (!ti) return;
+      ti.querySelector('.t1').textContent = t1; ti.querySelector('.t1').style.color = color || '#fff';
+      ti.querySelector('.t2').textContent = t2 || '';
+      ti.classList.add('show');
+      clearTimeout(bigTitle12.tm); bigTitle12.tm = setTimeout(() => ti.classList.remove('show'), 3200);
+    }
+    // ---- ATMOSPHERE: how strongly each new biome is around the player (0..1, blends at the borders) ----
+    function biomeMix12() {
+      const w = Game.world, p = Game.player;
+      if (!w || !p || w.isInterior || inAbyss(p)) return { ash: 0, red: 0, frost: 0, surface: 0 };
+      const x = Math.floor(p.x), sf = w.surfaceHeight(x);
+      const under = smoothstep(sf + 4, sf + 12, p.y);   // deeper than the surface: the sky no longer matters
+      return { ash: w.ashness(x), red: w.redwoodness(x), frost: w.snowiness(x), surface: 1 - under };
+    }
+    function renderSkyTint12(dayFrac) {
+      if (!Game.player) return;
+      const m = biomeMix12();
+      if (m.surface <= 0.01) return;
+      const day = Math.max(0, Math.min(1, (skyLightLevel(dayFrac) - 0.1) / 0.9));
+      if (m.ash > 0.01) { ctx.fillStyle = `rgba(${Math.round(90 + 60 * day)},${Math.round(36 + 14 * day)},${Math.round(30 + 8 * day)},${0.55 * m.ash * m.surface})`; ctx.fillRect(0, 0, VIEW.w, VIEW.h); }
+      if (m.red > 0.01) { ctx.fillStyle = `rgba(22,60,38,${0.22 * m.red * m.surface * (0.4 + 0.6 * day)})`; ctx.fillRect(0, 0, VIEW.w, VIEW.h); }
+      if (m.frost > 0.01) {
+        ctx.fillStyle = `rgba(190,225,255,${0.12 * m.frost * m.surface * day})`; ctx.fillRect(0, 0, VIEW.w, VIEW.h);
+        const night = 1 - day;   // the aurora
+        if (night > 0.35) {
+          const t = B12.t;
+          ctx.save(); ctx.globalCompositeOperation = 'lighter';
+          for (let band = 0; band < 3; band++) {
+            const hue = [[80, 255, 160], [120, 160, 255], [200, 110, 255]][band];
+            for (let x = 0; x < VIEW.w; x += 6) {
+              const y0 = VIEW.h * (0.12 + 0.07 * band) + Math.sin(x * 0.006 + t * 0.35 + band * 2) * 26 + Math.sin(x * 0.017 - t * 0.5 + band) * 10;
+              const h = 70 + 40 * Math.sin(x * 0.004 + t * 0.2 + band * 1.7);
+              const g = ctx.createLinearGradient(0, y0, 0, y0 + h);
+              const a = 0.1 * (night - 0.3) * m.frost * m.surface * (0.6 + 0.4 * Math.sin(x * 0.01 + t * 0.8 + band));
+              g.addColorStop(0, `rgba(${hue},0)`); g.addColorStop(0.3, `rgba(${hue},${a})`); g.addColorStop(1, `rgba(${hue},0)`);
+              ctx.fillStyle = g; ctx.fillRect(x, y0, 6, h);
+            }
+          }
+          ctx.restore();
+        }
+      }
+    }
+    B12.pre.push(function biomeFx12(ox, oy) {
+      const m = biomeMix12(), p = Game.player; if (!p) return;
+      const cx0 = Game.camX, cy0 = Game.camY, vw = VIEW.w / TILE, vh = VIEW.h / TILE, pm = particleMul();
+      const dt = 1 / 60;
+      if (m.ash > 0.2 && m.surface > 0.3 && Math.random() < 0.55 * pm) {   // ash drifting down, embers rising off the ground
+        Game.particles.push({ x: cx0 + Math.random() * vw, y: cy0 - 1, vx: 1.2 + Math.random() * 1.2, vy: 1.2 + Math.random() * 1.2, life: 6, age: 0, size: 0.05 + Math.random() * 0.05, color: Math.random() < 0.5 ? 'rgba(210,205,200,0.75)' : 'rgba(120,115,115,0.8)', gravity: 0.1, snow: true });
+        if (Math.random() < 0.35) Game.particles.push({ x: cx0 + Math.random() * vw, y: cy0 + vh * (0.5 + Math.random() * 0.6), vx: (Math.random() - 0.3) * 1.2, vy: -1.2 - Math.random() * 1.2, life: 2 + Math.random(), age: 0, size: 0.05, color: Math.random() < 0.5 ? '#ff8a2a' : '#ffd05a', gravity: -0.1 });
+      }
+      if (m.red > 0.2 && m.surface > 0.3 && Math.random() < 0.18 * pm) {   // falling needles, pollen, the odd firefly spark
+        Game.particles.push({ x: cx0 + Math.random() * vw, y: cy0 - 1, vx: 0.4 + Math.random() * 0.6, vy: 0.7 + Math.random() * 0.6, life: 9, age: 0, size: 0.05, color: Math.random() < 0.6 ? '#2f7a3c' : '#b8793a', gravity: 0, petal: true });
+      }
+      if (m.frost > 0.2 && m.surface > 0.3 && Math.random() < 0.22 * pm) {   // ice glints
+        Game.particles.push({ x: cx0 + Math.random() * vw, y: cy0 + Math.random() * vh, vx: 0, vy: 0, life: 0.7, age: 0, size: 0.07, color: '#ffffff', gravity: 0, kind: 'star' });
+      }
+      // sun shafts through the redwoods
+      if (m.red > 0.35 && m.surface > 0.4) {
+        const day = skyLightLevel(dayFraction());
+        if (day > 0.4) {
+          ctx.save(); ctx.globalCompositeOperation = 'lighter';
+          for (let i = 0; i < 6; i++) {
+            const bx = ((i * 0.19 + 0.05 + Math.sin(B12.t * 0.07 + i) * 0.02) % 1) * VIEW.w, bw = VIEW.w * (0.025 + 0.015 * (i % 3));
+            const g = ctx.createLinearGradient(bx, 0, bx + VIEW.h * 0.5, VIEW.h);
+            const a = 0.06 * m.red * day * (0.7 + 0.3 * Math.sin(B12.t * 0.6 + i * 2));
+            g.addColorStop(0, `rgba(255,240,180,${a})`); g.addColorStop(1, 'rgba(255,240,180,0)');
+            ctx.fillStyle = g; ctx.beginPath(); ctx.moveTo(bx, 0); ctx.lineTo(bx + bw, 0); ctx.lineTo(bx + bw + VIEW.h * 0.5, VIEW.h); ctx.lineTo(bx + VIEW.h * 0.5, VIEW.h); ctx.closePath(); ctx.fill();
+          }
+          ctx.restore();
+        }
+      }
+    });
+    // ---- AMBIENT SOUNDS of the new biomes, made of noise and sines (no files) ----
+    function noiseBuf12(sec) {
+      if (!B12.nb) { const n = actx.sampleRate * 2, b = actx.createBuffer(1, n, actx.sampleRate), d = b.getChannelData(0); for (let i = 0; i < n; i++) d[i] = Math.random() * 2 - 1; B12.nb = b; }
+      return B12.nb;
+    }
+    function amb12(kind) {
+      if (!actx || actx.state !== 'running') return;
+      const vol = (Settings.volMaster / 100) * ((Settings.volAmbient ?? 100) / 100); if (vol <= 0.01) return;
+      const t = actx.currentTime, out = actx.createGain(); out.gain.value = vol; out.connect(actx.destination);
+      const env = (g, a, hold, rel, peak) => { g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(peak, t + a); g.gain.setValueAtTime(peak, t + a + hold); g.gain.exponentialRampToValueAtTime(0.0001, t + a + hold + rel); };
+      const noise = (dur, type, f0, f1, q, peak, a, hold, rel) => {
+        const s = actx.createBufferSource(); s.buffer = noiseBuf12(); s.loop = true;
+        const fl = actx.createBiquadFilter(); fl.type = type; fl.frequency.setValueAtTime(f0, t); fl.frequency.linearRampToValueAtTime(f1, t + dur); fl.Q.value = q;
+        const g = actx.createGain(); env(g, a, hold, rel, peak); s.connect(fl); fl.connect(g); g.connect(out); s.start(t); s.stop(t + dur + 0.2);
+      };
+      const tone = (type, f0, f1, dur, peak, a, delay) => {
+        const o = actx.createOscillator(), g = actx.createGain(); o.type = type; const d = delay || 0;
+        o.frequency.setValueAtTime(f0, t + d); o.frequency.exponentialRampToValueAtTime(Math.max(20, f1), t + d + dur);
+        g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(peak, t + d + a); g.gain.exponentialRampToValueAtTime(0.0001, t + d + dur);
+        o.connect(g); g.connect(out); o.start(t + d); o.stop(t + d + dur + 0.05);
+      };
+      switch (kind) {
+        case 'wind': noise(6, 'bandpass', 400, 900, 1.2, 0.18, 2.2, 1.2, 2.4); break;                       // wind in the needles
+        case 'creak': tone('sawtooth', 95, 60, 0.9, 0.025, 0.2); noise(0.9, 'lowpass', 300, 140, 2, 0.05, 0.1, 0.5, 0.3); break;   // a giant trunk groaning
+        case 'hoot': tone('sine', 420, 380, 0.3, 0.07, 0.04); tone('sine', 400, 340, 0.45, 0.07, 0.04, 0.42); break;              // an owl
+        case 'chirp': for (let i = 0; i < 3; i++) tone('sine', 2600 + Math.random() * 900, 3600 + Math.random() * 800, 0.09, 0.025, 0.01, i * 0.13); break;   // birds
+        case 'howl': noise(7, 'bandpass', 900, 500, 3, 0.2, 2.5, 1.5, 3); tone('sine', 520, 380, 5, 0.012, 2); break;                // frost wind
+        case 'icecrack': noise(0.25, 'highpass', 3500, 5000, 0.8, 0.12, 0.005, 0.03, 0.2); tone('sine', 2400, 900, 0.35, 0.03, 0.005); break;
+        case 'rumble': noise(5, 'lowpass', 90, 60, 1.5, 0.45, 1.6, 1.4, 2); tone('sine', 52, 36, 4, 0.1, 1); break;                  // the ground, deep down
+        case 'crackle': for (let i = 0; i < 9; i++) { const d = i * (0.05 + Math.random() * 0.2); const s = actx.createBufferSource(); s.buffer = noiseBuf12(); const fl = actx.createBiquadFilter(); fl.type = 'highpass'; fl.frequency.value = 1500 + Math.random() * 2500; const g = actx.createGain(); g.gain.setValueAtTime(0.0001, t + d); g.gain.exponentialRampToValueAtTime(0.08, t + d + 0.004); g.gain.exponentialRampToValueAtTime(0.0001, t + d + 0.05); s.connect(fl); fl.connect(g); g.connect(out); s.start(t + d, Math.random()); s.stop(t + d + 0.07); } break;
+        case 'thud': tone('sine', 90, 30, 0.7, 0.2, 0.01); noise(0.8, 'lowpass', 250, 80, 1, 0.15, 0.01, 0.1, 0.6); break;       // a far-off eruption
+        case 'whisper': noise(3.5, 'bandpass', 2400, 1800, 6, 0.06, 1.2, 0.6, 1.5); break;
+      }
+    }
+    B12.updaters.push(function ambSounds12(dt, p) {
+      B12.ambT = (B12.ambT || 5) - dt;
+      if (B12.ambT > 0) return;
+      B12.ambT = 5 + Math.random() * 9;
+      const m = biomeMix12(), night = (() => { const f = dayFraction(); return f >= NIGHT_START && f < NIGHT_END; })();
+      if (m.ash > 0.5) { amb12(['rumble', 'crackle', 'crackle', 'thud', 'wind'][Math.floor(Math.random() * 5)]); return; }
+      if (m.red > 0.5 && m.surface > 0.4) { amb12(night ? ['hoot', 'creak', 'wind', 'whisper'][Math.floor(Math.random() * 4)] : ['chirp', 'creak', 'wind', 'chirp'][Math.floor(Math.random() * 4)]); return; }
+      if (m.frost > 0.5) { amb12(m.surface > 0.4 ? ['howl', 'howl', 'icecrack'][Math.floor(Math.random() * 3)] : ['icecrack', 'icecrack', 'howl'][Math.floor(Math.random() * 3)]); return; }
+    });
+    // entering one of the new places: a title and a toast
+    B12.updaters.push(function enter12(dt, p) {
+      B12.entT = (B12.entT || 0) - dt;
+      if (B12.entT > 0) return; B12.entT = 1;
+      const w = Game.world; if (w.isInterior) return;
+      const b = w.biome12(Math.floor(p.x));
+      if (b !== B12.biome) {
+        B12.biome = b;
+        const info = { redwood: ['Redwood Forest', 'giants older than the villages', '#ff9a6a', 'redwood'], frost: ['Frostlands', 'the cold goes all the way down', '#bfeaff', 'frostlands'], ash: ['Ashlands', 'nothing grows here. Something lives here', '#ff8a4a', 'ashlands'] }[b];
+        if (info && p.y < w.surfaceHeight(Math.floor(p.x)) + 6) { bigTitle12(info[0], info[1], info[2]); if (typeof Adv !== 'undefined') Adv.grant(info[3]); }
+      }
+    });
+    function glowCircle12(x, y, r, c, a) { const gr = ctx.createRadialGradient(x, y, 0, x, y, r); gr.addColorStop(0, `rgba(${c},${a})`); gr.addColorStop(1, `rgba(${c},0)`); ctx.fillStyle = gr; ctx.fillRect(x - r, y - r, r * 2, r * 2); }
+    function renderB12Pre(ox, oy) { for (const f of B12.pre) f(ox, oy); }
+    function renderB12Glow(ox, oy, glow) { ctx.save(); ctx.globalCompositeOperation = 'lighter'; for (const f of B12.glow) f(ox, oy, glow); ctx.restore(); }
+
     // ---------------------------------------------------------------------------
     // LAVA — thick and slow. It runs 3 blocks sideways from a source (water
     // runs 7) and updates twice a second. Where lava meets water it hardens:
@@ -10366,6 +10677,7 @@
       if (!def || def.kind !== 'food') return;
       if (p.hunger >= p.maxHunger && !def.alwaysEat) { showToast('Not hungry'); return; }
       p.eat(def.hunger);
+      if (def.fx || def.mana) applyEatFx12(p, def);   // (1.2)
       if (def.heal) p.heal(def.heal);
       if (def.regen) { p.regenT = Math.max(p.regenT || 0, def.regen); p.regenTick = 1; }
       if (def.heal) for (let i = 0; i < 14; i++) Game.particles.push({ x: p.x + Math.random() * p.w, y: p.y + Math.random() * p.h, vx: (Math.random() - 0.5) * 1.5, vy: -1.5 - Math.random(), life: 0.8, age: 0, size: 0.08, kind: 'star', color: i % 2 ? '#ffe066' : '#ffffff', gravity: -0.5 });
@@ -10389,6 +10701,7 @@
       if (mob.segOf) { hurtParasiteBody(mob, dmg, attacker, crit, kind); return; }   // (1.1.4: a ring of the Apex Parasite's body)
       if (mob.isPlayerProxy) { pvpHit(mob.remote, dmg, attacker, crit); return; }   // (1.0.2: Friendly Fire)
       if (mob.dying != null) return;
+      if (attacker === Game.player) weaponOnHit12(mob, dmg);   // (1.2) frost and fire weapons
       if (attacker === Game.player && (mob.def.hostile || mob.def.boss) && !mob.def.npc && !(mob.bossInvuln > 0)) leechFrom(Game.player, dmg);   // (1.1.4)
       if (mob.net && netIsClient()) { netClientHit(mob, dmg, attacker, crit, kind); return; }   // (multiplayer: the host decides)
       if (mob.def.boss && !(mob.bossInvuln > 0)) {
@@ -10699,6 +11012,7 @@
         });
       }
       screenShake(mob.type === 'brute' ? 0.5 : 0.2);
+      if (MOB_DEATH12[mob.type]) MOB_DEATH12[mob.type](mob);   // (1.2)
       const r = Math.random;
       if (mob.baby && mob.def.livestock) return;   // babies drop nothing, like Minecraft
       // (1.0.2) finished off with a lucky gold sword: half the time, double loot
@@ -10724,6 +11038,7 @@
         case 'brute': spawnDrop(122, 2 + Math.floor(r() * 2), mx, my); spawnDrop(124, 2, mx, my); spawnDrop(133, 1 + Math.floor(r() * 3), mx, my);
           if (r() < 0.6) spawnDrop(119, 1 + Math.floor(r() * 2), mx, my); break;
         case 'gloomwing': if (r() < 0.3) spawnDrop(117, 1, mx, my); break;
+        default: lootMob12(mob, mx, my);   // (1.2)
       }
     }
 
@@ -10820,6 +11135,7 @@
         if (mob.dying >= 0.75) finishMobDeath(mob);
         return;
       }
+      if (mob.chill > 0 || mob.freeze > 0 || mob.burn > 0) { dt = mobStatus12(mob, dt); if (dt <= 0) return; }   // (1.2) chilled, frozen, burning
       mob.hurtFlash = Math.max(0, mob.hurtFlash - dt);
       mob.attackCooldown = Math.max(0, mob.attackCooldown - dt);
       mob.kbTimer = Math.max(0, mob.kbTimer - dt);
@@ -10868,7 +11184,7 @@
         // hostiles burn away in daylight (open sky) and slowly give up on
         // brightly torch-lit areas
         const mtx = Math.floor(mob.x + mob.w / 2), mty = Math.floor(mob.y + mob.h / 2);
-        const inSun = !isNight && Game.world.wallAt(mtx, mty) === WALL_NONE;
+        const inSun = !isNight && !def.sunproof && Game.world.wallAt(mtx, mty) === WALL_NONE;
         if (!mob.guardian && !mob.customName && (inSun || lightAt(mtx, mty) >= 12)) { mob.despawnTimer += dt; if (mob.despawnTimer > (inSun ? 6 : 12)) { mob.dead = true; return; } }
         else mob.despawnTimer = 0;
         const sees = mobCanSeePlayer(mob, p, dist);
@@ -10882,6 +11198,8 @@
         }
       }
 
+      if (def.ai) { runAI12(mob, dt, p, dx, dist); return; }   // (1.2)
+      if (def.nocturnal && nocturnalGone12(mob, dt)) return;
       if (def.flying) { updateFlyer(mob, dt, p, dx, dist); return; }
       if (def.pet) { mobMove(mob, petAI(mob, dt, p, dx, dist), dt); return; }
       if (def.villager) { mobMove(mob, villagerAI(mob, dt, p, dx, dist, isNight), dt); return; }
@@ -14489,7 +14807,7 @@
       if (p.headInWater && !p.dead) {
         p.underSoundT = (p.underSoundT || 3) - dt;
         if (p.underSoundT <= 0) { p.underSoundT = 4 + Math.random() * 6; sfx('underwater.bubbles'); }
-        if (!Game.creative) p.air = Math.max(0, p.air - dt * (hasAquaArmor(p) ? 0.5 : 1));   // the cobalt chestplate doubles your breath
+        if (!Game.creative) p.air = Math.max(0, p.air - dt * (hasAquaArmor(p) ? 0.5 : 1) * (hasFx12(p, 'breath') ? 0 : 1));   // the cobalt chestplate doubles your breath
         p.bubbleT = (p.bubbleT || 0) - dt;
         if (p.bubbleT <= 0) { p.bubbleT = 0.5 + Math.random() * 0.8; spawnBubbles(p.x + p.w / 2 + p.facing * 0.2, p.y + 0.3, 1 + (Math.random() < 0.4 ? 1 : 0)); }
         if (p.air <= 0) {
@@ -14940,7 +15258,7 @@
       updateSprinklerViz(world);   // (1.1.5) and which pipes carry water, which sprinklers spray
       computeLighting(world, dayFrac);
       if (world.isInterior) { ctx.fillStyle = '#050608'; ctx.fillRect(0, 0, VIEW.w, VIEW.h); }
-      else renderSky(dayFrac);
+      else { renderSky(dayFrac); renderSkyTint12(dayFrac); }
       const colStart = Math.floor(Game.camX) - 1;
       const colEnd = Math.floor(Game.camX + VIEW.w / TILE) + 1;
       const rowStart = Math.max(0, Math.floor(Game.camY) - 1);
@@ -15023,12 +15341,14 @@
       if (Game.player) renderPlayer(originX, originY);
       renderBoats(originX, originY);   // after the player, so the hull hides a rider's legs
       renderParticles(originX, originY);
+      renderB12Pre(originX, originY);   // (1.2)
 
       renderDarkness(originX, originY);
       renderUnderwater(originX, originY);
       renderMobEyes(originX, originY);
       renderBossBody(originX, originY);
       renderGlowFX(originX, originY);
+      renderB12Glow(originX, originY, glowCircle12);   // (1.2)
       renderBowAim(originX, originY);
       renderCombatFX(originX, originY);
       renderAbyssCompass(originX, originY);
@@ -15728,6 +16048,414 @@
       dog: drawDog, cat: drawCat, villager: drawVillager, cow: drawCow, chicken: drawChicken, fish: drawFish, squid: drawSquid,
       imp: drawImp, firefly: drawFirefly, abyssking: drawKing, tonio: drawTonio, sensei: drawSensei, broodlarva: drawLarva
     };
+    // =============================================================================
+    // BETA 1.2 - NEW CREATURES
+    //   Redwood   Barkling (a stump until you step close), Sporeling (hops; spores poison), Gloom Owl (night)
+    //   Frost     Ice Husk (chills), Frost Wraith (shoots ice), Ice Golem (rare, in the ice caves)
+    //   Ash       Ember Wisp (fireballs), Cinder Crawler (sets you alight), Magma Brute (huge)
+    //   Night     Night Stalker (blinks behind you), Moon Moth (harmless, loves lamps), Blood Bat,
+    //             Crimson Husk, and the Blood Moon's own Crimson Reaper
+    //   Ruins     Ruin Skeleton, Sentinel
+    // Their art is in Textures/entities/mobs12/NAME.png: a strip of frames, drawn by drawSpr12.
+    // Behaviours are in MOB_AI12 (updateMob calls def.ai); spawning is spawner12 below.
+    // =============================================================================
+    Object.assign(MOB_TYPES, {
+      barkling: { name: 'Barkling', w: 0.9, h: 1.9, speed: 2.0, health: 26, hostile: true, dmg: 4, kb: 0.6, reach: 0.5, sunproof: true, ai: 'melee', biome: 'redwood' },
+      sporeling: { name: 'Sporeling', w: 0.7, h: 0.75, speed: 2.4, health: 10, hostile: true, dmg: 2, kb: 1.2, reach: 0.3, sunproof: true, ai: 'sporeling', biome: 'redwood' },
+      gloomowl: { name: 'Gloom Owl', w: 0.95, h: 0.8, speed: 4.2, health: 9, hostile: true, dmg: 3, kb: 1.4, flying: true, sunproof: true, nocturnal: true },
+      icehusk: { name: 'Ice Husk', w: 0.65, h: 1.9, speed: 1.9, health: 26, hostile: true, dmg: 4, kb: 0.7, reach: 0.45, sunproof: true, ai: 'melee', biome: 'frost' },
+      frostwraith: { name: 'Frost Wraith', w: 0.85, h: 1.5, speed: 2.6, health: 18, hostile: true, dmg: 3, kb: 1.0, flying: true, sunproof: true, ai: 'hover', biome: 'frost' },
+      icegolem: { name: 'Ice Golem', w: 1.4, h: 2.7, speed: 1.2, health: 85, hostile: true, dmg: 8, kb: 0.12, reach: 1.2, sunproof: true, ai: 'slammer', biome: 'frost' },
+      emberwisp: { name: 'Ember Wisp', w: 0.7, h: 0.95, speed: 3.0, health: 9, hostile: true, dmg: 3, kb: 1.3, flying: true, fireproof: true, sunproof: true, ai: 'hover', biome: 'ash', glow: '255,140,40' },
+      cindercrawler: { name: 'Cinder Crawler', w: 1.5, h: 0.85, speed: 3.4, health: 16, hostile: true, dmg: 3, kb: 1.0, reach: 0.4, climbs: true, fireproof: true, sunproof: true, ai: 'crawl', biome: 'ash', glow: '255,120,30' },
+      magmabrute: { name: 'Magma Brute', w: 1.5, h: 2.6, speed: 1.3, health: 75, hostile: true, dmg: 8, kb: 0.12, reach: 1.2, fireproof: true, sunproof: true, ai: 'slammer', biome: 'ash', glow: '255,110,30' },
+      nightstalker: { name: 'Night Stalker', w: 0.6, h: 2.3, speed: 3.8, health: 24, hostile: true, dmg: 5, kb: 0.8, reach: 0.5, sunproof: true, nocturnal: true, ai: 'stalker' },
+      moonmoth: { name: 'Moon Moth', w: 0.7, h: 0.55, speed: 1.6, health: 3, hostile: false, dmg: 0, kb: 1.5, flying: true, nocturnal: true, sunproof: true, ai: 'moth', glow: '170,190,255' },
+      bloodbat: { name: 'Blood Bat', w: 0.9, h: 0.55, speed: 5.0, health: 7, hostile: true, dmg: 2, kb: 1.5, flying: true, sunproof: true, nocturnal: true },
+      crimsonhusk: { name: 'Crimson Husk', w: 0.65, h: 1.9, speed: 2.5, health: 32, hostile: true, dmg: 5, kb: 0.6, reach: 0.45, sunproof: true, nocturnal: true, ai: 'melee' },
+      crimsonreaper: { name: 'Crimson Reaper', w: 1.0, h: 2.8, speed: 3.4, health: 190, hostile: true, dmg: 8, kb: 0.05, flying: true, sunproof: true, nocturnal: true, ai: 'reaper', elite: true, glow: '255,40,60' },
+      ruinskeleton: { name: 'Ruin Skeleton', w: 0.65, h: 1.9, speed: 1.8, health: 22, hostile: true, dmg: 4, kb: 0.8, reach: 0.5, sunproof: true, ai: 'melee', ruin: true },
+      sentinel: { name: 'Sentinel', w: 1.3, h: 2.5, speed: 1.1, health: 65, hostile: true, dmg: 7, kb: 0.1, reach: 1.2, sunproof: true, ai: 'slammer', ruin: true },
+    });
+    // what each one drops [item, min, max, chance]
+    Object.assign(MOB_TYPES.barkling, { loot: [[100, 1, 3, 0.8], [REDWOOD_LOG, 1, 2, 0.5], [BROWN_MUSHROOM_ITEM, 1, 2, 0.4], [RAW_REDWOOD, 1, 1, 0.12]] });
+    Object.assign(MOB_TYPES.sporeling, { loot: [[BROWN_MUSHROOM_ITEM, 1, 2, 0.6], [RED_MUSHROOM_ITEM, 1, 1, 0.35]] });
+    Object.assign(MOB_TYPES.gloomowl, { loot: [[STRING, 1, 2, 0.5], [133, 1, 1, 0.3], [MOONPETAL, 1, 1, 0.12]] });
+    Object.assign(MOB_TYPES.icehusk, { loot: [[133, 1, 2, 0.5], [FROST_CRYSTAL, 1, 1, 0.2], [118, 1, 1, 0.15], [FISH_IDS[2], 1, 1, 0.15]] });
+    Object.assign(MOB_TYPES.frostwraith, { loot: [[FROST_CRYSTAL, 1, 2, 0.4], [MANA_POTION, 1, 1, 0.1]] });
+    Object.assign(MOB_TYPES.icegolem, { loot: [[FROST_CRYSTAL, 3, 6, 1], [PACKED_ICE, 2, 5, 0.8], [IRON, 1, 3, 0.5], [FROST_BLADE, 1, 1, 0.08], [GLACIER_HAMMER, 1, 1, 0.04], [FROST_WAND, 1, 1, 0.06]] });
+    Object.assign(MOB_TYPES.emberwisp, { loot: [[RAW_EMBER, 1, 1, 0.3], [117, 1, 2, 0.4]] });
+    Object.assign(MOB_TYPES.cindercrawler, { loot: [[RAW_EMBER, 1, 1, 0.25], [117, 1, 2, 0.5], [STRING, 1, 2, 0.3]] });
+    Object.assign(MOB_TYPES.magmabrute, { loot: [[RAW_EMBER, 2, 4, 1], [MAGMA_ROCK, 1, 3, 0.6], [EMBER_INGOT, 1, 1, 0.12], [EMBER_STAFF, 1, 1, 0.05], [LIGHTNING_ROD, 1, 1, 0.04]] });
+    Object.assign(MOB_TYPES.nightstalker, { loot: [[MOONPETAL, 1, 2, 0.4], [STRING, 1, 2, 0.5], [BLOOD_SHARD, 1, 1, 0.04]] });
+    Object.assign(MOB_TYPES.moonmoth, { loot: [[MOONPETAL, 1, 1, 0.5]] });
+    Object.assign(MOB_TYPES.bloodbat, { loot: [[BLOOD_SHARD, 1, 1, 0.12]] });
+    Object.assign(MOB_TYPES.crimsonhusk, { loot: [[BLOOD_SHARD, 1, 2, 0.5], [133, 1, 2, 0.5], [122, 1, 2, 0.4]] });
+    Object.assign(MOB_TYPES.crimsonreaper, { loot: [[BLOOD_SHARD, 5, 9, 1], [DIAMOND, 2, 4, 1], [RUBY, 1, 3, 0.8], [245, 1, 2, 0.7], [MANA_POTION, 2, 4, 1], [ABYSS_TOME, 1, 1, 0.35], [EMBER_STAFF, 1, 1, 0.12], [VOID_ORB, 1, 1, 0.2], [LIGHTNING_ROD, 1, 1, 0.12]] });
+    Object.assign(MOB_TYPES.ruinskeleton, { loot: [[133, 1, 3, 0.8], [217, 1, 2, 0.3], [GOLD, 1, 2, 0.15], [15, 1, 3, 0.3]] });
+    Object.assign(MOB_TYPES.sentinel, { loot: [[ANCIENT_METAL, 1, 1, 0.25], [RUIN_BRICKS, 2, 4, 0.7], [134, 1, 2, 0.3]] });
+    function lootMob12(mob, mx, my) {
+      const L = mob.def.loot; if (!L) return;
+      for (const [item, a, b, ch] of L) if (Math.random() < ch) spawnDrop(item, a + Math.floor(Math.random() * (b - a + 1)), mx, my);
+      if (mob.def.elite) { eventMessage(`The ${mob.def.name} is slain!`, '#ff6a8a'); if (mob.type === 'crimsonreaper') { B12.reaperDown = true; Adv.grant('bloodmoon'); } }
+    }
+    // ---- art ----
+    const MOBSPR12 = {};
+    for (const [n, w, h, fr, o] of [['barkling', 28, 38, 5], ['sporeling', 18, 18, 3], ['gloomowl', 28, 24, 3], ['icehusk', 18, 36, 4], ['frostwraith', 26, 40, 3], ['icegolem', 36, 48, 5],
+      ['emberwisp', 16, 22, 3], ['cindercrawler', 32, 18, 3], ['magmabrute', 36, 48, 5], ['nightstalker', 16, 46, 4], ['moonmoth', 24, 18, 3], ['bloodbat', 28, 16, 3], ['crimsonhusk', 18, 36, 4],
+      ['crimsonreaper', 40, 54, 3], ['ruinskeleton', 18, 36, 4], ['sentinel', 32, 46, 5], ['hollowknight', 64, 72, 14]]) {
+      const img = new Image(); img.src = 'Textures/entities/mobs12/' + n + '.png';
+      MOBSPR12[n] = { img, w, h, frames: fr };
+    }
+    MOBSPR12.hollowknight.fit = 1.0;
+    function walkFrame12(m, n) { return Math.abs(m.vx) > 0.15 ? 1 + (Math.floor(m.legPhase * 0.9) % n) : 0; }
+    function frameFor12(m) {
+      switch (m.type) {
+        case 'icehusk': case 'crimsonhusk': case 'ruinskeleton': case 'nightstalker': return m.attackAnim > 0.35 ? 3 : walkFrame12(m, 2);
+        case 'icegolem': case 'magmabrute': case 'sentinel': return m.slam === 'windup' ? 3 : m.slam === 'recover' ? 4 : walkFrame12(m, 2);
+        case 'barkling': return m.disguised ? 4 : m.attackAnim > 0.35 ? 3 : walkFrame12(m, 2);
+        case 'sporeling': return !m.onGround ? 2 : (m.hopT > 0 && m.hopT < 0.3) ? 1 : 0;
+        case 'gloomowl': case 'bloodbat': case 'moonmoth': return [0, 1, 2, 1][Math.floor(m.flap * 0.45) % 4];
+        case 'frostwraith': return m.castT > 0 ? 2 : Math.floor(Game.time * 3 + m.id) % 2;
+        case 'emberwisp': return Math.floor(Game.time * 9 + m.id) % 3;
+        case 'cindercrawler': return Math.abs(m.vx) > 0.2 ? Math.floor(m.legPhase * 1.1) % 3 : 0;
+        case 'crimsonreaper': return m.castT > 0 ? 2 : Math.floor(Game.time * 2 + m.id) % 2;
+      }
+      return 0;
+    }
+    function mkDraw12(name) {
+      const S = MOBSPR12[name];
+      return (g, m, u, eyes) => {
+        if (!S.img.complete || !S.img.naturalWidth) return;
+        const fr = Math.min(S.frames - 1, frameFor12(m));
+        const dh = m.h * 16 * u * (S.fit || 1.1), dw = S.w * dh / S.h;
+        g.imageSmoothingEnabled = false;
+        const bob = m.def.flying ? Math.sin(Game.time * 2.4 + m.id) * 0.4 * u : 0;
+        g.drawImage(S.img, fr * S.w, 0, S.w, S.h, -dw / 2, (m.def.flying ? -dh / 2 : -dh) + bob, dw, dh);
+        if (m.def.eye && m.dying == null && !m.disguised) eyes.push({ x: m.def.eye[0] * u, y: (m.def.flying ? -dh / 2 : -dh) + m.def.eye[1] * dh, s: 2 * u, c: m.def.eye[2] });
+      };
+    }
+    for (const n in MOBSPR12) if (n !== 'hollowknight') MOB_DRAW[n] = mkDraw12(n);
+    Object.assign(MOB_TYPES.icehusk, { eye: [1.5, 0.1, '120,230,255'] }); Object.assign(MOB_TYPES.crimsonhusk, { eye: [1.5, 0.1, '255,50,50'] });
+    Object.assign(MOB_TYPES.barkling, { eye: [0, 0.14, '255,170,40'] }); Object.assign(MOB_TYPES.nightstalker, { eye: [0, 0.12, '255,255,255'] });
+    Object.assign(MOB_TYPES.ruinskeleton, { eye: [1.5, 0.09, '70,220,240'] }); Object.assign(MOB_TYPES.sentinel, { eye: [0, 0.14, '70,220,240'] });
+    Object.assign(MOB_TYPES.icegolem, { eye: [0, 0.12, '200,250,255'] }); Object.assign(MOB_TYPES.magmabrute, { eye: [0, 0.13, '255,200,80'] });
+    Object.assign(MOB_TYPES.frostwraith, { eye: [1, 0.22, '190,250,255'] }); Object.assign(MOB_TYPES.crimsonreaper, { eye: [1, 0.2, '255,40,50'] });
+    Object.assign(MOB_TYPES.gloomowl, { eye: [4, 0.3, '255,210,60'] }); Object.assign(MOB_TYPES.bloodbat, { eye: [0, 0.4, '255,220,80'] });
+    // ---- statuses on monsters: chilled (half speed), frozen (stuck), burning ----
+    function mobStatus12(m, dt) {
+      const def = m.def;
+      if (m.burn > 0) {
+        m.burn -= dt; m.burnT = (m.burnT || 0) - dt;
+        if (m.burnT <= 0 && !def.fireproof) { m.burnT = 0.5; m.health -= 2; m.hurtFlash = 0.15; spawnDamageNumber(m.x + m.w / 2, m.y, 2, 'hit'); if (m.health <= 0) { killMob(m); m.burn = 0; } }
+        if (Math.random() < dt * 14 * particleMul()) spawnFlame(m.x + Math.random() * m.w, m.y + Math.random() * m.h);
+      }
+      if (m.freeze > 0) {
+        m.freeze -= dt; m.vx = 0;
+        if (def.flying) m.vy += GRAVITY * 0.4 * dt; else applyGravityAndBuoyancy(m, Game.world, dt);
+        moveAndCollide(m, Game.world, dt);
+        return 0;
+      }
+      if (m.chill > 0) { m.chill -= dt; if (Math.random() < dt * 6 * particleMul()) Game.particles.push({ x: m.x + Math.random() * m.w, y: m.y + Math.random() * m.h, vx: 0, vy: 0.5, life: 0.5, age: 0, size: 0.07, color: '#cfeeff', gravity: 1 }); return dt * 0.5; }
+      return dt;
+    }
+    function weaponOnHit12(mob, dmg) {
+      const p = Game.player, s = p.selectedSlot(), W = s && WEAPONS[s.item], d = s && ITEMS[s.item];
+      if (!d || mob.def.boss) return;
+      if (W && W.chill) { mob.chill = Math.max(mob.chill || 0, 3.5); if (W.type === 'hammer') mob.freeze = Math.max(mob.freeze || 0, 1.3); }
+      if (d.burns && !mob.def.fireproof) mob.burn = Math.max(mob.burn || 0, 3);
+    }
+    B12.pre.push(function mobStatusDraw12(ox, oy) {
+      for (const m of Game.mobs) {
+        if (!(m.chill > 0 || m.freeze > 0) || m.dying != null) continue;
+        const x = ox + m.x * TILE, y = oy + m.y * TILE, w = m.w * TILE, h = m.h * TILE;
+        if (m.freeze > 0) {
+          ctx.fillStyle = 'rgba(170,225,255,0.45)'; ctx.fillRect(x - 3, y - 3, w + 6, h + 6);
+          ctx.strokeStyle = 'rgba(240,252,255,0.9)'; ctx.lineWidth = 2; ctx.strokeRect(x - 3, y - 3, w + 6, h + 6);
+          ctx.fillStyle = 'rgba(255,255,255,0.6)'; ctx.fillRect(x + 2, y + 2, w * 0.3, 3); ctx.fillRect(x + w * 0.6, y + h * 0.5, 4, h * 0.25);
+        } else { ctx.fillStyle = 'rgba(150,215,255,0.25)'; ctx.fillRect(x, y, w, h); }
+      }
+    });
+    // ---- bolts: everything that flies and hurts (magic is in the next section; the mobs' ice and fire is here) ----
+    Game.bolts12 = [];
+    function spawnBolt12(o) { const b = Object.assign({ age: 0, life: 3, r: 0.25, dmg: 3, kind: 'ice', from: 'mob', vx: 0, vy: 0, grav: 0, bounce: 0 }, o); Game.bolts12.push(b); return b; }
+    function hurtPlayer12(dmg, push, dirFrom, cause) {
+      const p = Game.player; if (!p || p.dead || Game.creative || p.invuln > 0) return false;
+      dmg = Math.max(1, Math.round(dmg * (DIFFICULTY_DAMAGE[Settings.difficulty] ?? 1)));
+      p.damage(dmg, cause); if (!p.dead && push) p.knockback((p.x + p.w / 2) > dirFrom ? 1 : -1, push, 2.5);
+      return true;
+    }
+    const BOLT_COL12 = { ice: ['190,240,255', '#cfeeff'], ember: ['255,140,40', '#ffb050'], pfire: ['255,130,30', '#ffc060'], pfrost: ['120,220,255', '#bff6ff'], pvoid: ['170,100,255', '#d8b0ff'], pabyss: ['200,70,255', '#e8a0ff'], blood: ['255,50,70', '#ff8090'] };
+    function boltBurst12(b, n, big) {
+      const c = BOLT_COL12[b.kind] ? BOLT_COL12[b.kind][1] : '#fff';
+      for (let i = 0; i < n * particleMul() + 2; i++) { const a = Math.random() * 6.28, sp = 1 + Math.random() * (big ? 6 : 3); Game.particles.push({ x: b.x, y: b.y, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, life: 0.35 + Math.random() * 0.3, age: 0, size: 0.07 + Math.random() * 0.08, color: c, gravity: 3 }); }
+    }
+    function updateBolts12(dt) {
+      const p = Game.player, w = Game.world; if (!w) return;
+      for (let i = Game.bolts12.length - 1; i >= 0; i--) {
+        const b = Game.bolts12[i];
+        b.age += dt; if (b.age > b.life) { if (b.onEnd) b.onEnd(b); Game.bolts12.splice(i, 1); continue; }
+        b.vy += b.grav * dt;
+        if (b.homing) { const t = b.homing(b); if (t) { const a = Math.atan2(t.y - b.y, t.x - b.x), sp = Math.hypot(b.vx, b.vy) || 1, ca = Math.atan2(b.vy, b.vx); let d = ((a - ca + Math.PI * 3) % (Math.PI * 2)) - Math.PI; const na = ca + Math.max(-4 * dt, Math.min(4 * dt, d)); b.vx = Math.cos(na) * sp; b.vy = Math.sin(na) * sp; } }
+        const nx = b.x + b.vx * dt, ny = b.y + b.vy * dt;
+        if (solidAt(Math.floor(nx), Math.floor(ny))) {
+          if (b.bounce > 0) {
+            b.bounce--; const sx = solidAt(Math.floor(nx), Math.floor(b.y)), sy = solidAt(Math.floor(b.x), Math.floor(ny));
+            if (sx || !sy) b.vx *= -0.9; if (sy || !sx) b.vy *= -0.85;
+            boltBurst12(b, 4); continue;
+          }
+          boltBurst12(b, 8); if (b.onHitWorld) b.onHitWorld(b); Game.bolts12.splice(i, 1); continue;
+        }
+        b.x = nx; b.y = ny;
+        if (b.trail && Math.random() < dt * 40 * particleMul()) Game.particles.push({ x: b.x, y: b.y, vx: (Math.random() - 0.5) * 0.6, vy: (Math.random() - 0.5) * 0.6, life: 0.3, age: 0, size: 0.08, color: BOLT_COL12[b.kind] ? BOLT_COL12[b.kind][1] : '#fff', gravity: 0 });
+        let hit = false;
+        if (b.from === 'mob') {
+          if (p && !p.dead && boxDistToPoint(p, b.x, b.y) < b.r) {
+            hit = hurtPlayer12(b.dmg, 4, b.x, b.kind === 'ember' ? 'fire' : 'magic');
+            if (hit) { if (b.fx) b.fx(p); boltBurst12(b, 10); Game.bolts12.splice(i, 1); continue; }
+          }
+        } else {
+          for (const m of combatTargets()) {
+            if (m.dying != null || m.dead || (m.def.npc) || (m.def.pet && m.tamed) || m.def.villager || m.isPlayerProxy || b.hitSet && b.hitSet.has(m.id)) continue;
+            if (!(m.def.hostile || m.def.boss || m.segOf)) continue;
+            if (boxDistToPoint(m, b.x, b.y) < b.r) {
+              if (b.hitSet) b.hitSet.add(m.id);
+              hurtMob(m, b.dmg, Game.player, false); if (b.fx) b.fx(m, b);
+              boltBurst12(b, 8); if (b.pierce) { b.pierce--; continue; }
+              if (b.onHitMob) b.onHitMob(b, m);
+              hit = true; break;
+            }
+          }
+          if (hit) { Game.bolts12.splice(i, 1); continue; }
+        }
+      }
+    }
+    B12.updaters.push((dt) => updateBolts12(dt));
+    B12.glow.push(function drawBolts12(ox, oy, glow) {
+      for (const b of Game.bolts12) {
+        const x = ox + b.x * TILE, y = oy + b.y * TILE, r = Math.max(4, b.r * TILE), c = BOLT_COL12[b.kind] || BOLT_COL12.ice;
+        glow(x, y, r * 4, c[0], 0.5); glow(x, y, r * 1.4, c[0], 0.95);
+        ctx.fillStyle = 'rgba(255,255,255,0.95)'; ctx.fillRect(Math.round(x - r * 0.35), Math.round(y - r * 0.35), Math.max(2, Math.round(r * 0.7)), Math.max(2, Math.round(r * 0.7)));
+      }
+      for (const m of Game.mobs) if (m.def.glow && m.dying == null) { const x = ox + (m.x + m.w / 2) * TILE, y = oy + (m.y + m.h / 2) * TILE; glow(x, y, Math.max(m.w, m.h) * TILE * 1.3, m.def.glow, 0.28 + 0.08 * Math.sin(Game.time * 5 + m.id)); }
+    });
+    // ---- AI ----
+    const MOB_AI12 = {};
+    function nocturnalGone12(m, dt) {
+      if (!m.def.nocturnal || m.customName || m.guardian || B12.night) return false;
+      m.nd12 = (m.nd12 || 0) + dt;
+      if (m.nd12 > 3) { m.dead = true; for (let i = 0; i < 10; i++) Game.particles.push({ x: m.x + Math.random() * m.w, y: m.y + Math.random() * m.h, vx: (Math.random() - 0.5), vy: -1, life: 0.9, age: 0, size: 0.14, color: 'rgba(120,100,160,0.5)', gravity: -0.3 }); return true; }
+      return false;
+    }
+    // walkers that bite: Barkling, Ice Husk, Crimson Husk, Ruin Skeleton
+    MOB_AI12.melee = function (m, dt, p, dx, dist) {
+      const def = m.def; let tv = 0;
+      if (nocturnalGone12(m, dt)) return;
+      if (m.type === 'barkling' && m.disguised === undefined) m.disguised = !B12.night && Math.random() < 0.7;
+      if (m.disguised) {
+        if (dist < 4.5 || m.hurtFlash > 0) { m.disguised = false; m.attackAnim = 1; m.vy = -6; sfx('barkling.say', { x: m.x, y: m.y, pitch: 0.7 }); for (let i = 0; i < 14; i++) Game.particles.push({ x: m.x + m.w / 2 + (Math.random() - 0.5), y: m.y + m.h, vx: (Math.random() - 0.5) * 3, vy: -2 - Math.random() * 2, life: 0.8, age: 0, size: 0.09, color: i % 2 ? '#2f7a3c' : '#8a3d26', gravity: 6 }); }
+        else { mobMove(m, 0, dt); return; }
+      }
+      if (m.state === 'wander') tv = wanderVx(m, dt);
+      else if (m.state === 'hostile') {
+        const dir = dx > 0 ? 1 : -1, gap = boxGap(m, p);
+        tv = dir * def.speed * (m.type === 'crimsonhusk' && Game.time % 5 < 1 ? 1.5 : 1);
+        if (gap < def.reach + 0.3) tv *= 0.3;
+        if (gap < def.reach && m.attackCooldown <= 0) {
+          m.attackAnim = 1;
+          if (hitPlayer(m, def.dmg, 6.5, 4)) {
+            m.attackCooldown = 1.15;
+            if (m.type === 'icehusk') addFx12(p, 'slow', 5);
+            else if (m.type === 'barkling' && Math.random() < 0.25) addFx12(p, 'poison', 3);
+            else if (m.type === 'crimsonhusk' && Game.creative !== true) { p.hunger = Math.max(0, p.hunger - 0.5); }
+          } else m.attackCooldown = 0.4;
+        }
+      }
+      mobMove(m, tv, dt);
+    };
+    // Sporeling: hops at you; if it reaches you (or dies) a cloud of poison spores bursts out
+    function sporeCloud12(m) {
+      const cx = m.x + m.w / 2, cy = m.y + m.h / 2;
+      for (let i = 0; i < 26 * particleMul() + 4; i++) { const a = Math.random() * 6.28, sp = Math.random() * 2.2; Game.particles.push({ x: cx, y: cy, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 0.5, life: 1.1 + Math.random() * 0.8, age: 0, size: 0.1 + Math.random() * 0.14, color: i % 3 ? 'rgba(150,230,90,0.55)' : 'rgba(230,240,150,0.6)', gravity: -0.2, mist: true }); }
+      sfx('hiss', { x: cx, y: cy }); 
+      const p = Game.player; if (p && !p.dead && Math.hypot(p.x + p.w / 2 - cx, p.y + p.h / 2 - cy) < 2.6) { addFx12(p, 'poison', 6); }
+    }
+    MOB_AI12.sporeling = function (m, dt, p, dx, dist) {
+      const def = m.def; m.hopT = Math.max(0, (m.hopT || 0) - dt);
+      let tv = 0;
+      if (m.state === 'hostile') {
+        const dir = dx > 0 ? 1 : -1;
+        if (m.onGround && m.hopCd == null) m.hopCd = 0.5;
+        m.hopCd = (m.hopCd || 0) - dt;
+        if (m.onGround && m.hopCd <= 0) { m.hopT = 0.25; }
+        if (m.onGround && m.hopT > 0 && m.hopT < 0.05) { m.vy = -8.5; m.vx = dir * 4.2; m.kbTimer = 0.4; m.hopCd = 0.9 + Math.random() * 0.5; }
+        if (boxGap(m, p) < 0.3 && m.attackCooldown <= 0) { if (hitPlayer(m, def.dmg, 5, 3)) { sporeCloud12(m); m.attackCooldown = 1; m.health = 0; killMob(m); m.sporeDone = true; return; } }
+      } else if (m.onGround && Math.random() < dt * 0.4) { m.vy = -5; m.vx = (Math.random() < 0.5 ? -1 : 1) * 1.5; m.kbTimer = 0.4; }
+      mobMove(m, tv, dt);
+    };
+    // floaters that keep their distance and shoot: Frost Wraith (ice), Ember Wisp (fire)
+    MOB_AI12.hover = function (m, dt, p, dx, dist) {
+      const def = m.def; m.flap += dt * 8; m.castT = Math.max(0, (m.castT || 0) - dt);
+      const mcx = m.x + m.w / 2, mcy = m.y + m.h / 2, pcx = p.x + p.w / 2, pcy = p.y + p.h * 0.35;
+      let tx, ty, sp;
+      if (m.state === 'hostile') {
+        const ang = Game.time * 0.7 + m.id * 2.1, want = m.type === 'frostwraith' ? 6 : 5;
+        tx = pcx + Math.cos(ang) * want; ty = pcy - 2.5 + Math.sin(ang * 1.3) * 1.5; sp = def.speed;
+        m.shootCd = (m.shootCd == null ? 1 + Math.random() : m.shootCd) - dt;
+        if (m.shootCd <= 0 && dist < 11 && !Game.creative) {
+          m.shootCd = m.type === 'frostwraith' ? 2.4 + Math.random() : 2.8 + Math.random(); m.castT = 0.45;
+          const a = Math.atan2(pcy - mcy, pcx - mcx), spd = m.type === 'frostwraith' ? 9 : 8;
+          if (m.type === 'frostwraith') { for (const da of [0, -0.22, 0.22]) spawnBolt12({ x: mcx, y: mcy, vx: Math.cos(a + da) * spd, vy: Math.sin(a + da) * spd, kind: 'ice', dmg: 2, r: 0.28, life: 2.4, trail: true, fx: (pp) => addFx12(pp, 'slow', 4) }); sfx('frostwraith.say', { x: mcx, y: mcy, pitch: 1.3 }); }
+          else { spawnBolt12({ x: mcx, y: mcy, vx: Math.cos(a) * spd, vy: Math.sin(a) * spd, kind: 'ember', dmg: 3, r: 0.3, life: 2.6, trail: true, fx: (pp) => { if (!hasFx12(pp, 'fireproof')) pp.fireT = Math.max(pp.fireT || 0, 3); } }); sfx('mob.blaze', { x: mcx, y: mcy }); }
+        }
+        m.facingDir = dx > 0 ? 1 : -1;
+      } else { tx = mcx + Math.sin(Game.time * 0.6 + m.id * 3) * 4; ty = mcy + Math.cos(Game.time * 0.8 + m.id) * 2; sp = def.speed * 0.4; if (Math.abs(m.vx) > 0.2) m.facingDir = m.vx > 0 ? 1 : -1; }
+      if (m.kbTimer <= 0) { const ddx = tx - mcx, ddy = ty - mcy, len = Math.hypot(ddx, ddy) || 1, k = Math.min(1, dt * 2.5); m.vx += (ddx / len * sp * Math.min(1, len / 2) - m.vx) * k; m.vy += (ddy / len * sp * Math.min(1, len / 2) - m.vy) * k; }
+      const vx0 = m.vx, vy0 = m.vy; moveAndCollide(m, Game.world, dt);
+      if (m.vx === 0 && vx0 !== 0) m.vy -= 0.1; if (m.vy === 0 && vy0 > 0) m.vy = -2;
+      m.legPhase += dt; if (m.y > WORLD_H + 5) m.dead = true;
+      if (m.type === 'emberwisp' && Math.random() < dt * 10 * particleMul()) spawnFlame(mcx + (Math.random() - 0.5) * 0.4, mcy + 0.2);
+    };
+    // the heavies: wind up (arms up), slam, recover. Ice Golem chills, Magma Brute burns, Sentinel just hurts
+    MOB_AI12.slammer = function (m, dt, p, dx, dist) {
+      const def = m.def; let tv = 0;
+      if (m.state === 'wander') tv = wanderVx(m, dt);
+      else if (m.state === 'hostile') {
+        const dir = dx > 0 ? 1 : -1, gap = boxGap(m, p); tv = dir * def.speed;
+        if (m.slam === 'windup') {
+          tv = 0; m.slamT -= dt;
+          if (m.slamT <= 0) {
+            m.slam = 'recover'; m.slamT = 0.8;
+            const fx = m.x + m.w / 2, fy = m.y + m.h; sfx('fall.big', { x: fx, y: fy, pitch: 0.55 }); sfx('brute.slam', { x: fx, y: fy }); screenShake(0.7);
+            const col = m.type === 'icegolem' ? ['#e8f8ff', '#8cc4ec'] : m.type === 'magmabrute' ? ['#ff8a1e', '#ffd05a', '#3a2a30'] : ['#9aa592', '#6c7468'];
+            for (let i = 0; i < 22; i++) { const s = (i % 2 ? 1 : -1); Game.particles.push({ x: fx + s * (0.5 + i * 0.1), y: fy - 0.1, vx: s * (3 + Math.random() * 5), vy: -2 - Math.random() * 3, life: 0.5 + Math.random() * 0.4, age: 0, size: 0.1 + Math.random() * 0.1, color: col[i % col.length], gravity: 10 }); }
+            if (m.type === 'magmabrute') for (let s = -1; s <= 1; s += 2) for (let k = 1; k <= 5; k++) spawnFlame(fx + s * k * 0.8, fy - 0.2);
+            if (boxGap(m, p) < def.reach + 0.8 && p.y + p.h > m.y + m.h - 1.6) {
+              if (hitPlayer(m, def.dmg, 11, 6)) { if (m.type === 'icegolem') addFx12(p, 'slow', 6); else if (m.type === 'magmabrute' && !hasFx12(p, 'fireproof')) p.fireT = Math.max(p.fireT || 0, 4); }
+            }
+          }
+        } else if (m.slam === 'recover') { tv = 0; m.slamT -= dt; if (m.slamT <= 0) m.slam = null; }
+        else if (gap < def.reach + 0.4 && m.attackCooldown <= 0 && m.onGround) { m.slam = 'windup'; m.slamT = 0.7; m.attackCooldown = 2.4; m.facingDir = dir; sfx('brute.roar', { x: m.x + m.w / 2, y: m.y + m.h / 2, pitch: 0.7 }); }
+      }
+      mobMove(m, tv, dt);
+    };
+    // Cinder Crawler: a crawler that leaves fire
+    MOB_AI12.crawl = function (m, dt, p, dx, dist) {
+      const def = m.def; let tv = 0;
+      if (m.state === 'wander') tv = wanderVx(m, dt);
+      else if (m.state === 'hostile') {
+        const dir = dx > 0 ? 1 : -1, gap = boxGap(m, p); tv = dir * def.speed;
+        m.pounceCd -= dt;
+        if (m.onGround && m.pounceCd <= 0 && Math.abs(dx) < 4.5 && Math.abs(dx) > 1.2) { m.vy = -8; m.vx = dir * 8.5; m.pouncing = true; m.pounceCd = 1.6 + Math.random(); m.kbTimer = 0.35; sfx('cindercrawler.say', { x: m.x, y: m.y, pitch: 1.2 }); }
+        if (gap < def.reach && m.attackCooldown <= 0) { if (hitPlayer(m, def.dmg, 6, 3.5)) { m.attackCooldown = 0.9; if (!hasFx12(p, 'fireproof')) p.fireT = Math.max(p.fireT || 0, 3); } }
+      }
+      if (Math.random() < dt * 8 * particleMul()) spawnFlame(m.x + Math.random() * m.w, m.y + m.h * 0.4);
+      mobMove(m, tv, dt);
+    };
+    // Night Stalker: blinks behind you, fast, sneaky; burns away when the sun comes
+    MOB_AI12.stalker = function (m, dt, p, dx, dist) {
+      const def = m.def; if (nocturnalGone12(m, dt)) return;
+      let tv = 0;
+      if (m.state === 'wander') tv = wanderVx(m, dt);
+      else if (m.state === 'hostile') {
+        const dir = dx > 0 ? 1 : -1, gap = boxGap(m, p); tv = dir * def.speed;
+        m.blinkCd = (m.blinkCd == null ? 2 + Math.random() * 3 : m.blinkCd) - dt;
+        if (m.blinkCd <= 0 && dist > 4 && dist < 14 && !Game.creative) {
+          m.blinkCd = 4 + Math.random() * 3;
+          const side = p.facing ? -p.facing : 1, nx = Math.floor(p.x + p.w / 2 + side * 2.5), sf = Game.world.surfaceHeight(nx);
+          let ny = null; for (let y = Math.floor(p.y) - 2; y < Math.floor(p.y) + 4; y++) if (Game.world.getTile(nx, y) === AIR && Game.world.getTile(nx, y - 1) === AIR && Game.world.getTile(nx, y - 2) === AIR && solidAt(nx, y + 1)) { ny = y; break; }
+          if (ny != null) {
+            for (let i = 0; i < 14; i++) Game.particles.push({ x: m.x + m.w / 2, y: m.y + Math.random() * m.h, vx: (Math.random() - 0.5) * 2, vy: -1, life: 0.7, age: 0, size: 0.14, color: i % 2 ? 'rgba(120,90,200,0.6)' : 'rgba(20,10,40,0.8)', gravity: -0.4 });
+            m.x = nx + 0.5 - m.w / 2; m.y = ny + 1 - m.h; m.vx = 0; m.vy = 0;
+            for (let i = 0; i < 14; i++) Game.particles.push({ x: m.x + m.w / 2, y: m.y + Math.random() * m.h, vx: (Math.random() - 0.5) * 2, vy: -1, life: 0.7, age: 0, size: 0.14, color: i % 2 ? 'rgba(120,90,200,0.6)' : 'rgba(20,10,40,0.8)', gravity: -0.4 });
+            sfx('husk.say', { x: m.x, y: m.y, pitch: 0.5 });
+          }
+        }
+        if (gap < def.reach && m.attackCooldown <= 0) { m.attackAnim = 1; if (hitPlayer(m, def.dmg, 7, 4)) m.attackCooldown = 1.0; else m.attackCooldown = 0.4; }
+      }
+      mobMove(m, tv, dt);
+    };
+    // Moon Moth: harmless, drawn to lanterns and torches
+    MOB_AI12.moth = function (m, dt, p, dx, dist) {
+      if (nocturnalGone12(m, dt)) return;
+      m.flap += dt * 14;
+      const mcx = m.x + m.w / 2, mcy = m.y + m.h / 2;
+      if (!m.lamp || m.lampT <= 0) {
+        m.lampT = 3 + Math.random() * 3; m.lamp = null; let best = 99;
+        for (const l of Game.world.lightsNear(mcx, mcy, 14)) { if (l.id === 15 || l.id === 22 || l.id === BRAZIER_LIT || l.id === PAPER_LANTERN) { const d = Math.hypot(l.x - mcx, l.y - mcy); if (d < best) { best = d; m.lamp = l; } } }
+      }
+      m.lampT -= dt;
+      let tx, ty;
+      if (m.lamp) { const a = Game.time * 2 + m.id; tx = m.lamp.x + 0.5 + Math.cos(a) * 1.4; ty = m.lamp.y + 0.3 + Math.sin(a * 1.3) * 1.0; }
+      else { tx = mcx + Math.sin(Game.time * 0.7 + m.id * 3) * 5; ty = mcy + Math.cos(Game.time * 0.9 + m.id) * 2; }
+      const ddx = tx - mcx, ddy = ty - mcy, len = Math.hypot(ddx, ddy) || 1, k = Math.min(1, dt * 3);
+      if (m.kbTimer <= 0) { m.vx += (ddx / len * m.def.speed * Math.min(1, len) - m.vx) * k; m.vy += (ddy / len * m.def.speed * Math.min(1, len) - m.vy) * k; }
+      m.facingDir = m.vx > 0.1 ? 1 : m.vx < -0.1 ? -1 : m.facingDir;
+      moveAndCollide(m, Game.world, dt);
+      if (Math.random() < dt * 3 * particleMul()) Game.particles.push({ x: mcx, y: mcy + 0.2, vx: 0, vy: 0.3, life: 1, age: 0, size: 0.05, color: 'rgba(190,210,255,0.8)', gravity: 0 });
+    };
+    // the Crimson Reaper (Blood Moon): floats at you, scythe sweeps, calls bats, blinks if you run
+    MOB_AI12.reaper = function (m, dt, p, dx, dist) {
+      const def = m.def; m.flap = (m.flap || 0) + dt * 3; m.castT = Math.max(0, (m.castT || 0) - dt);
+      const mcx = m.x + m.w / 2, mcy = m.y + m.h / 2, pcx = p.x + p.w / 2, pcy = p.y + p.h * 0.4;
+      m.state = Game.creative ? 'wander' : 'hostile';
+      m.batCd = (m.batCd == null ? 6 : m.batCd) - dt; m.blinkCd = (m.blinkCd == null ? 8 : m.blinkCd) - dt;
+      if (m.state === 'hostile') {
+        if (m.blinkCd <= 0 && dist > 13) { m.blinkCd = 8; const nx = pcx + (Math.random() < 0.5 ? -5 : 5), ny = pcy - 1; for (let i = 0; i < 20; i++) Game.particles.push({ x: mcx, y: mcy + (Math.random() - 0.5) * 2, vx: (Math.random() - 0.5) * 3, vy: -1, life: 0.8, age: 0, size: 0.16, color: i % 2 ? 'rgba(200,20,50,0.7)' : 'rgba(20,0,10,0.8)', gravity: -0.3 }); m.x = nx - m.w / 2; m.y = ny - m.h / 2; m.vx = m.vy = 0; sfx('nightstalker.say', { x: nx, y: ny, pitch: 0.5 }); }
+        if (m.batCd <= 0 && Game.mobs.filter(q => q.type === 'bloodbat').length < 8) { m.batCd = 12; m.castT = 0.8; for (let i = 0; i < 3; i++) { const b = new Mob('bloodbat', mcx + (i - 1) * 1.2, mcy - 1); b.state = 'hostile'; Game.mobs.push(b); } eventMessage('The Crimson Reaper calls its bats!', '#ff6a8a'); }
+        const want = 2.2, tx = pcx - Math.sign(dx || 1) * want, ty = pcy - 0.5;
+        if (m.kbTimer <= 0) { const ddx = tx - mcx, ddy = ty - mcy, len = Math.hypot(ddx, ddy) || 1, k = Math.min(1, dt * 3); m.vx += (ddx / len * def.speed * Math.min(1, len / 2) - m.vx) * k; m.vy += (ddy / len * def.speed * Math.min(1, len / 2) - m.vy) * k; }
+        m.facingDir = dx > 0 ? 1 : -1;
+        if (m.attackCooldown <= 0 && dist < 3.4) { m.castT = 0.5; m.attackCooldown = 1.9; m.swipeT = 0.25; }
+        if (m.swipeT > 0) { m.swipeT -= dt; if (m.swipeT <= 0 && dist < 3.8) { hitPlayer(m, def.dmg, 9, 5); for (let i = 0; i < 12; i++) { const a = -1.2 + i * 0.2; Game.particles.push({ x: mcx + m.facingDir * 1.5, y: mcy + Math.sin(a) * 1.3, vx: m.facingDir * 3, vy: Math.sin(a) * 2, life: 0.4, age: 0, size: 0.12, color: '#ff3a4a', gravity: 0 }); } sfx('attack.strong', { x: mcx, y: mcy, pitch: 0.6 }); } }
+      } else { m.vx *= 0.95; m.vy = Math.sin(Game.time) * 0.5; }
+      moveAndCollide(m, Game.world, dt);
+      if (Math.random() < dt * 20 * particleMul()) Game.particles.push({ x: mcx + (Math.random() - 0.5) * 0.8, y: m.y + m.h * 0.9, vx: 0, vy: 0.8, life: 0.7, age: 0, size: 0.1, color: Math.random() < 0.5 ? '#c01830' : '#2a0a14', gravity: 1 });
+    };
+    // updateMob calls this for any mob with an `ai`
+    function runAI12(m, dt, p, dx, dist) { return MOB_AI12[m.def.ai](m, dt, p, dx, dist); }
+    const MOB_DEATH12 = { sporeling: (m) => { if (!m.sporeDone) sporeCloud12(m); } };
+    // ---- spawning: the biomes have their own monsters, by day and by night ----
+    B12.night = false;
+    B12.updaters.push(function nightFlag12() { const f = dayFraction(); B12.night = f >= NIGHT_START && f < NIGHT_END; });
+    const SPAWN12 = {   // biome: [surface table], [underground table]   (type, weight)
+      redwood: { surf: [['barkling', 3], ['sporeling', 3]], night: [['gloomowl', 3], ['barkling', 1]], under: [['sporeling', 1]] },
+      frost: { surf: [['icehusk', 3], ['frostwraith', 2]], night: [['frostwraith', 2], ['icehusk', 2]], under: [['icehusk', 3], ['frostwraith', 2], ['icegolem', 1]] },
+      ash: { surf: [['emberwisp', 3], ['cindercrawler', 3], ['magmabrute', 1]], night: [['emberwisp', 3], ['cindercrawler', 3], ['magmabrute', 2]], under: [['magmabrute', 3], ['cindercrawler', 3], ['emberwisp', 2]] },
+    };
+    function pickW12(t) { let s = 0; for (const [, w] of t) s += w; let r = Math.random() * s; for (const [n, w] of t) { r -= w; if (r <= 0) return n; } return t[0][0]; }
+    function spawner12(dt, p) {
+      B12.spawnT = (B12.spawnT || 2) - dt; if (B12.spawnT > 0) return;
+      B12.spawnT = 2.2 + Math.random() * 1.5;
+      const w = Game.world; if (w.isInterior || netIsClient() || Settings.difficulty === 'peaceful' || Game.creative) return;
+      const px = Math.floor(p.x), sfH = w.surfaceHeight(px), under = p.y > sfH + 6;
+      const b = w.biome12(px); if (!b) return;
+      const T = SPAWN12[b], tab = under ? T.under : B12.night ? T.night : T.surf;
+      const type = pickW12(tab), def = MOB_TYPES[type];
+      const near = Game.mobs.filter(m => m.def.biome === b && !m.dead && Math.abs(m.x - p.x) < 60);
+      if (near.length >= (b === 'ash' && under ? 7 : 5) || near.filter(m => m.type === type).length >= (def.health > 60 ? 1 : 3)) return;
+      const x = Math.floor(p.x + (Math.random() < 0.5 ? -1 : 1) * (13 + Math.random() * 12));
+      if (w.biome12(x) !== b) return;
+      const sf = w.surfaceHeight(x); if (sf >= SEA_LEVEL) return;
+      let y;
+      if (under) {
+        y = Math.floor(p.y) - 8 + Math.floor(Math.random() * 20);
+        if (y <= sf + 4 || y >= WORLD_H - BEDROCK_ROWS - 2) return;
+        if (!def.flying && !(w.getTile(x, y) === AIR && w.getTile(x, y - 1) === AIR && solidAt(x, y + 1))) return;
+        if (def.flying && !(w.getTile(x, y) === AIR && w.getTile(x, y - 1) === AIR)) return;
+        if (lightAt(x, y) > 7) return;
+      } else {
+        y = sf - 1; if (w.getTile(x, y) !== AIR || !solidAt(x, sf)) return;
+        if (lightAt(x, y) > 12 && B12.night) return;
+      }
+      if (w.placedWalls.get(x * WORLD_H + Math.floor(y))) return;
+      const m = new Mob(type, x + 0.5 - def.w / 2, 0);
+      m.y = def.flying ? y - 1.5 : y + 1 - m.h;
+      if (boxHitsSolid(w, m.x, m.y, m.w, m.h)) return;
+      Game.mobs.push(m);
+    }
+    B12.updaters.push(spawner12);
+
     let mobEyeGlows = [];
     function renderMobs(originX, originY) {
       mobEyeGlows = [];
@@ -16656,6 +17384,34 @@
     for (const id of [77, 82, 83, 84, 85, 86, 87, 88]) BLOCK_SOUND_GROUP[id] = 'stone';
     BLOCK_SOUND_GROUP[78] = 'grass'; BLOCK_SOUND_GROUP[79] = 'gravel'; BLOCK_SOUND_GROUP[80] = 'wood'; BLOCK_SOUND_GROUP[81] = 'wood'; BLOCK_SOUND_GROUP[89] = 'glass';
     const STEP_COUNTS = { stone: 6, grass: 6, gravel: 4, sand: 5, wood: 6, cloth: 4, ladder: 5 };
+    // (1.2) the new monsters' voices: made from the existing sounds, pitched to suit
+    {
+      const S12 = (type, say, hurt, death, step, cat) => {
+        const mk = (spec, vol) => spec && ({ files: spec[0], vol: spec[2] != null ? spec[2] : vol, pitch: spec[1], cat: cat || 'volCreatures' });
+        if (say) SOUNDS[type + '.say'] = mk(say, 0.8); if (hurt) SOUNDS[type + '.hurt'] = mk(hurt, 0.9); if (death) SOUNDS[type + '.death'] = mk(death, 0.9); if (step) SOUNDS[type + '.step'] = mk(step, 0.15);
+      };
+      const rav = n_('mob/ravager/idle', 4), ravH = n_('mob/ravager/hurt', 4), ravD = n_('mob/ravager/death', 3), husS = n_('mob/husk/step', 5), husI = n_('mob/husk/idle', 3), husH = n_('mob/husk/hurt', 2), husD = n_('mob/husk/death', 2);
+      const bat = n_('mob/bat/idle', 4), batH = n_('mob/bat/hurt', 4), vexI = n_('mob/vex/idle', 4), vexH = n_('mob/vex/hurt', 2), vexD = n_('mob/vex/death', 2);
+      const wit = n_('mob/wither/idle', 4), witH = n_('mob/wither/hurt', 4), golem = n_('mob/irongolem/hit', 4), spi = n_('mob/spider/say', 4), spiS = n_('mob/spider/step', 4);
+      S12('barkling', [rav, [0.7, 0.9]], [ravH, [0.8, 1]], [ravD, [0.8, 1]], [husS, [0.7, 0.8]]);
+      S12('sporeling', [n_('mob/pig/say', 3), [1.6, 1.9], 0.5], [n_('mob/chicken/hurt', 2), [1.2, 1.5]], [n_('mob/chicken/hurt', 2), [0.9, 1.1]], null);
+      S12('gloomowl', [bat, [0.55, 0.7]], [batH, [0.6, 0.8]], [['mob/bat/death'], [0.6, 0.7]], null);
+      S12('icehusk', [husI, [0.75, 0.9]], [husH, [0.8, 0.95]], [husD, [0.8, 0.95]], [husS, [0.8, 0.9]]);
+      S12('frostwraith', [vexI, [0.6, 0.8]], [vexH, [0.7, 0.9]], [vexD, [0.7, 0.9]], null);
+      S12('icegolem', [rav, [0.5, 0.65]], [golem, [0.6, 0.75]], [ravD, [0.55, 0.7]], [golem, [0.4, 0.5], 0.3]);
+      S12('emberwisp', [n_('mob/blaze/breathe', 4), [1.1, 1.4]], [n_('mob/blaze/breathe', 4), [1.5, 1.8]], [['mob/blaze/death'], [1.2, 1.4]], null);
+      S12('cindercrawler', [spi, [0.8, 1.0]], [spi, [1.1, 1.3]], [['mob/spider/death'], [0.9, 1.1]], [spiS, [0.9, 1.1]]);
+      S12('magmabrute', [rav, [0.45, 0.6]], [ravH, [0.5, 0.65]], [ravD, [0.5, 0.65]], [golem, [0.4, 0.5], 0.3]);
+      S12('nightstalker', [wit, [1.2, 1.5], 0.6], [witH, [1.1, 1.4]], [['mob/wither/death'], [1.3, 1.5]], [husS, [0.6, 0.7]]);
+      S12('moonmoth', [bat, [1.8, 2.2], 0.25], [batH, [1.8, 2.2]], [['mob/bat/death'], [1.8, 2.2]], null);
+      S12('bloodbat', [bat, [0.9, 1.1]], [batH, [0.9, 1.1]], [['mob/bat/death'], [0.9, 1.1]], null);
+      S12('crimsonhusk', [husI, [0.55, 0.7]], [husH, [0.6, 0.75]], [husD, [0.6, 0.75]], [husS, [0.7, 0.8]]);
+      S12('crimsonreaper', [wit, [0.5, 0.7]], [witH, [0.6, 0.8]], [['mob/wither/death'], [0.6, 0.7]], null);
+      S12('ruinskeleton', [husI, [1.3, 1.5], 0.6], [husH, [1.3, 1.5]], [husD, [1.3, 1.5]], [husS, [1.4, 1.6]]);
+      S12('sentinel', [rav, [0.55, 0.7]], [golem, [0.7, 0.85]], [ravD, [0.6, 0.75]], [golem, [0.45, 0.55], 0.3]);
+      S12('hollowknight', [wit, [0.5, 0.65]], [witH, [0.55, 0.7]], [['mob/wither/death'], [0.55, 0.65]], [golem, [0.4, 0.5], 0.3]);
+      SOUNDS['mob.blaze'] = { files: ['mob/ghast/fireball4'], vol: 0.35, pitch: [1.5, 1.8], cat: 'volCreatures' };
+    }
     // (1.2) the new blocks' sound groups
     for (const id of [REDWOOD_LOG, REDWOOD_PLANKS, FALLEN_LOG, CHARRED_LOG, BURNING_LOG, FROZEN_CHEST]) BLOCK_SOUND_GROUP[id] = 'wood';
     for (const id of [REDWOOD_GRASS, REDWOOD_NEEDLES, BROWN_MUSHROOM, RED_MUSHROOM, EMBER_LEAVES, CINDER_WEED, MOONBLOOM]) BLOCK_SOUND_GROUP[id] = 'grass';
@@ -18717,6 +19473,23 @@
       { id: 'king', title: 'Regicide', desc: 'Defeat the King of the Abyss', icon: ABYSS_HEART, event: true, challenge: true },
       { id: 'sprinkler', title: 'Let It Rain', desc: 'Get a Sprinkler watering your crops', icon: SPRINKLER, event: true },   // (1.1.5)
       { id: 'totem', title: 'Something Stirs Below', desc: 'Awaken the Apex Parasite with a totem in the desert', icon: PARASITE_TOTEM, event: true },   // (1.1.4)
+      // ---- Beta 1.2 ----
+      { id: 'redwood', title: 'Giants of the Forest', desc: 'Walk into the Redwood Forest', icon: REDWOOD_LOG, event: true },
+      { id: 'frostlands', title: 'Cold Shoulder', desc: 'Visit the Frostlands', icon: PACKED_ICE, event: true },
+      { id: 'ashlands', title: 'Land of Ash', desc: 'Cross into the Ashlands', icon: ASH_BLOCK, event: true },
+      { id: 'redwoodore', title: 'Heartwood', desc: 'Get Raw Redwood from Redwood Ore', icon: RAW_REDWOOD, items: [RAW_REDWOOD] },
+      { id: 'frostore', title: 'Cold Hard Crystal', desc: 'Get a Frost Crystal', icon: FROST_CRYSTAL, items: [FROST_CRYSTAL] },
+      { id: 'emberore', title: 'Hot Property', desc: 'Get an Ember Ingot', icon: EMBER_INGOT, items: [EMBER_INGOT] },
+      { id: 'frozenchest', title: 'Cold Storage', desc: 'Open a Frozen Chest in an ice cave', icon: FROZEN_CHEST, event: true },
+      { id: 'cast', title: 'Apprentice', desc: 'Cast a spell', icon: EMBER_STAFF, event: true },
+      { id: 'archmage', title: 'Archmage', desc: 'Own all five magic weapons', icon: ABYSS_TOME, items: [EMBER_STAFF, FROST_WAND, VOID_ORB, LIGHTNING_ROD, ABYSS_TOME], all: true, challenge: true },
+      { id: 'fish', title: 'Gone Fishing', desc: 'Catch a fish', icon: FISHING_ROD, event: true },
+      { id: 'fishall', title: 'Master Angler', desc: 'Catch every kind of fish', icon: SHARK, event: true, challenge: true },
+      { id: 'bloodmoon', title: 'Red Sky at Night', desc: 'Live through a Blood Moon', icon: BLOOD_SHARD, event: true, challenge: true },
+      { id: 'moonbloom', title: 'Night Gardener', desc: 'Pick a Moonbloom at night', icon: MOONPETAL, items: [MOONPETAL] },
+      { id: 'ruins', title: 'Forgotten Halls', desc: 'Find the Ancient Ruins', icon: RUIN_BRICKS, event: true },
+      { id: 'ruinkey', title: 'Open Sesame', desc: 'Open an Ancient Door with a Ruin Key', icon: RUIN_KEY, event: true },
+      { id: 'hollow', title: 'Hollow Victory', desc: 'Defeat the Hollow Knight', icon: HOLLOW_BLADE, event: true, challenge: true },
       { id: 'parasite', title: 'Exterminator', desc: 'Defeat the Apex Parasite', icon: PARASITE_TOTEM, event: true, challenge: true },   // (1.1.4)
       { id: 'storage', title: 'Solid Investment', desc: 'Pack nine ingots or gems into a block', icon: 82, items: [82, 83, 84, 85, 86, 87, 88] },
       { id: 'fish', title: 'Fishy Business', desc: 'Catch a fish', icon: 138, items: [138] },
@@ -18789,7 +19562,7 @@
             for (const s of p.inventory) if (s) have.add(s.item);
             if (p.armorSlot) have.add(p.armorSlot.item);
             if (Game.cursor) have.add(Game.cursor.item);
-            for (const a of ADVANCEMENTS) if (a.items && !this.done.has(a.id) && a.items.some(i => have.has(i))) this.grant(a.id);
+            for (const a of ADVANCEMENTS) if (a.items && !this.done.has(a.id) && (a.all ? a.items.every(i => have.has(i)) : a.items.some(i => have.has(i)))) this.grant(a.id);
             if (!Game.world.isInterior && p.y > DEEPSLATE_ROW) this.grant('deep');
             if (perkCount(p) >= 1) this.grant('perk');
             if (perkCount(p) >= 3) this.grant('perks3');
@@ -22335,6 +23108,7 @@
       else if (!p.sprinting) p.sprintCharge = Math.max(0, p.sprintCharge - dt * 3);
       let maxSpeed = p.sprinting ? MOVE_SPEED + (SPRINT_SPEED - MOVE_SPEED) * p.sprintCharge : MOVE_SPEED;
       maxSpeed *= perkStat(p, 'speed', 'speed', 1);   // Swift Charm (I/II/III)
+      maxSpeed *= speedMul12(p);   // (1.2) chilled, swift, stuck in a web
       if (p.featherFalling && hasPerk(p, 'wings')) maxSpeed *= 1.25;   // (1.0.5) Angel Wings: you steer faster while gliding
       { const hs = p.selectedSlot(), hw = hs && WEAPONS[hs.item]; if (hw && hw.type === 'hammer') maxSpeed *= 0.85; if (p.musketReload) maxSpeed *= 0.6; if (p.hammer && p.hammer.t < 0.4) maxSpeed *= 0.5; }
       if (inWater) maxSpeed *= hasAquaArmor(p) ? 0.7 : 0.55;
@@ -22752,7 +23526,7 @@
     // a number from PERK_STATS for the level you're wearing (or `none` without the charm)
     function perkStat(p, key, stat, none) { const lv = perkLevel(p, key); return lv ? PERK_STATS[key][stat][lv - 1] : none; }
     // Warrior Charm on a melee hit
-    function warriorDmg(p, dmg) { const lv = perkLevel(p, 'damage'); return lv ? Math.max(dmg + PERK_STATS.damage.min[lv - 1], Math.ceil(dmg * PERK_STATS.damage.mult[lv - 1])) : dmg; }
+    function warriorDmg(p, dmg) { const lv = perkLevel(p, 'damage'); const d = lv ? Math.max(dmg + PERK_STATS.damage.min[lv - 1], Math.ceil(dmg * PERK_STATS.damage.mult[lv - 1])) : dmg; return hasFx12(p, 'strength') ? Math.ceil(d * 1.3) : d; }
     function perkCount(p) { return p && p.perks ? p.perks.filter(Boolean).length : 0; }
     function doDash(p, dir) {
       if (p.dashCd > 0 || !dir || p.riding || p.flying || p.swimming) return;
@@ -23100,6 +23874,7 @@
         p.useTimer -= dt;
         if (Input.rightDown) holdUse(p);
         updatePlayerVitals(p, dt);
+        updateB12(dt);   // (1.2)
         updateMobs(dt);
         if (!netIsClient() || Game.world.isInterior) updateFurnaces(dt);
         updateDoors(dt);

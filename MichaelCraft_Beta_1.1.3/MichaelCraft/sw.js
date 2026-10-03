@@ -2,7 +2,7 @@
 // Makes the game installable as an app and playable offline: everything the game
 // loads is kept in a cache on your phone. When a new version is uploaded, change
 // VERSION below so phones throw away the old copy.
-const VERSION = 'michaelcraft-beta-1.2.1';
+const VERSION = 'michaelcraft-beta-1.3';
 const PRECACHE = [
  "./",
  "index.html",
@@ -248,6 +248,20 @@ const PRECACHE = [
  "Sounds/music/desperation_BGM.mp3",
  "Sounds/music/final_stand.mp3",
  "Sounds/music/apex_parasite.mp3",
+ "Textures/items/mana_star.png",
+ "Textures/items/short_bow.png",
+ "Textures/blocks/launch_pad.png",
+ "Textures/blocks/rocket_hull.png",
+ "Textures/blocks/rocket_fin_l.png",
+ "Textures/blocks/rocket_fin_r.png",
+ "Textures/blocks/rocket_engine.png",
+ "Textures/blocks/rocket_tank.png",
+ "Textures/blocks/rocket_cockpit.png",
+ "Textures/blocks/rocket_nose.png",
+ "Textures/HUD/addons/nightmare.png",
+ "Textures/HUD/addons/hardcore.png",
+ "Textures/HUD/addons/moon.png",
+ "Textures/HUD/addons/space.png",
  "Sounds/music/hollow_knight.mp3",
  "Textures/items/abyss_tome.png",
  "Textures/items/ancient_armor.png",

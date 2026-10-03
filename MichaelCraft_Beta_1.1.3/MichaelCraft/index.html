@@ -10429,6 +10429,7 @@
         if (targetId === CHARM_MERGER) { openScreen('merger', t.x, t.y); return; }   // (1.0.6)
         if (DOOR_INFO[targetId]) { toggleDoorLock(t.x, t.y); return; }
       }
+      if (!isRepeat && def && def.toolType === 'rod') { useRod12(p, slot); return; }   // (1.2) fishing
       if (!isRepeat && def && WEAPONS[slot.item]) { weaponRightClick(p, slot, WEAPONS[slot.item]); return; }   // dash / pound / reload
       if (!isRepeat && def && def.kind === 'food') { eatSelected(); return; }
       if (!isRepeat && def && def.kind === 'armor') { equipArmor(); return; }
@@ -14423,6 +14424,10 @@
           { cost: [[122, 7]], result: [134, 1], max: 12 },
           { cost: [[134, 1]], result: [132, 5], max: 12 },
           { cost: [[134, 1]], result: [124, 3], max: 8 },
+          { cost: [[BASS, 4]], result: [134, 1], max: 12 }, { cost: [[TROUT, 4]], result: [134, 1], max: 12 },   // (1.2) fish
+          { cost: [[ICEFISH, 3]], result: [134, 1], max: 12 }, { cost: [[FROST_KOI, 2]], result: [134, 1], max: 12 }, { cost: [[MAGMAFISH, 2]], result: [134, 1], max: 12 },
+          { cost: [[TUNA, 2]], result: [134, 1], max: 12 }, { cost: [[PUFFERFISH, 3]], result: [134, 1], max: 8 }, { cost: [[SHARK, 1]], result: [134, 3], max: 6 },
+          { cost: [[134, 4]], result: [FISHING_ROD, 1], max: 3 },
           { cost: [[134, 16]], result: [205, 1], max: 1 }]      // Heart Charm (health boost)
       },
       {
@@ -16572,6 +16577,126 @@
       sfx('spell.abyss');
     };
     // hook into the engine
+
+    // =============================================================================
+    // BETA 1.2 - FISHING
+    //   Right-click with a Fishing Rod near water (or, in the Ashlands, LAVA) to cast. Wait for the bobber to
+    //   dip - a "!" pops up - and right-click again to reel in. What bites depends on where you fish:
+    //     Forest / lakes     Bass, Trout
+    //     Frostlands         Icefish, Frost Koi
+    //     Ashlands (lava)    Magmafish
+    //     The sea            Tuna, Pufferfish, and (rarely) a Shark
+    //   Cook them in a furnace: each one gives a different bonus (see FISH_FX). Butchers buy fish for emeralds.
+    // =============================================================================
+    const FISH_TABLE12 = {
+      forest: [[BASS, 50], [TROUT, 50]],
+      frost: [[ICEFISH, 62], [FROST_KOI, 38]],
+      ash: [[MAGMAFISH, 100]],
+      ocean: [[TUNA, 50], [PUFFERFISH, 38], [SHARK, 12]],
+    };
+    const TREASURE12 = {
+      forest: [[134, 1, 2], [MANA_POTION, 1, 1], [201, 1, 1], [FISHING_ROD, 1, 1], [GOLD, 1, 2]],
+      frost: [[FROST_CRYSTAL, 1, 3], [134, 1, 2], [MANA_POTION, 1, 1], [DIAMOND, 1, 1]],
+      ash: [[RAW_EMBER, 1, 3], [EMBER_INGOT, 1, 1], [134, 1, 2], [MAGMA_ROCK, 1, 2]],
+      ocean: [[134, 1, 3], [DIAMOND, 1, 1], [MANA_POTION, 1, 2], [RUBY, 1, 1], [GOLD, 2, 3]],
+    };
+    const JUNK12 = [[100, 1, 3], [STRING, 1, 2], [133, 1, 1], [124, 1, 1]];
+    function fishBiome12(x, y) {
+      const w = Game.world, tx = Math.floor(x), ty = Math.floor(y);
+      if (isLavaId(w.getTile(tx, ty)) || w.isAsh(tx)) return 'ash';
+      if (w.isSnowy(tx)) return 'frost';
+      if (w.oceanness(tx) > 0.3 && w.surfaceHeight(tx) > SEA_LEVEL - 1) return 'ocean';
+      return 'forest';
+    }
+    function rollCatch12(biome) {
+      const r = Math.random();
+      if (r < 0.07) { const T = TREASURE12[biome], t = T[Math.floor(Math.random() * T.length)]; return { item: t[0], qty: t[1] + Math.floor(Math.random() * (t[2] - t[1] + 1)), treasure: true }; }
+      if (r < 0.12) { const t = JUNK12[Math.floor(Math.random() * JUNK12.length)]; return { item: t[0], qty: t[1], junk: true }; }
+      return { item: pickW12(FISH_TABLE12[biome].map(([i, w]) => [i, w])), qty: 1 };
+    }
+    B12.rod = null; B12.leaps = [];
+    function useRod12(p, slot) {
+      const R = B12.rod;
+      if (R) {
+        if (R.state === 'bite') reelIn12(p, slot);
+        else { B12.rod = null; sfx('swim', { pitch: 1.4, vol: 0.5 }); }
+        p.swing = 1; return;
+      }
+      p.swing = 1; startAction(p, 'slash');
+      const ox = p.x + p.w / 2 + p.facing * 0.7, oy = p.y + 0.3;
+      B12.rod = { x: ox, y: oy, vx: p.lookX * 11 + p.vx * 0.3, vy: p.lookY * 11 - 3.5, state: 'fly', t: 0, wait: 0, biteT: 0, dip: 0 };
+      sfx('bow.shoot', { pitch: 1.6, vol: 0.45 });
+    }
+    function reelIn12(p, slot) {
+      const R = B12.rod; B12.rod = null;
+      const biome = fishBiome12(R.x, R.y), c = rollCatch12(biome);
+      giveOrDrop(makeStack(c.item, c.qty));
+      B12.leaps.push({ item: c.item, x: R.x, y: R.y, t: 0 });
+      const nm = ITEMS[c.item].name;
+      showToast(c.treasure ? `Treasure! You fished up ${c.qty > 1 ? c.qty + ' ' : ''}${nm}` : c.junk ? `You reeled in some ${nm}...` : `You caught a ${nm}!`);
+      for (let i = 0; i < 16; i++) { const a = -Math.PI / 2 + (Math.random() - 0.5) * 1.8; Game.particles.push({ x: R.x, y: R.y, vx: Math.cos(a) * (2 + Math.random() * 2), vy: Math.sin(a) * (3 + Math.random() * 2), life: 0.5, age: 0, size: 0.07, color: biome === 'ash' ? '#ffb02e' : '#bfe4ff', gravity: 12 }); }
+      sfx('splash', { x: R.x, y: R.y, vol: 1.4, pitch: 1.3 }); sfx('pickup');
+      if (c.item >= BASS && c.item <= PUFFERFISH) {
+        Adv.grant('fish');
+        const f = Game.flags; if (f) { f.fish = f.fish || []; if (!f.fish.includes(c.item)) f.fish.push(c.item); if (f.fish.length >= FISH_IDS.length) Adv.grant('fishall'); }
+      }
+      if (!Game.creative && slot && slot.durability != null) { slot.durability -= 1; if (slot.durability <= 0) { const i = p.inventory.indexOf(slot); if (i >= 0) p.inventory[i] = null; sfx('tool.break'); } }
+      renderHUD.hotSig = null;
+    }
+    B12.updaters.push(function rod12(dt, p) {
+      const R = B12.rod, w = Game.world;
+      for (let i = B12.leaps.length - 1; i >= 0; i--) { const L = B12.leaps[i]; L.t += dt; if (L.t > 0.7) B12.leaps.splice(i, 1); }
+      if (!R) return;
+      const s = p.selectedSlot();
+      if (!s || ITEMS[s.item].toolType !== 'rod' || p.dead || Math.hypot(R.x - p.x, R.y - p.y) > 22 || w.isInterior) { B12.rod = null; return; }
+      R.t += dt;
+      if (R.state === 'fly') {
+        R.vy += 22 * dt; R.x += R.vx * dt; R.y += R.vy * dt;
+        const tx = Math.floor(R.x), ty = Math.floor(R.y), id = w.getTile(tx, ty);
+        if (isWaterId(id) || isLavaId(id)) {
+          let yy = ty; while (yy > 0 && (isWaterId(w.getTile(tx, yy - 1)) || isLavaId(w.getTile(tx, yy - 1)))) yy--;
+          R.y = yy + 0.12; R.vx = R.vy = 0; R.state = 'float'; R.t = 0; R.wait = 3 + Math.random() * 7; R.lava = isLavaId(id);
+          if (R.lava) { for (let k = 0; k < 8; k++) spawnFlame(R.x + (Math.random() - 0.5) * 0.6, R.y); } else spawnSplash(R.x, R.y);
+          sfx(R.lava ? 'fizz' : 'splash', { x: R.x, y: R.y, vol: 0.8 });
+        } else if (solidAt(tx, ty) || R.t > 3) { R.state = 'drop'; R.t = 0; R.vx *= 0.1; }
+      } else if (R.state === 'drop') { R.vy += 22 * dt; R.y += R.vy * dt; if (R.t > 0.5) B12.rod = null; }
+      else if (R.state === 'float') {
+        if (R.t > R.wait - 1.1 && R.t < R.wait && Math.random() < dt * 3) { R.dip = 0.25; if (R.lava) spawnFlame(R.x, R.y); else spawnSplash(R.x, R.y); }   // a nibble
+        if (R.t >= R.wait) {
+          R.state = 'bite'; R.biteT = 1.3; R.dip = 0.5;
+          sfx(R.lava ? 'fizz' : 'splash', { x: R.x, y: R.y, vol: 1.1, pitch: 1.5 });
+          for (let k = 0; k < 10; k++) Game.particles.push({ x: R.x + (Math.random() - 0.5) * 0.5, y: R.y, vx: (Math.random() - 0.5) * 3, vy: -3 - Math.random() * 2, life: 0.5, age: 0, size: 0.07, color: R.lava ? '#ffb02e' : '#bfe4ff', gravity: 12 });
+        }
+        R.dip = Math.max(0, R.dip - dt);
+      } else if (R.state === 'bite') {
+        R.biteT -= dt; R.dip = 0.4 + 0.1 * Math.sin(R.t * 30);
+        if (R.biteT <= 0) { R.state = 'float'; R.t = 0; R.wait = 2.5 + Math.random() * 5; showToast('It got away...'); }
+      }
+    });
+    B12.pre.push(function drawRod12(ox, oy) {
+      const R = B12.rod, p = Game.player;
+      if (R && p) {
+        const hx = p.x + p.w / 2 + p.facing * 0.9, hy = p.y + 0.15;
+        const bx = R.x, by = R.y + (R.state === 'float' || R.state === 'bite' ? R.dip * 0.5 + Math.sin(Game.time * 3) * 0.02 : 0);
+        const sag = R.state === 'fly' ? 0.2 : 0.6 + Math.abs(bx - hx) * 0.04;
+        ctx.strokeStyle = 'rgba(240,240,240,0.85)'; ctx.lineWidth = Math.max(1, TILE / 16);
+        ctx.beginPath(); ctx.moveTo(ox + hx * TILE, oy + hy * TILE); ctx.quadraticCurveTo(ox + (hx + bx) / 2 * TILE, oy + ((hy + by) / 2 + sag) * TILE, ox + bx * TILE, oy + by * TILE); ctx.stroke();
+        const sx = ox + bx * TILE, sy = oy + by * TILE, r = TILE * 0.17;
+        if (R.state === 'float' || R.state === 'bite') { ctx.strokeStyle = 'rgba(255,255,255,0.35)'; ctx.lineWidth = 1; ctx.beginPath(); ctx.ellipse(sx, oy + (R.y + 0.15) * TILE, r * (2 + Math.sin(Game.time * 2)), r * 0.6, 0, 0, 6.283); ctx.stroke(); }
+        ctx.fillStyle = '#e8e8e8'; ctx.beginPath(); ctx.arc(sx, sy + r * 0.2, r, 0, 3.1416); ctx.fill();
+        ctx.fillStyle = '#d42a2a'; ctx.beginPath(); ctx.arc(sx, sy + r * 0.2, r, 3.1416, 6.283); ctx.fill();
+        ctx.strokeStyle = '#2a1a1a'; ctx.lineWidth = 1; ctx.beginPath(); ctx.arc(sx, sy + r * 0.2, r, 0, 6.283); ctx.stroke();
+        if (R.state === 'bite') {
+          ctx.save(); ctx.font = `${Math.round(TILE * 0.9)}px "Press Start 2P", monospace`; ctx.textAlign = 'center'; ctx.fillStyle = '#ff3a3a'; ctx.strokeStyle = '#fff'; ctx.lineWidth = 3;
+          const yy = sy - TILE * (1.0 + 0.15 * Math.sin(Game.time * 18)); ctx.strokeText('!', sx, yy); ctx.fillText('!', sx, yy); ctx.restore();
+        }
+      }
+      for (const L of B12.leaps) {
+        const ic = itemIcon[L.item] || blockTex[L.item]; if (!ic || !p) continue;
+        const k = L.t / 0.7, tx = p.x + p.w / 2, ty = p.y + 0.3, x = L.x + (tx - L.x) * k, y = L.y + (ty - L.y) * k - Math.sin(k * Math.PI) * 2.5;
+        ctx.save(); ctx.translate(ox + x * TILE, oy + y * TILE); ctx.rotate(k * 6); ctx.imageSmoothingEnabled = false; const sz = TILE * 0.8; ctx.drawImage(ic, 0, 0, ic.width, ic.height, -sz / 2, -sz / 2, sz, sz); ctx.restore();
+      }
+    });
 
     let mobEyeGlows = [];
     function renderMobs(originX, originY) {
@@ -21958,6 +22083,9 @@
       if (!f || !Game.flags) return;
       Game.flags.tonioSold = Game.flags.tonioSold || !!f.tonioSold;
       for (let i = 0; i < 3; i++) Game.flags.sensei[i] = Game.flags.sensei[i] || !!(f.sensei && f.sensei[i]);
+      Game.flags.hollowDown = Game.flags.hollowDown || !!f.hollowDown;   // (1.2)
+      Game.flags.bloodMoons = Math.max(Game.flags.bloodMoons | 0, f.bloodMoons | 0);
+      if (Array.isArray(f.fish)) { Game.flags.fish = Game.flags.fish || []; for (const x of f.fish) if (!Game.flags.fish.includes(x)) Game.flags.fish.push(x); }
     }
 
     // ---- CLIENT: messages from the host ------------------------------------------------
@@ -22722,7 +22850,7 @@
       // cheats: chosen when the world is made. Worlds from before 1.3 keep them on.
       Game.cheats = saveData ? (saveData.cheats ?? true) : !!cheats;
       const fl = (saveData && saveData.flags) || {};
-      Game.flags = { tonioSold: !!fl.tonioSold, sensei: [0, 1, 2].map(i => !!(fl.sensei && fl.sensei[i])) };
+      Game.flags = { tonioSold: !!fl.tonioSold, sensei: [0, 1, 2].map(i => !!(fl.sensei && fl.sensei[i])), fish: Array.isArray(fl.fish) ? fl.fish.slice() : [], hollowDown: !!fl.hollowDown, bloodMoons: fl.bloodMoons | 0 };
       Game.netSaves = (saveData && saveData.netPlayers) || {};
       Game.rules = Object.assign(defaultRules(), (saveData && saveData.rules) || (!saveData && newWorldRules) || {});   // (1.0.2)
       Game.dayShift = (saveData && saveData.dayShift) || 0; Game._lastT = null;
@@ -22838,7 +22966,7 @@
       Game.world = new World((Math.random() * 1e9) | 0);
       Game.mobs = []; Game.drops = []; Game.particles = [];
       Game.projectiles = []; Game.arrows = []; Game.boss = null; Game.ritual = null; stopBossMusic(true);
-      Game.flags = { tonioSold: false, sensei: [false, false, false] }; resetCombatState(); Game.cheats = false;
+      Game.flags = { tonioSold: false, sensei: [false, false, false], fish: [], hollowDown: false, bloodMoons: 0 }; resetCombatState(); Game.cheats = false;
       Game.worldId = null; Game.worldName = null;
       el('chat-input').placeholder = 'Type a command, like /help';
       updateNetBadge();

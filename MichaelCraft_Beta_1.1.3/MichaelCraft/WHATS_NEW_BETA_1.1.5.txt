@@ -39,15 +39,17 @@ WATER INTAKE - no more buckets
   A pump now works as soon as it's placed: you don't have to open it first.
   Breaking an intake in a lake leaves the water behind.
 
-CROPS GROW 3x FASTER
-  All crops now grow about 3 times faster than before, everywhere. Crops watered by a
-  sprinkler grow about 6 times faster than before (twice as fast as ordinary crops now).
+CROP GROWTH
+  A seed now grows into ripe wheat in 3 MINUTES (3 stages of 60 seconds each). Crops
+  watered by a sprinkler take 1 MINUTE (3 times faster). Every crop keeps its own clock
+  and grows while you're within about 40 blocks of it (up, down or sideways, so a farm in a
+  basement or on a tower grows too).
 
 WHAT A SPRINKLER DOES
   It waters a patch 7 blocks wide: 3 blocks to its left, 3 to its right, and itself, from one
   block above it to two blocks below. Put it right next to your farmland (or on a pipe
   running along the top of your field). Watered farmland goes dark and shiny, and crops
-  growing in it grow about 6x faster than the old rate. Water sprays out in arcs and the nozzle spins.
+  growing in it grow 3x faster. Water sprays out in arcs and the nozzle spins.
   A sprinkler only drinks while it has something to water (0.4 units a second), and an empty
   tank waters nothing: the pump screen shows the tank, how many sprinklers are connected,
   how many are watering right now, and tells you what's wrong.

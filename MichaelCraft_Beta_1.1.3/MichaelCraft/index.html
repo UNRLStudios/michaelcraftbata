@@ -7239,6 +7239,11 @@
         // anything changing next to water makes the water re-check itself
         if (isWaterId(old) || isWaterId(id) || this.waterNear(x, y)) this.scheduleWater(x, y);
         if (isLavaId(old) || isLavaId(id) || this.lavaNear(x, y)) this.scheduleLava(x, y);
+        {   // (1.1.5) a pipe, pump, sprinkler or intake placed in water remembers the water around it (drawn behind it; breaking it gives the water back)
+          const sub = id === WATER_PIPE || id === SPRINKLER || id === WATER_PUMP || id === WATER_INTAKE;
+          if (sub) { if (isWaterId(old)) (this.wetTiles || (this.wetTiles = new Set())).add(x + ',' + y); }
+          else if (this.wetTiles && this.wetTiles.size) this.wetTiles.delete(x + ',' + y);
+        }
         if (id === WATER_PUMP && !netIsClient() && !this.containers.has(x + ',' + y)) { this.containers.set(x + ',' + y, makePumpContainer()); contDirty(this, x + ',' + y); }   // (1.1.5) a pump starts working the moment it's placed, no need to open it first
         if ((id === 22 || id === 86) && !this.isInterior && Game.player && this === netOverworld() && !netIsClient()) checkAltarRitual(x, id === 22 ? y : y - 1);
         // keep this chunk's light-source cache in sync
@@ -9276,7 +9281,7 @@
         Game.world.containers.delete(x + ',' + y);
         contDirty(Game.world, x + ',' + y);
       }
-      Game.world.setTile(x, y, block.waterlogged || (id === WATER_INTAKE && intakeActive(Game.world, x, y)) ? WATER_SRC : AIR);   // (seaweed - and an intake in a lake - leave their water behind)
+      Game.world.setTile(x, y, block.waterlogged || (Game.world.wetTiles && Game.world.wetTiles.has(x + ',' + y)) ? WATER_SRC : AIR);   // (seaweed - and pipes, pumps and intakes that sat in water - leave their water behind)
       if (DOOR_INFO[id]) {   // the other half of the door goes with it (one door drops)
         const oy = DOOR_INFO[id].top ? y + 1 : y - 1;
         if (DOOR_INFO[Game.world.getTile(x, oy)]) Game.world.setTile(x, oy, AIR);
@@ -9434,7 +9439,7 @@
         for (const m of Game.mobs) if (hits(m)) return false;
       }
       if (b.attach) return isSupported(x, y, id);
-      if (id === WATER_INTAKE && isWaterId(world.getTile(x, y))) return true;   // (1.1.5) an intake can go anywhere in a lake or sea
+      if ((id === WATER_INTAKE || id === WATER_PIPE) && isWaterId(world.getTile(x, y))) return true;   // (1.1.5) intakes and pipes can go anywhere in a lake or sea
       if (world.wallAt(x, y) !== WALL_NONE) return true;
       for (const [nx, ny] of [[x, y - 1], [x, y + 1], [x - 1, y], [x + 1, y]]) {
         const nb = BLOCKS[world.getTile(nx, ny)];
@@ -16799,8 +16804,8 @@
     // it grow about 3x faster. A sprinkler only drinks while it has something to water
     // (0.4 units a second), and a pump with an empty tank waters nothing.
     // =============================================================================
-    const PUMP_CAP = 1600, BUCKET_WATER = 100, SPRINKLER_MAX = 10, SPRINKLER_USE = 0.4, WPIPE_MAX = 96, INTAKE_RATE = 5;   // (an intake in a lake fills 5 units a second)
-    const CROP_GROWTH = 0.36, WET_GROWTH = 0.72;   // chance a young crop grows a stage every 3-5 s: normal 3x vanilla (0.12), watered by a sprinkler 6x
+    const PUMP_CAP = 1600, BUCKET_WATER = 100, SPRINKLER_MAX = 10, SPRINKLER_USE = 0.4, WPIPE_MAX = 96;
+    const CROP_STAGE_TIME = 60, WET_RATE = 3;   // seconds a crop spends in each of its 3 growing stages (seed to ripe wheat = 3 minutes); a sprinkler makes it WET_RATE times faster (1 minute)
     const wpipeJoins = (id) => id === WATER_PIPE || id === WATER_PUMP || id === SPRINKLER || id === WATER_INTAKE;
     // everything wired to the pump at (px, py): its pipes (with their distance, for the flow
     // animation) and its sprinklers, nearest first (so "the first 10" is well defined)
@@ -16862,8 +16867,8 @@
         if (work > 0) Adv.grant('sprinkler');
       }
       const before = c.water;
-      if (c.intakes > 0 && c.water < PUMP_CAP) c.water = Math.min(PUMP_CAP, c.water + INTAKE_RATE * c.intakes * dt);   // water coming up the pipes
-      if (c.work > 0 && c.water > 0) c.water = Math.max(0, c.water - SPRINKLER_USE * c.work * dt);
+      if (c.intakes > 0) c.water = PUMP_CAP;   // water coming up the pipes from a lake or sea: the tank stays full
+      else if (c.work > 0 && c.water > 0) c.water = Math.max(0, c.water - SPRINKLER_USE * c.work * dt);
       if (c.water !== before) {
         c.dirtyT = (c.dirtyT || 0) - dt;
         if (c.dirtyT <= 0 || c.water <= 0 || c.water >= PUMP_CAP) { c.dirtyT = 1; changed = true; }
@@ -16918,14 +16923,17 @@
     // ---- drawing the pipes, the pump and the sprinklers ----
     function drawIntake(world, x, y, sx, sy) {
       const u = TILE / 16;
-      if (N4.some(([dx, dy]) => isWaterId(world.getTile(x + dx, y + dy)))) drawWater(world, WATER_SRC, x, y, sx, sy, 0);   // it sits in the water: show the lake behind it
+      drawWaterBehind(world, x, y, sx, sy);   // it sits in the water: show the lake behind it
       ctx.drawImage(blockTex[WATER_INTAKE], 0, 0, TEX, TEX, sx, sy, TILE, TILE);
       if (Sprk.intakeSet.has(x + ',' + y)) {   // drawing water: the slits shimmer
         const t = performance.now() / 1000;
         for (let i = 0; i < 3; i++) { const yy = [4, 7, 10][i], k = (Math.sin(t * 8 + i * 2) + 1) / 2; ctx.fillStyle = `rgba(255,255,255,${0.15 + 0.35 * k})`; ctx.fillRect(sx + 4 * u, sy + yy * u, 8 * u, u); }
       }
     }
+    // the water behind a pipe / pump / sprinkler / intake that was placed in a lake
+    function drawWaterBehind(world, x, y, sx, sy) { if (world.wetTiles && world.wetTiles.size && world.wetTiles.has(x + ',' + y)) drawWater(world, WATER_SRC, x, y, sx, sy, 0); }
     function drawWPipe(world, x, y, sx, sy) {
+      drawWaterBehind(world, x, y, sx, sy);
       let mask = 0;
       N4.forEach(([dx, dy], i) => { if (wpipeJoins(world.getTile(x + dx, y + dy))) mask |= 1 << i; });
       // a pipe running through earth shows dirt behind it (at least two of its sides are grass, dirt or farmland)
@@ -16941,7 +16949,8 @@
       }
     }
     function drawPump(world, x, y, sx, sy) {
-      const u = TILE / 16, c = world.containers.get(x + ',' + y), f = c ? Math.max(0, Math.min(1, (c.water || 0) / PUMP_CAP)) : 0;
+      drawWaterBehind(world, x, y, sx, sy);
+      const u = TILE / 16, c = world.containers.get(x + ',' + y), f = c ? Math.max(0, Math.min(1, (c.intakes > 0 ? 1 : (c.water || 0) / PUMP_CAP))) : 0;   // fed by a lake it always looks full
       ctx.drawImage(blockTex[WATER_PUMP], 0, 0, TEX, TEX, sx, sy, TILE, TILE);
       ctx.fillStyle = '#223a52'; ctx.fillRect(sx + 4 * u, sy + 5 * u, 8 * u, 7 * u);   // the glass, emptied...
       const h = Math.round(f * 7 * u);
@@ -16949,7 +16958,7 @@
         ctx.fillStyle = '#3fa7ff'; ctx.fillRect(sx + 4 * u, sy + 12 * u - h, 8 * u, h);
         ctx.fillStyle = '#1f6fc4'; ctx.fillRect(sx + 4 * u, sy + 12 * u - Math.min(h, 2 * u), 8 * u, Math.min(h, 2 * u));
         ctx.fillStyle = '#9be0ff'; ctx.fillRect(sx + 4 * u, sy + 12 * u - h, 8 * u, Math.max(1, Math.round(u * 0.8)));
-        if (c && c.work > 0) {   // bubbles
+        if (c && (c.work > 0 || c.intakes > 0)) {   // bubbles
           const t = performance.now() / 1000;
           for (let i = 0; i < 3; i++) { const by = ((t * 1.6 + i * 0.37) % 1) * h; ctx.fillStyle = 'rgba(220,245,255,0.85)'; ctx.fillRect(Math.round(sx + (5 + i * 2.6) * u), Math.round(sy + 12 * u - by - u), Math.ceil(u), Math.ceil(u)); }
         }
@@ -16957,6 +16966,7 @@
       ctx.fillStyle = 'rgba(255,255,255,0.22)'; ctx.fillRect(sx + 5 * u, sy + 5.5 * u, u, 5 * u);   // glint on the glass
     }
     function drawSprinkler(world, x, y, sx, sy) {
+      drawWaterBehind(world, x, y, sx, sy);
       let mask = 0;
       N4.forEach(([dx, dy], i) => { if (wpipeJoins(world.getTile(x + dx, y + dy))) mask |= 1 << i; });
       ctx.drawImage(pipeSprite(mask, false, true), 0, 0, TEX, TEX, sx, sy, TILE, TILE);   // the joint it sits on
@@ -17045,11 +17055,11 @@
     // (1.1.5) the Water Pump screen: a bucket goes in on the left (an empty one comes out on the right) and the tank fills
     function updatePumpBars(c) {
       const f = Math.max(0, Math.min(1, (c.water || 0) / PUMP_CAP));
-      el('pump-fill').style.height = (f * 100).toFixed(1) + '%';
+      el('pump-fill').style.height = (f * 100).toFixed(1) + '%';   // (fed by a lake the tank is always full)
       el('pump-amt').textContent = `${((c.water || 0) / BUCKET_WATER).toFixed(1)} / ${PUMP_CAP / BUCKET_WATER}`;
       const n = c.sprinklers || 0, over = c.over || 0, ink = c.intakes || 0, info = el('pump-info');
       info.innerHTML = `<div>Sprinklers: <b>${n} / ${SPRINKLER_MAX}</b>${over ? ` <span class="bad">(${over} more won't get water)</span>` : ''}</div>`
-        + `<div>Watering now: <b>${c.work || 0}</b> &nbsp; Pipes: <b>${c.pipes || 0}</b> &nbsp; Intakes: <b>${ink}${c.intakeTotal > ink ? ' / ' + c.intakeTotal : ''}</b>${ink ? ` <span class="dim">(+${ink * INTAKE_RATE}/s)</span>` : ''}</div>`
+        + `<div>Watering now: <b>${c.work || 0}</b> &nbsp; Pipes: <b>${c.pipes || 0}</b> &nbsp; Intakes: <b>${ink}${c.intakeTotal > ink ? ' / ' + c.intakeTotal : ''}</b>${ink ? ' <span class="dim">(keeps the tank full)</span>' : ''}</div>`
         + `<div class="dim">${(c.water || 0) <= 0 && !ink ? 'The tank is empty - put Water Buckets in the slot on the left, or run pipes to a Water Intake in a lake.' : (c.water || 0) <= 0 ? 'Filling from the intake...' : n === 0 ? 'Run Water Pipes from the pump and put Sprinklers on them.' : (c.work || 0) > 0 ? 'Watering your crops.' : 'Nothing to water: put farmland or crops within 3 blocks of a sprinkler.'}</div>`;
     }
     function updateGemCutterBars(g) {
@@ -21096,6 +21106,7 @@
             riding: Game.player.riding && !Game.outside ? ow.boats.indexOf(Game.player.riding) : -1,
           },
           boats: (ow.boats || []).map(b => [b.x, b.y, b.facing]),
+          wet: ow.wetTiles ? [...ow.wetTiles] : [],   // (1.1.5) pipes sitting in water
           adv: Adv.save(),
           mode: Game.creative ? 'creative' : 'survival',
           // ---- Alpha 1.3 ----
@@ -21215,6 +21226,7 @@
           if (isWaterId(id)) Game.world.scheduleWater(x, y);   // let half-finished streams carry on
         }
         for (const [x, y, id] of (saveData.walls || [])) Game.world.placedWalls.set(x * WORLD_H + y, id);
+        if (saveData.wet && saveData.wet.length) Game.world.wetTiles = new Set(saveData.wet);   // (1.1.5)
         for (const [id, d] of (saveData.interiors || [])) {
           const I = getInterior(d.type, id);
           I.visited = d.visited;
@@ -22441,15 +22453,21 @@
       }
     }
     function growCropsNear(p) {
-      updateSprinklerViz(Game.world);   // (1.1.5) watered crops grow ~3x faster
-      const x0 = Math.floor(p.x) - 28, x1 = Math.floor(p.x) + 28;
-      for (let x = x0; x <= x1; x++) {
-        const surface = Game.world.surfaceHeight(x);
-        for (let y = surface - 6; y <= surface + 2; y++) {
-          const id = Game.world.getTile(x, y);
-          if ((id === 28 || id === 29 || id === 30) && Math.random() < (Sprk.wet.has(x * WORLD_H + y) ? WET_GROWTH : CROP_GROWTH)) {
-            Game.world.setTile(x, y, id + 1);
-          }
+      updateSprinklerViz(Game.world);   // (1.1.5) which crops a sprinkler is watering
+      // every growing crop near you keeps its own clock: 60 s per stage, 3x faster when watered. (It looks all the way
+      // up and down around you, so a farm in a basement or on a tower grows too.)
+      const w = Game.world, now = Game.time, dt = Math.max(0, Math.min(12, now - (w._cropLast == null ? now : w._cropLast)));
+      w._cropLast = now;
+      if (dt <= 0) return;
+      const old = w.cropT || new Map(), T = w.cropT = new Map();   // (only the crops seen this time keep their clock)
+      const px = Math.floor(p.x), py = Math.floor(p.y);
+      for (let x = px - 40; x <= px + 40; x++) {
+        for (let y = py - 32; y <= py + 32; y++) {
+          const id = w.getTile(x, y);
+          if (id < 28 || id > 30) continue;
+          const key = x * WORLD_H + y, was = old.get(key), t = (was && was.id === id ? was.t : 0) + dt * (Sprk.wet.has(key) ? WET_RATE : 1);
+          if (t >= CROP_STAGE_TIME) { w.setTile(x, y, id + 1); if (id < 30) T.set(key, { t: t - CROP_STAGE_TIME, id: id + 1 }); }   // (the leftover time counts toward the next stage, so it doesn't drift)
+          else T.set(key, { t, id });
         }
       }
     }

@@ -3827,7 +3827,7 @@
         <button class="mc-btn" id="btn-mp-back">Back</button>
       </div>
 
-      <div class="title-foot left">MichaelCraft Beta 1.2</div>
+      <div class="title-foot left">MichaelCraft Beta 1.2.1</div>
     </div>
 
     <div id="touch-controls">
@@ -4775,14 +4775,14 @@
     defItem(HOLLOW_SIGNET, 'Hollow Signet', { kind: 'perk', perk: 'ward', stack: 1 });
     // how each new weapon fights
     Object.assign(WEAPONS, {
-      [HOLLOW_BLADE]: { type: 'katana', dmg: 15, cd: 0.26, reach: 3.3, dashDist: 7, dashCd: 1.0, dashDmg: 22, trail: '#6fe8ff', wave: true },
-      [FROST_BLADE]: { type: 'katana', dmg: 8, cd: 0.3, reach: 2.9, dashDist: 6, dashCd: 1.2, dashDmg: 12, trail: '#bfeaff', chill: true },
+      [HOLLOW_BLADE]: { type: 'katana', dmg: 12, cd: 0.3, reach: 3.1, noDash: true, trail: '#6fe8ff', wave: true },   // (1.2.1: a bit weaker, and no dash)
+      [FROST_BLADE]: { type: 'katana', dmg: 8, cd: 0.3, reach: 2.9, noDash: true, trail: '#bfeaff', chill: true },   // (1.2.1: no dash)
       [GLACIER_HAMMER]: { type: 'hammer', dmg: 15, cd: 0.9, reach: 3.0, poundCd: 3.0, poundDmg: 18, trail: '#9fe0ff', chill: true },
       // MAGIC: they cost MANA instead of durability. cd = seconds between casts
       [EMBER_STAFF]: { type: 'magic', spell: 'ember', dmg: 9, cd: 0.6, mana: 9, color: '#ff8a1e' },
       [FROST_WAND]: { type: 'magic', spell: 'frost', dmg: 7, cd: 0.45, mana: 7, color: '#8ee6ff' },
       [VOID_ORB]: { type: 'magic', spell: 'void', dmg: 26, cd: 1.1, mana: 24, color: '#b070ff' },
-      [LIGHTNING_ROD]: { type: 'magic', spell: 'lightning', dmg: 18, cd: 1.0, mana: 18, color: '#fff27a' },
+      [LIGHTNING_ROD]: { type: 'magic', spell: 'lightning', dmg: 14, cd: 1.0, mana: 18, color: '#fff27a' },
       [ABYSS_TOME]: { type: 'magic', spell: 'abyss', dmg: 5, cd: 0.8, mana: 14, color: '#d060ff' },
     });
     // ---- recipes ----
@@ -4797,7 +4797,7 @@
       { result: FROST_WAND, qty: 1, shape: [' CC', ' IC', 'S  '], key: { C: FROST_CRYSTAL, I: IRON, S: STICK } },
       { result: VOID_ORB, qty: 1, shape: [' O ', 'ORO', ' O '], key: { O: OBSIDIAN, R: RUBY } },
       { result: LIGHTNING_ROD, qty: 1, shape: [' GE', ' IG', 'I  '], key: { G: GOLD, E: EMBER_INGOT, I: IRON } },
-      { result: ABYSS_TOME, qty: 1, shapeless: [217, 217, 217, BLOOD_SHARD, MOONPETAL] },
+      { result: ABYSS_TOME, qty: 1, shapeless: [217, 217, 217, BLOOD_SHARD, ABYSSAL_HEART] },   // (1.2.1: made with the King's heart; no longer dropped)
       { result: MANA_POTION, qty: 2, shapeless: [201, 201, MOONPETAL, FROST_CRYSTAL] },
       { result: FISHING_ROD, qty: 1, shape: ['  S', ' SX', 'S X'], key: { S: STICK, X: STRING } },
       { result: ANCIENT_ARMOR, qty: 1, shape: ['P P', 'PMP', 'PPP'], key: { P: ANCIENT_PLATE, M: ANCIENT_METAL } },
@@ -4806,7 +4806,7 @@
       { result: PACKED_ICE, qty: 1, shape: ['II', 'II'], key: { I: 67 } },
     );
     PERKS.ward = { item: HOLLOW_SIGNET, name: 'Hollow Ward', desc: 'Take less damage from everything', color: '#7fe8e0' };
-    PERK_STATS.ward = { reduce: [0.10, 0.14, 0.18, 0.22, 0.26, 0.30, 0.34, 0.38] };
+    PERK_STATS.ward = { reduce: [0.03, 0.04, 0.05, 0.06, 0.08, 0.10, 0.12, 0.13] };   // (1.2.1: 13% at the top tier)
     // Fill in each recipe's name, total ingredient list and grid size.
     for (const r of RECIPES) {
       r.name = ITEMS[r.result].name;
@@ -4867,7 +4867,7 @@
       [REDWOOD_ORE]: 'Found deep in the Redwood Forest. Smelt the Raw Redwood into ingots', [REDWOOD_INGOT]: 'Redwood tools: better than iron',
       [FROST_CRYSTAL]: 'From Frost Ore and crystals in the ice caves of the Frostlands. Frost Blade, Glacier Hammer, Frost Wand', [EMBER_INGOT]: 'Ember tools and the Ember Staff, Lightning Rod',
       [RAW_EMBER]: 'From Ember Ore in the Ashlands. Smelt it into an Ember Ingot', [ANCIENT_METAL]: 'The Hollow Knight guards it. Ancient Armor needs one',
-      [ANCIENT_PLATE]: '8 plates (and a bit of Ancient Metal) make Ancient Armor', [RUIN_KEY]: 'Opens an Ancient Door in the Ancient Ruins (right-click the door)',
+      [ANCIENT_PLATE]: '8 plates (and a bit of Ancient Metal) make Ancient Armor', [RUIN_KEY]: 'Dropped by the Apex Parasite. Opens an Ancient Door in the Ancient Ruins (right-click the door)',
       [MOONPETAL]: 'Moonblooms only grow at night', [BLOOD_SHARD]: 'Dropped by Blood Moon monsters', [HOLLOW_BLADE]: 'The Hollow Knight\'s sword. Throws a wave of soul with every third cut',
       [HOLLOW_SIGNET]: 'A ward charm: wear it like a charm. Less damage from everything', [FROST_BLADE]: 'Chills what it cuts: they move slowly',
       [GLACIER_HAMMER]: 'A smash that freezes monsters to the spot', [EMBER_STAFF]: 'MAGIC. Right-click or hold: bouncing fireballs. Costs mana',
@@ -6389,14 +6389,14 @@
       dojo: [[STRING, 2, 5, 0.7], [217, 3, 8, 0.6], [134, 2, 6, 0.6], [IRON_STICK, 1, 2, 0.4], [128, 2, 5, 0.5], [PAPER_LANTERN, 1, 3, 0.5],
       [127, 1, 3, 0.4], [TATAMI, 2, 6, 0.4], [DOJO_MAP, 1, 1, 0.25], [KATANA, 1, 1, 0.08]],
     };
-    // (1.2) loot of the new chests (item, min, max, chance). The Ancient Ruins' KEY chest always holds a Ruin Key.
+    // (1.2) loot of the new chests (item, min, max, chance). (1.2.1) The Ruin Key is dropped ONLY by the Apex Parasite; the old key-room chest is just a treasure chest now.
     LOOT.cabin = [[BROWN_MUSHROOM_ITEM, 2, 5, 0.6], [RED_MUSHROOM_ITEM, 1, 2, 0.25], [STRING, 1, 3, 0.5], [100, 2, 6, 0.5], [RAW_REDWOOD, 2, 4, 0.55], [REDWOOD_INGOT, 1, 3, 0.3],
       [127, 1, 3, 0.5], [FISHING_ROD, 1, 1, 0.25], [BASS, 1, 2, 0.35], [15, 3, 6, 0.55], [MANA_POTION, 1, 1, 0.1], [121, 1, 3, 0.4], [135, 1, 1, 0.12]];
     LOOT.frost = [[FROST_CRYSTAL, 2, 5, 0.85], [IRON, 2, 5, 0.6], [GOLD, 1, 3, 0.35], [ICEFISH, 1, 2, 0.35], [MANA_POTION, 1, 2, 0.35], [15, 4, 8, 0.6], [134, 1, 3, 0.2],
       [FROST_BLADE, 1, 1, 0.07], [FROST_WAND, 1, 1, 0.09], [GLACIER_HAMMER, 1, 1, 0.04], [DIAMOND, 1, 2, 0.15], [127, 2, 4, 0.5]];
     LOOT.ruins = [[ANCIENT_METAL, 1, 2, 0.3], [GOLD, 3, 6, 0.6], [DIAMOND, 1, 3, 0.4], [RUBY, 1, 2, 0.3], [134, 2, 5, 0.5], [MANA_POTION, 1, 3, 0.55], [245, 1, 2, 0.3], [15, 4, 8, 0.6],
-      [EMBER_STAFF, 1, 1, 0.06], [VOID_ORB, 1, 1, 0.05], [ABYSS_TOME, 1, 1, 0.08], [LIGHTNING_ROD, 1, 1, 0.06], [FROST_WAND, 1, 1, 0.05], [MOONPETAL, 1, 3, 0.4], [BLOOD_SHARD, 1, 2, 0.12]];
-    LOOT.ruinKey = [[RUIN_KEY, 1, 1, 1], [GOLD, 1, 3, 0.5], [MANA_POTION, 1, 2, 0.4], [15, 4, 8, 0.7], [127, 2, 4, 0.5], [134, 1, 3, 0.3]];
+      [EMBER_STAFF, 1, 1, 0.06], [VOID_ORB, 1, 1, 0.05], [LIGHTNING_ROD, 1, 1, 0.06], [FROST_WAND, 1, 1, 0.05], [MOONPETAL, 1, 3, 0.4], [BLOOD_SHARD, 1, 2, 0.12]];
+    LOOT.ruinKey = [[GOLD, 1, 3, 0.5], [MANA_POTION, 1, 2, 0.4], [15, 4, 8, 0.7], [127, 2, 4, 0.5], [134, 1, 3, 0.3]];
     const STRUCTURES = {
       cottage: {
         name: 'Cottage', biome: 'plains', chance: 0.14, shell: 13, floor: 5, wall: WALL_PLANKS, loot: 'house', door: 'wood',
@@ -11897,11 +11897,18 @@
     const KING_IMG = new Image(); KING_IMG.src = 'Textures/entities/king_of_the_abyss.png';
     const KING_HAND_IMG = new Image(); KING_HAND_IMG.src = 'Textures/entities/king_hand.png';
     const BOSS_AI = { king: (m, dt, p) => kingAI(m, dt, p), parasite: (m, dt, p) => parasiteAI(m, dt, p) };   // (add new bosses' AI here)
+    // (1.2.1) the Apex Parasite must fall before the King can be woken or the Hollow Knight faced
+    function parasiteBeaten12() { return !!(Game.flags && Game.flags.parasiteDown) || Adv.done.has('parasite') || Adv.done.has('king') || Adv.done.has('hollow'); }
     function checkAltarRitual(x, y) {
       const w = netOverworld();
       if (w.getTile(x, y) !== 22 || w.getTile(x, y + 1) !== 86 || w.getTile(x, y + 2) !== ALTAR) return;
       if (Game.boss && !Game.boss.dead) { if (Net.applyFrom && Net.applyFrom !== 'host') netSend(Net.applyFrom, { t: 'ev', text: 'The King is already awake!', color: '#c070ff' }); else showToast('The King is already awake!'); return; }
       if (Game.ritual) return;
+      if (!parasiteBeaten12()) {   // (1.2.1) the King's door is shut until the Apex Parasite is dead
+        const msg = 'The altar stays cold. Something else must fall first... the Apex Parasite.';
+        if (Net.applyFrom && Net.applyFrom !== 'host') netSend(Net.applyFrom, { t: 'ev', text: msg, color: '#c070ff' }); else showToast(msg);
+        sfx('door.lock', { x, y }); return;
+      }
       Game.ritual = { x, y: y + 2, t: 0, by: Net.applyFrom || 'host' };   // (1.0.2: remember who summoned him)
       netFxCapture(x, y, () => {
         netFx(['r', x, y + 2]);
@@ -13029,11 +13036,13 @@
       bossReward(m, 'parasite');
       const r = Math.random;
       // 20 Parasite Ingots (for armor, tools and the katana), plus gold, diamonds, emeralds and rubies
-      const drops = [[PARASITE_INGOT, 20], [129, 10 + Math.floor(r() * 7)], [120, 5 + Math.floor(r() * 5)], [134, 14 + Math.floor(r() * 9)], [145, 3 + Math.floor(r() * 3)]];
+      const drops = [[RUIN_KEY, 1], [PARASITE_INGOT, 20], [129, 10 + Math.floor(r() * 7)], [120, 5 + Math.floor(r() * 5)], [134, 14 + Math.floor(r() * 9)], [145, 3 + Math.floor(r() * 3)]];
       for (const [it, q] of drops) { const d = spawnDrop(it, q, mx, my); if (d) { d.vx = (r() - 0.5) * 8; d.vy = -4 - r() * 4; } }
+      if (Game.flags) Game.flags.parasiteDown = true;   // (1.2.1) opens the road to the Ancient Ruins and the King
       Game.boss = null;
       for (const x of Game.mobs) if (x.type === 'broodlarva') { x.dead = true; deathPuff(x.x + x.w / 2, x.y + x.h / 2, ['#b6ff3a', '#5b2415']); }
       eventMessage('The Apex Parasite has been defeated!', '#b6ff3a');
+      setTimeout(() => eventMessage('It was carrying a Ruin Key... and the King of the Abyss can be woken now.', '#d6cfb4'), 2200);
       sfx('toast.challenge');
     }
     // it gave up (everyone fell or ran): the totem is left behind for another try
@@ -16245,7 +16254,7 @@
     Object.assign(MOB_TYPES.moonmoth, { loot: [[MOONPETAL, 1, 1, 0.5]] });
     Object.assign(MOB_TYPES.bloodbat, { loot: [[BLOOD_SHARD, 1, 1, 0.12]] });
     Object.assign(MOB_TYPES.crimsonhusk, { loot: [[BLOOD_SHARD, 1, 2, 0.5], [133, 1, 2, 0.5], [122, 1, 2, 0.4]] });
-    Object.assign(MOB_TYPES.crimsonreaper, { loot: [[BLOOD_SHARD, 5, 9, 1], [DIAMOND, 2, 4, 1], [RUBY, 1, 3, 0.8], [245, 1, 2, 0.7], [MANA_POTION, 2, 4, 1], [ABYSS_TOME, 1, 1, 0.35], [EMBER_STAFF, 1, 1, 0.12], [VOID_ORB, 1, 1, 0.2], [LIGHTNING_ROD, 1, 1, 0.12]] });
+    Object.assign(MOB_TYPES.crimsonreaper, { loot: [[BLOOD_SHARD, 5, 9, 1], [DIAMOND, 2, 4, 1], [RUBY, 1, 3, 0.8], [245, 1, 2, 0.7], [MANA_POTION, 2, 4, 1], [EMBER_STAFF, 1, 1, 0.12], [VOID_ORB, 1, 1, 0.2], [LIGHTNING_ROD, 1, 1, 0.12]] });
     Object.assign(MOB_TYPES.ruinskeleton, { loot: [[133, 1, 3, 0.8], [217, 1, 2, 0.3], [GOLD, 1, 2, 0.15], [15, 1, 3, 0.3]] });
     Object.assign(MOB_TYPES.sentinel, { loot: [[ANCIENT_METAL, 1, 1, 0.25], [RUIN_BRICKS, 2, 4, 0.7], [134, 1, 2, 0.3]] });
     function lootMob12(mob, mx, my) {
@@ -16276,8 +16285,8 @@
         case 'crimsonreaper': return m.castT > 0 ? 2 : Math.floor(Game.time * 2 + m.id) % 2;
         case 'hollowknight': {
           const mv = m.move, w2 = walkFrame12(m, 2);
-          if (m.phase < 2) { if (mv === 'wind') return 3; if (mv === 'slash') return 4; if (mv === 'block' || mv === 'bash') return 5; if (mv === 'break' || mv === 'intro') return 6; if (mv === 'summon') return 7; return w2; }
-          if (mv === 'wind' || mv === 'leap') return 11; if (mv === 'slash') return 12; if (mv === 'summon' || mv === 'break') return 13; return 8 + w2;
+          if (m.phase < 2) { if (mv === 'wind') return 3; if (mv === 'slash') return 4; if (mv === 'block' || mv === 'bash') return 5; if (mv === 'break' || mv === 'intro') return 6; if (mv === 'summon' || mv === 'rain') return 7; if (mv === 'quake') return m.moveT < 0.8 ? 5 : 4; return w2; }
+          if (mv === 'wind' || mv === 'leap' || mv === 'dashcut') return 11; if (mv === 'slash') return 12; if (mv === 'quake') return m.moveT < 0.55 ? 11 : 12; if (mv === 'summon' || mv === 'break' || mv === 'rain') return 13; return 8 + w2;
         }
       }
       return 0;
@@ -16368,6 +16377,7 @@
         b.x = nx; b.y = ny;
         if (b.trail && Math.random() < dt * 40 * particleMul()) Game.particles.push({ x: b.x, y: b.y, vx: (Math.random() - 0.5) * 0.6, vy: (Math.random() - 0.5) * 0.6, life: 0.3, age: 0, size: 0.08, color: BOLT_COL12[b.kind] ? BOLT_COL12[b.kind][1] : '#fff', gravity: 0 });
         if (b.well) for (const m of hostileNear12(b.x, b.y, b.well)) { if (m.def.boss || m.dying != null) continue; const d = Math.max(0.5, boxDistToPoint(m, b.x, b.y)); m.vx += Math.sign(b.x - (m.x + m.w / 2)) * 14 * dt / d * 2; if (m.def.flying) m.vy += Math.sign(b.y - (m.y + m.h / 2)) * 14 * dt / d * 2; }
+        if (b.touchBlast && b.age > 0.12 && hostileNear12(b.x, b.y, b.r + 0.1).length) { voidBlast12(b); Game.bolts12.splice(i, 1); continue; }   // (1.2.1) it bursts the moment it touches a monster
         if (b.noHit) { if (b.trail && Math.random() < dt * 30) Game.particles.push({ x: b.x + (Math.random() - 0.5) * 2, y: b.y + (Math.random() - 0.5) * 2, vx: (b.x - b.x) , vy: 0, life: 0.4, age: 0, size: 0.07, color: '#c090ff', gravity: 0 }); continue; }
         let hit = false;
         if (b.from === 'mob') {
@@ -16682,7 +16692,7 @@
       flashAt(b.x, b.y, 5, '170,100,255', 0.3); sfx('spell.boom', { x: b.x, y: b.y, vol: 1, pitch: 0.55 });
     }
     SPELL12.void = function (p, W, dmg, ox, oy) {
-      spawnBolt12({ from: 'player', kind: 'pvoid', x: ox, y: oy, vx: p.lookX * 5.2, vy: p.lookY * 5.2, life: 3.2, r: 0.5, dmg: 0, dmgReal: dmg, noHit: true, well: 5, trail: true, onEnd: voidBlast12, onHitWorld: voidBlast12 });
+      spawnBolt12({ from: 'player', kind: 'pvoid', x: ox, y: oy, vx: p.lookX * 5.2, vy: p.lookY * 5.2, life: 3.2, r: 0.5, dmg: 0, dmgReal: dmg, noHit: true, touchBlast: true, well: 5, trail: true, onEnd: voidBlast12, onHitWorld: voidBlast12 });
       sfx('spell.void');
     };
     // lightning: instant, from the sky
@@ -16778,7 +16788,8 @@
         p.swing = 1; return;
       }
       p.swing = 1; startAction(p, 'slash');
-      const ox = p.x + p.w / 2 + p.facing * 0.7, oy = p.y + 0.3;
+      let ox = p.x + p.w / 2 + p.facing * 0.7, oy = p.y + 0.3;
+      if (solidAt(Math.floor(ox), Math.floor(oy))) ox = p.x + p.w / 2;   // (1.2.1) casting with your nose against a wall: start from the middle of you
       B12.rod = { x: ox, y: oy, vx: p.lookX * 11 + p.vx * 0.3, vy: p.lookY * 11 - 3.5, state: 'fly', t: 0, wait: 0, biteT: 0, dip: 0 };
       sfx('bow.shoot', { pitch: 1.6, vol: 0.45 });
     }
@@ -16806,15 +16817,32 @@
       if (!s || ITEMS[s.item].toolType !== 'rod' || p.dead || Math.hypot(R.x - p.x, R.y - p.y) > 22 || w.isInterior) { B12.rod = null; return; }
       R.t += dt;
       if (R.state === 'fly') {
-        R.vy += 22 * dt; R.x += R.vx * dt; R.y += R.vy * dt;
-        const tx = Math.floor(R.x), ty = Math.floor(R.y), id = w.getTile(tx, ty);
-        if (isWaterId(id) || isLavaId(id)) {
-          let yy = ty; while (yy > 0 && (isWaterId(w.getTile(tx, yy - 1)) || isLavaId(w.getTile(tx, yy - 1)))) yy--;
-          R.y = yy + 0.12; R.vx = R.vy = 0; R.state = 'float'; R.t = 0; R.wait = 3 + Math.random() * 7; R.lava = isLavaId(id);
-          if (R.lava) { for (let k = 0; k < 8; k++) spawnFlame(R.x + (Math.random() - 0.5) * 0.6, R.y); } else spawnSplash(R.x, R.y);
-          sfx(R.lava ? 'fizz' : 'splash', { x: R.x, y: R.y, vol: 0.8 });
-        } else if (solidAt(tx, ty) || R.t > 3) { R.state = 'drop'; R.t = 0; R.vx *= 0.1; }
-      } else if (R.state === 'drop') { R.vy += 22 * dt; R.y += R.vy * dt; if (R.t > 0.5) B12.rod = null; }
+        // (1.2.1) the bobber is a real little body now: it stops at walls, bounces off the ceiling and LANDS on the ground
+        const n = Math.max(1, Math.ceil(dt / 0.012)), h = dt / n;
+        for (let k = 0; k < n && R.state === 'fly'; k++) {
+          R.vy += 22 * h;
+          let nx = R.x + R.vx * h, ny = R.y + R.vy * h;
+          if (solidAt(Math.floor(nx), Math.floor(R.y))) { R.vx *= -0.15; nx = R.x; }
+          let landed = false;
+          if (solidAt(Math.floor(nx), Math.floor(ny))) {
+            if (R.vy > 0) { landed = true; ny = Math.floor(ny) - 0.12; } else { R.vy *= -0.2; ny = R.y; }
+          }
+          R.x = nx; R.y = ny;
+          const tx = Math.floor(R.x), ty = Math.floor(R.y), id = w.getTile(tx, ty);
+          if (isWaterId(id) || isLavaId(id)) {
+            let yy = ty; while (yy > 0 && (isWaterId(w.getTile(tx, yy - 1)) || isLavaId(w.getTile(tx, yy - 1)))) yy--;
+            R.y = yy + 0.12; R.vx = R.vy = 0; R.state = 'float'; R.t = 0; R.wait = 3 + Math.random() * 7; R.lava = isLavaId(id);
+            if (R.lava) { for (let q = 0; q < 8; q++) spawnFlame(R.x + (Math.random() - 0.5) * 0.6, R.y); } else spawnSplash(R.x, R.y);
+            sfx(R.lava ? 'fizz' : 'splash', { x: R.x, y: R.y, vol: 0.8 });
+          } else if (landed) {
+            R.state = 'land'; R.t = 0; R.vx = R.vy = 0;
+            const below = w.getTile(tx, ty + 1);
+            if (isWaterId(below) || isLavaId(below)) { /* water right under the edge: let it sink in next frame */ R.state = 'fly'; R.y = ty + 0.9; R.vy = 1; }
+            else { for (let q = 0; q < 5; q++) Game.particles.push({ x: R.x, y: R.y + 0.1, vx: (Math.random() - 0.5) * 2, vy: -1 - Math.random(), life: 0.3, age: 0, size: 0.06, color: '#c8b890', gravity: 8 }); sfx('step', { x: R.x, y: R.y, vol: 0.4, pitch: 1.5 }); }
+          }
+        }
+        if (R.state === 'fly' && R.t > 4) R.state = 'land', R.t = 0;
+      } else if (R.state === 'land') { if (R.t > 1.8) { B12.rod = null; showToast('Nothing bites on dry land. Cast it into water!'); } }
       else if (R.state === 'float') {
         if (R.t > R.wait - 1.1 && R.t < R.wait && Math.random() < dt * 3) { R.dip = 0.25; if (R.lava) spawnFlame(R.x, R.y); else spawnSplash(R.x, R.y); }   // a nibble
         if (R.t >= R.wait) {
@@ -17032,8 +17060,8 @@
     //   * rooms wake up the first time you walk in (skeletons climb out of the floor; two statues become Sentinels)
     //   * ancient braziers light themselves at night (and when the Knight wakes)
     //   * DART TRAPS fire along the line they face when you step into it; Ruin Spikes hurt
-    //   * the ANCIENT DOOR opens with a Ruin Key (right-click), found in the secret room
-    //   * THE HOLLOW KNIGHT (mini-boss, 430 health):
+    //   * the ANCIENT DOOR opens with a Ruin Key (right-click), dropped ONLY by the Apex Parasite
+    //   * THE HOLLOW KNIGHT (mini-boss, 520 health; rebuilt in 1.2.1):
     //       PHASE 1  slow, with a SHIELD: it blocks hits from the front (hit it from behind, or while it swings),
     //                three-cut sword combos with a wind-up you can read, and a shield bash.
     //       PHASE 2  at half health the shield SHATTERS: it's much faster, leaps and slams, hits harder,
@@ -17041,11 +17069,11 @@
     //     It drops the Hollow Blade, Ancient Armor Plates, Ancient Metal, and (sometimes) a Hollow Signet.
     // =============================================================================
     Object.assign(MOB_TYPES, {
-      hollowknight: { name: 'The Hollow Knight', w: 1.7, h: 3.7, speed: 2.5, health: 430, hostile: true, boss: true, dmg: 7, kb: 0, custom: 'hollow', sunproof: true,
+      hollowknight: { name: 'The Hollow Knight', w: 1.7, h: 3.7, speed: 2.7, health: 520, hostile: true, boss: true, dmg: 9, kb: 0, custom: 'hollow', sunproof: true,
         loot: [[HOLLOW_BLADE, 1, 1, 1], [ANCIENT_PLATE, 6, 9, 1], [ANCIENT_METAL, 3, 5, 1], [HOLLOW_SIGNET, 1, 1, 0.35], [DIAMOND, 2, 4, 1], [GOLD, 5, 9, 1], [134, 6, 10, 1], [MANA_POTION, 2, 3, 1], [245, 1, 2, 0.6]] },
     });
     BOSSES.hollowknight = {
-      name: 'The Hollow Knight', music: 'Sounds/music/final_stand.mp3',
+      name: 'The Hollow Knight', music: 'Sounds/music/hollow_knight.mp3',
       home: (m) => m.arena ? { x: (m.arena.x0 + m.arena.x1) / 2, y: m.arena.floor - 6 } : { x: m.x, y: m.y },
       chase: { x: 40, y: 22 }, summonAdv: 'ruins', killAdv: 'hollow', dmgMult: 1.0,
       leaveMsg: 'The Hollow Knight sinks back onto its throne, waiting.', color: '#6fe8ff',
@@ -17056,7 +17084,7 @@
     Object.assign(MOB_TYPES.hollowknight, { eye: [2, 0.17, '70,230,250'] });
     function spawnHollow(R) {
       const ar = R.arena, m = new Mob('hollowknight', ar.spawn[0] + 0.5 - 0.85, ar.spawn[1] + 1 - 3.7);
-      Object.assign(m, { arena: ar, phase: 1, move: 'intro', moveT: 0, t: 0, shieldHp: 150, shieldUp: false, bossInvuln: 2.2, state: 'hostile', guardian: true, ruin: R.id, cd: 1, facingDir: -1, summonCd: 8 });
+      Object.assign(m, { arena: ar, phase: 1, move: 'intro', moveT: 0, t: 0, shieldHp: 170, shieldUp: false, bossInvuln: 2.2, state: 'hostile', guardian: true, ruin: R.id, cd: 1, facingDir: -1, summonCd: 8 });
       Game.mobs.push(m); bossSpawned(m);
       sfx('hollowknight.say', { x: m.x, y: m.y, vol: 1.3 }); screenShake(0.9); flashDamage();
       eventMessage('The Hollow Knight rises from its throne!', '#6fe8ff'); bigTitle12('The Hollow Knight', 'it has guarded this place for ages', '#6fe8ff');
@@ -17068,44 +17096,111 @@
       for (let i = 0; i < 12; i++) Game.particles.push({ x: x + 0.5 + (Math.random() - 0.5), y: y + 0.9, vx: (Math.random() - 0.5) * 3, vy: -2 - Math.random() * 3, life: 0.7, age: 0, size: 0.1, color: i % 2 ? '#8e988a' : '#d6cfb4', gravity: 8 });
       sfx('dig.stone', { x, y, vol: 1.2 }); return m;
     }
+    // ---- THE HOLLOW KNIGHT's moves (rebuilt in 1.2.1) ----
+    //   PHASE 1 (shield):  walk -> 3-cut combo (the last cut throws a crescent SOUL WAVE along the floor: jump it!)
+    //                      block (front hits barely scratch it) -> shield BASH (dust trail) -> SHIELD QUAKE: slams the
+    //                      shield down and glowing cracks race along the floor, then crystal SPEARS burst up (move!)
+    //   PHASE 2 (shield breaks, faster, angrier, flames orbit it):
+    //                      fast combos with soul waves - DASH CUT: it blinks behind you leaving afterimages and cuts
+    //                      - SPECTRAL BLADE RAIN: swords light up across the arena, then fall - LEAP SLAM: two
+    //                      shockwaves and rubble from the ceiling - calls skeletons - QUAKE both ways
+    B12.hk = { spikes: [], blades: [], ghosts: [] };
     function hollowAI(m, dt, p) {
       const A = m.arena, mcx = m.x + m.w / 2, pcx = p.x + p.w / 2, dx = pcx - mcx, dist = Math.abs(dx), dir = dx > 0 ? 1 : -1;
-      m.t += dt; m.moveT += dt; m.bossInvuln = Math.max(0, (m.bossInvuln || 0) - dt); m.cd = Math.max(0, (m.cd || 0) - dt); m.summonCd = Math.max(0, m.summonCd - dt);
-      const p2 = m.phase >= 2, spd = p2 ? 4.7 : 2.5, dmg = p2 ? 10 : 7;
+      m.t += dt; m.moveT += dt; m.bossInvuln = Math.max(0, (m.bossInvuln || 0) - dt); m.cd = Math.max(0, (m.cd || 0) - dt); m.summonCd = Math.max(0, m.summonCd - dt); m.specialCd = Math.max(0, (m.specialCd == null ? 5 : m.specialCd) - dt);
+      const p2 = m.phase >= 2, spd = p2 ? 5.0 : 2.7, dmg = p2 ? 13 : 9;
       let tv = 0;
       const go = (mv) => { m.move = mv; m.moveT = 0; m.hitDone = false; };
-      const swing = (reach) => {   // the sword's arc: in front, from head to knee
+      const nSkel = () => Game.mobs.filter(q => q.type === 'ruinskeleton' && q.dying == null).length;
+      const soulWave = () => {   // a crescent that skims the floor
+        const y = A.floor - 1.1;
+        spawnBolt12({ from: 'mob', kind: 'ksoul', x: mcx + m.facingDir * 1.6, y, vx: m.facingDir * (p2 ? 14 : 11), vy: 0, dmg: Math.round(dmg * 0.9), r: 0.62, life: 1.5, trail: true, p2 });
+        sfx('spell.zap', { x: mcx, y, pitch: 0.7, vol: 0.8 });
+      };
+      const swing = (reach, last) => {
         if (m.hitDone) return; m.hitDone = true;
         const fx = mcx + m.facingDir * reach * 0.5;
-        sfx('katana.swing', { x: mcx, y: m.y + 1.5, pitch: 0.55, vol: 1.2 });
-        for (let i = 0; i < 12; i++) { const a = -1.3 + i * 0.22; Game.particles.push({ x: mcx + m.facingDir * (0.8 + Math.cos(a) * 1.8), y: m.y + 1.6 + Math.sin(a) * 1.6, vx: m.facingDir * 4, vy: 0, life: 0.25, age: 0, size: 0.14, color: p2 ? '#ff7a5a' : '#bff6ff', gravity: 0 }); }
-        if (Math.abs(p.x + p.w / 2 - fx) < reach * 0.5 + p.w / 2 && p.y + p.h > m.y + 0.6 && p.y < m.y + m.h && Math.sign(dx) === m.facingDir) { bossHitPlayer(dmg, mcx, p, 0, { kb: [9, 5], iframes: 0.35 }); }
+        sfx('katana.swing', { x: mcx, y: m.y + 1.5, pitch: 0.5, vol: 1.3 });
+        for (let i = 0; i < 16; i++) { const a = -1.3 + i * 0.17; Game.particles.push({ x: mcx + m.facingDir * (0.8 + Math.cos(a) * 2.2), y: m.y + 1.7 + Math.sin(a) * 1.8, vx: m.facingDir * 5, vy: Math.sin(a) * 1.5, life: 0.3, age: 0, size: 0.16, color: p2 ? (i % 2 ? '#ff7a5a' : '#ffd05a') : (i % 2 ? '#bff6ff' : '#5af0ff'), gravity: 0, kind: 'star' }); }
+        if (Math.abs(p.x + p.w / 2 - fx) < reach * 0.5 + p.w / 2 && p.y + p.h > m.y + 0.6 && p.y < m.y + m.h && Math.sign(dx) === m.facingDir) bossHitPlayer(dmg, mcx, p, 0, { kb: [10, 5], iframes: 0.35 });
+        if (last) soulWave();
       };
-      if (!p2 && (m.health <= m.maxHealth * 0.5 || m.shieldHp <= 0) && m.move !== 'break') { go('break'); m.shieldUp = false; m.shieldBroke = true; }
+      if (!p2 && (m.health <= m.maxHealth * 0.5 || m.shieldHp <= 0) && m.move !== 'break') { go('break'); m.shieldUp = false; }
       switch (m.move) {
         case 'intro': if (m.moveT > 1.7) go('walk'); break;
         case 'break':
-          if (!m.brokeFx) { m.brokeFx = true; m.phase = 2; m.bossInvuln = 1.8; screenShake(1); flashDamage(); sfx('tool.break', { x: mcx, y: m.y + 1, vol: 1.4, pitch: 0.6 }); sfx('hollowknight.say', { x: m.x, y: m.y, vol: 1.3, pitch: 0.8 }); eventMessage("The Hollow Knight's shield shatters! It's faster now...", '#ff7a5a');
-            for (let i = 0; i < 30; i++) { const a = Math.random() * 6.28, sp = 3 + Math.random() * 6; Game.particles.push({ x: mcx - m.facingDir * 1.4, y: m.y + 1.8, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 2, life: 0.9, age: 0, size: 0.13, color: i % 3 ? '#72879c' : '#3fd8ee', gravity: 9 }); }
-            for (const sx of [A.x0 + 5, A.x1 - 6]) skelAt12(sx, A.floor - 1); }
-          if (m.moveT > 1.5) { go('walk'); m.cd = 0.3; }
+          if (!m.brokeFx) {
+            m.brokeFx = true; m.phase = 2; m.bossInvuln = 2; screenShake(1.2); flashDamage(); sfx('tool.break', { x: mcx, y: m.y + 1, vol: 1.5, pitch: 0.55 }); sfx('hollowknight.say', { x: m.x, y: m.y, vol: 1.4, pitch: 0.75 });
+            eventMessage("The Hollow Knight's shield shatters! Its eyes burn red...", '#ff7a5a'); flashAt(mcx, m.y + 1.8, 9, '255,90,60', 0.4);
+            for (let i = 0; i < 44; i++) { const a = Math.random() * 6.28, sp = 3 + Math.random() * 8; Game.particles.push({ x: mcx - m.facingDir * 1.4, y: m.y + 1.8, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 2, life: 1, age: 0, size: 0.14, color: i % 3 ? '#72879c' : '#3fd8ee', gravity: 9 }); }
+            for (let i = 0; i < 36; i++) { const a = i / 36 * 6.28; Game.particles.push({ x: mcx, y: m.y + 1.8, vx: Math.cos(a) * 9, vy: Math.sin(a) * 6, life: 0.6, age: 0, size: 0.12, color: '#ff7a5a', gravity: 0, kind: 'star' }); }
+            for (const sx of [A.x0 + 5, A.x1 - 6]) skelAt12(sx, A.floor - 1);
+          }
+          if (m.moveT > 1.6) { go('walk'); m.cd = 0.3; m.specialCd = 1.5; }
           break;
         case 'walk': {
           m.facingDir = dir; tv = dir * spd;
-          if (dist < (p2 ? 2.6 : 3.0)) tv = 0;
-          if (m.cd <= 0 && dist < 3.8) {
+          if (dist < (p2 ? 2.4 : 2.8)) tv = 0;
+          if (m.cd <= 0) {
             const r = Math.random();
-            if (!p2) { if (r < 0.55) { m.combo = 1 + (Math.random() < 0.5 ? 1 : 0); go('wind'); } else if (r < 0.85 && m.shieldHp > 0) go('block'); else go('bash'); }
-            else { if (m.summonCd <= 0 && Game.mobs.filter(q => q.type === 'ruinskeleton' && q.dying == null).length < 4) { go('summon'); m.summonCd = 13; } else { m.combo = 2 + (Math.random() < 0.5 ? 1 : 0); go('wind'); } }
-          } else if (m.cd <= 0 && p2 && dist > 5.5 && Math.random() < dt * 1.3) go('leap');
-          else if (m.cd <= 0 && !p2 && dist > 6 && Math.random() < dt * 0.6) go('bash');
-          if (p2 && m.summonCd <= 0 && m.cd <= 0 && Game.mobs.filter(q => q.type === 'ruinskeleton' && q.dying == null).length < 3) { go('summon'); m.summonCd = 13; }
+            if (!p2) {
+              if (dist < 4) { if (r < 0.4) { m.combo = 2 + (Math.random() < 0.5 ? 1 : 0); go('wind'); } else if (r < 0.58 && m.shieldHp > 0) go('block'); else if (r < 0.78) go('bash'); else go('quake'); }
+              else if (m.specialCd <= 0) { if (r < 0.6) go('quake'); else go('bash'); m.specialCd = 5; }
+            } else {
+              if (m.summonCd <= 0 && nSkel() < 3) { go('summon'); m.summonCd = 14; }
+              else if (m.specialCd <= 0) { const r2 = Math.random(); if (r2 < 0.3) go('dashcut'); else if (r2 < 0.58) go('rain'); else if (r2 < 0.82 && dist > 4) go('leap'); else go('quake'); m.specialCd = 4.5; }
+              else if (dist < 4.2) { m.combo = 2 + (Math.random() < 0.6 ? 1 : 0); go('wind'); }
+            }
+          }
           break;
         }
-        case 'wind': m.facingDir = dir; tv = 0; if (m.moveT >= (p2 ? 0.3 : 0.6)) { go('slash'); m.vx = dir * (p2 ? 7 : 4); m.kbTimer = 0.1; } break;
-        case 'slash': swing(p2 ? 4.3 : 3.7); if (m.moveT > 0.28) { if (--m.combo > 0) go('wind'); else { go('walk'); m.cd = p2 ? 0.5 : 1.3; } } break;
-        case 'block': m.shieldUp = true; m.facingDir = dir; tv = dir * spd * 0.35; if (m.moveT > 2.1) { m.shieldUp = false; if (dist < 4) go('bash'); else { go('walk'); m.cd = 0.4; } } break;
-        case 'bash': m.shieldUp = true; m.facingDir = dir; if (m.moveT < 0.35) tv = 0; else { tv = m.facingDir * 9.5; if (!m.hitDone && dist < 2.4) { m.hitDone = true; bossHitPlayer(dmg + 1, mcx, p, 0, { kb: [12, 6], iframes: 0.4 }); screenShake(0.4); sfx('fall.big', { x: mcx, y: m.y + 3, pitch: 0.7 }); } } if (m.moveT > 0.95) { m.shieldUp = false; go('walk'); m.cd = 1.4; } break;
+        case 'wind': m.facingDir = dir; tv = 0; if (m.moveT >= (p2 ? 0.26 : 0.55)) { go('slash'); m.vx = dir * (p2 ? 8 : 4.5); m.kbTimer = 0.12; } break;
+        case 'slash': swing(p2 ? 4.5 : 3.8, m.combo === 1); if (m.moveT > 0.26) { if (--m.combo > 0) go('wind'); else { go('walk'); m.cd = p2 ? 0.45 : 1.2; } } break;
+        case 'block': m.shieldUp = true; m.facingDir = dir; tv = dir * spd * 0.35; if (m.moveT > 2.0) { if (dist < 4) go('bash'); else { go('walk'); m.cd = 0.4; } } break;
+        case 'bash':
+          m.facingDir = dir;
+          if (m.moveT < 0.35) tv = 0;
+          else {
+            tv = m.facingDir * 10.5;
+            if (Math.random() < dt * 40 * particleMul()) Game.particles.push({ x: mcx - m.facingDir * 0.8, y: m.y + m.h - 0.1, vx: -m.facingDir * 2, vy: -1.5, life: 0.5, age: 0, size: 0.16, color: 'rgba(150,170,180,0.6)', gravity: -0.5, mist: true });
+            if (!m.hitDone && dist < 2.4) { m.hitDone = true; bossHitPlayer(dmg + 2, mcx, p, 0, { kb: [13, 6], iframes: 0.4 }); screenShake(0.5); sfx('fall.big', { x: mcx, y: m.y + 3, pitch: 0.7 }); }
+          }
+          if (m.moveT > 1.0) { go('walk'); m.cd = 1.2; }
+          break;
+        case 'quake': {   // glowing cracks run along the floor, then crystal spears burst up
+          m.facingDir = dir; tv = 0;
+          const wt = p2 ? 0.55 : 0.8;
+          if (m.moveT >= wt && !m.hitDone) {
+            m.hitDone = true; screenShake(0.7); sfx('fall.big', { x: mcx, y: A.floor, pitch: 0.55 }); sfx('brute.slam', { x: mcx, y: A.floor });
+            const dirs = p2 ? [-1, 1] : [dir];
+            for (const d of dirs) for (let i = 0; i < (p2 ? 6 : 8); i++) { const x = mcx + d * (2 + i * 1.5); if (x > A.x0 + 0.5 && x < A.x1 - 0.5) B12.hk.spikes.push({ x, t: -i * 0.09, dmg: Math.round(dmg * 0.95), up: false, hit: false }); }
+            for (let i = 0; i < 14; i++) Game.particles.push({ x: mcx + (Math.random() - 0.5) * 2, y: A.floor - 0.1, vx: (Math.random() - 0.5) * 8, vy: -2 - Math.random() * 3, life: 0.5, age: 0, size: 0.13, color: i % 2 ? '#8e988a' : '#5af0ff', gravity: 10 });
+          }
+          if (m.moveT > wt + 0.7) { go('walk'); m.cd = 0.9; }
+          break;
+        }
+        case 'dashcut': {   // blink behind you and cut
+          m.facingDir = dir; tv = 0;
+          if (m.moveT >= 0.42 && !m.hitDone) {
+            m.hitDone = true;
+            const ox = m.x, oy = m.y, nx0 = pcx + dir * 2.3, nx = Math.max(A.x0 + 1, Math.min(A.x1 - 1 - m.w, nx0 - m.w / 2));
+            for (let i = 0; i < 7; i++) B12.hk.ghosts.push({ x: ox + (nx - ox) * i / 7, y: oy, facing: m.facingDir, age: -i * 0.02, frame: 12 });
+            for (let i = 0; i < 24; i++) Game.particles.push({ x: ox + m.w / 2, y: oy + Math.random() * m.h, vx: (Math.random() - 0.5) * 3, vy: -1, life: 0.7, age: 0, size: 0.18, color: i % 2 ? 'rgba(255,90,60,0.7)' : 'rgba(20,10,20,0.8)', gravity: -0.4 });
+            m.x = nx; m.vx = 0; m.facingDir = -dir; sfx('hollowknight.say', { x: nx, y: oy, pitch: 1.2, vol: 0.8 }); sfx('katana.dash', { x: nx, y: oy });
+            m.combo = 1; m.hitDone = false; go('slash'); m.combo = 1;
+          }
+          break;
+        }
+        case 'rain': {   // spectral swords light up the floor, then fall
+          tv = 0; m.facingDir = dir;
+          if (m.moveT >= 0.5 && !m.hitDone) {
+            m.hitDone = true; sfx('hollowknight.say', { x: mcx, y: m.y, pitch: 0.65, vol: 1.2 });
+            const xs = [pcx, pcx - 3.2, pcx + 3.2, pcx - 6.4, pcx + 6.4, pcx + (Math.random() - 0.5) * 9];
+            xs.forEach((x, i) => { if (x > A.x0 + 0.8 && x < A.x1 - 0.8) B12.hk.blades.push({ x, kind: 'sword', t: -i * 0.18, y: A.floor - 12, state: 'warn', dmg: Math.round(dmg * 0.9) }); });
+          }
+          if (m.moveT > 1.5) { go('walk'); m.cd = 0.8; }
+          break;
+        }
         case 'summon':
           tv = 0; m.facingDir = dir;
           if (m.moveT > 0.55 && !m.summoned) { m.summoned = true; sfx('hollowknight.say', { x: m.x, y: m.y, pitch: 0.7 }); for (const k of [-6, 0, 6]) { const sx = Math.max(A.x0 + 2, Math.min(A.x1 - 3, Math.floor(pcx + k))); skelAt12(sx, A.floor - 1); } screenShake(0.3); }
@@ -17114,25 +17209,135 @@
         case 'leap':
           if (m.moveT < 0.4) { tv = 0; m.facingDir = dir; m.leapInit = false; }
           else {
-            if (!m.leapInit) { m.leapInit = true; m.vy = -13; m.vx = dir * Math.min(9, dist * 1.4 + 2); m.kbTimer = 0.9; sfx('hollowknight.say', { x: m.x, y: m.y, pitch: 0.9 }); }
+            if (!m.leapInit) { m.leapInit = true; m.vy = -14; m.vx = dir * Math.min(10, dist * 1.4 + 2); m.kbTimer = 0.9; sfx('hollowknight.say', { x: m.x, y: m.y, pitch: 0.9 }); }
             if (m.onGround && m.moveT > 0.6) {
-              screenShake(0.7); sfx('fall.big', { x: mcx, y: m.y + 3.7, pitch: 0.6 }); sfx('brute.slam', { x: mcx, y: m.y + 3.7 });
+              screenShake(0.9); sfx('fall.big', { x: mcx, y: m.y + 3.7, pitch: 0.5 }); sfx('brute.slam', { x: mcx, y: m.y + 3.7 });
               const gy = Math.floor(m.y + m.h);
-              for (const s2 of [-1, 1]) spawnProjectile({ x: mcx + s2 * 1.2, y: gy - 0.4, vx: s2 * 9, vy: 0, kind: 'wave', groundY: gy, r: 0.45, dmg: 8, life: 1.6, solidHit: false });
-              for (let i = 0; i < 20; i++) { const s2 = i % 2 ? 1 : -1; Game.particles.push({ x: mcx + s2 * (0.6 + i * 0.1), y: m.y + m.h - 0.1, vx: s2 * (3 + Math.random() * 5), vy: -2 - Math.random() * 3, life: 0.5, age: 0, size: 0.12, color: i % 3 ? '#8e988a' : '#6fe8ff', gravity: 10 }); }
-              if (Math.abs(pcx - mcx) < 3 && p.onGround) bossHitPlayer(dmg, mcx, p, 0, { kb: [10, 7], iframes: 0.4 });
+              for (const s2 of [-1, 1]) spawnBolt12({ from: 'mob', kind: 'ksoul', x: mcx + s2 * 1.4, y: A.floor - 1.1, vx: s2 * 12, vy: 0, dmg: Math.round(dmg * 0.9), r: 0.62, life: 1.6, trail: true, p2: true });
+              for (let i = 0; i < 28; i++) { const s2 = i % 2 ? 1 : -1; Game.particles.push({ x: mcx + s2 * (0.6 + i * 0.1), y: m.y + m.h - 0.1, vx: s2 * (3 + Math.random() * 6), vy: -2 - Math.random() * 4, life: 0.6, age: 0, size: 0.14, color: i % 3 ? '#8e988a' : '#ff7a5a', gravity: 10 }); }
+              for (let i = 0; i < 4; i++) { const x = A.x0 + 2 + Math.random() * (A.x1 - A.x0 - 4); B12.hk.blades.push({ x, kind: 'rock', t: -0.2 - i * 0.25, y: A.floor - 12, state: 'warn', dmg: Math.round(dmg * 0.6) }); }
+              if (Math.abs(pcx - mcx) < 3.2 && p.onGround) bossHitPlayer(dmg, mcx, p, 0, { kb: [10, 7], iframes: 0.4 });
               go('walk'); m.cd = 0.7;
             }
           }
           break;
       }
-      m.shieldUp = (m.move === 'block' || m.move === 'bash');
+      m.shieldUp = (m.move === 'block' || m.move === 'bash' || (m.move === 'quake' && !p2 && m.moveT < 0.8));
       m.blocking = m.shieldUp && !p2;
       if (m.x < A.x0 + 0.3) { m.x = A.x0 + 0.3; m.vx = Math.max(0, m.vx); } if (m.x + m.w > A.x1 - 0.3) { m.x = A.x1 - 0.3 - m.w; m.vx = Math.min(0, m.vx); }
       mobMove(m, tv, dt);
-      m.legPhase += dt * 0;
-      if (p2 && Math.random() < dt * 14 * particleMul()) Game.particles.push({ x: m.x + m.w / 2 + (Math.random() - 0.5), y: m.y + 0.8 + Math.random() * 2, vx: 0, vy: -1, life: 0.6, age: 0, size: 0.09, color: '#ff7a5a', gravity: -0.5 });
+      if (p2 && Math.random() < dt * 20 * particleMul()) Game.particles.push({ x: m.x + m.w / 2 + (Math.random() - 0.5) * 1.4, y: m.y + 0.8 + Math.random() * 2.4, vx: 0, vy: -1.2, life: 0.7, age: 0, size: 0.1, color: Math.random() < 0.5 ? '#ff7a5a' : '#ffd05a', gravity: -0.6 });
+      else if (!p2 && Math.random() < dt * 6 * particleMul()) Game.particles.push({ x: m.x + m.w / 2 + (Math.random() - 0.5) * 1.4, y: m.y + 1 + Math.random() * 2.4, vx: 0, vy: -0.8, life: 0.7, age: 0, size: 0.08, color: '#5af0ff', gravity: -0.4 });
     }
+    // spears, falling swords and rubble, afterimages
+    B12.updaters.push(function hkSys12(dt, p) {
+      const H = B12.hk; if (!H.spikes.length && !H.blades.length && !H.ghosts.length) return;
+      const boss = Game.boss && Game.boss.type === 'hollowknight' ? Game.boss : null, floor = boss ? boss.arena.floor : null;
+      for (let i = H.spikes.length - 1; i >= 0; i--) {
+        const s = H.spikes[i]; s.t += dt;
+        if (!s.up && s.t >= 0.5) {
+          s.up = true; sfx('dig.glass', { x: s.x, y: floor, pitch: 0.8, vol: 0.8 });
+          for (let k = 0; k < 8; k++) Game.particles.push({ x: s.x + (Math.random() - 0.5) * 0.6, y: floor - Math.random() * 2, vx: (Math.random() - 0.5) * 3, vy: -3 - Math.random() * 3, life: 0.5, age: 0, size: 0.1, color: k % 2 ? '#bff6ff' : '#3fd8ee', gravity: 9 });
+          if (!Game.creative && !p.dead && Math.abs(p.x + p.w / 2 - s.x) < 0.75 && p.y + p.h > floor - 3.3) bossHitPlayer(s.dmg, s.x, p, 0, { kb: [5, 9], iframes: 0.4 });
+        }
+        if (s.t > 1.1 || floor == null) H.spikes.splice(i, 1);
+      }
+      for (let i = H.blades.length - 1; i >= 0; i--) {
+        const b = H.blades[i]; b.t += dt;
+        if (b.state === 'warn' && b.t >= 0.85) { b.state = 'fall'; b.vy = 0; }
+        else if (b.state === 'fall') {
+          b.vy = Math.min(40, b.vy + 90 * dt); b.y += b.vy * dt;
+          if (floor != null && b.y >= floor - 0.2) {
+            b.state = 'stuck'; b.t = 0; b.y = floor - 0.2; screenShake(0.2); sfx('dig.stone', { x: b.x, y: floor, vol: 1.1, pitch: b.kind === 'rock' ? 0.6 : 1.2 });
+            for (let k = 0; k < 10; k++) Game.particles.push({ x: b.x, y: floor - 0.2, vx: (Math.random() - 0.5) * 6, vy: -2 - Math.random() * 3, life: 0.5, age: 0, size: 0.11, color: b.kind === 'rock' ? '#8e988a' : (k % 2 ? '#bff6ff' : '#5af0ff'), gravity: 10 });
+            if (!Game.creative && !p.dead && Math.abs(p.x + p.w / 2 - b.x) < (b.kind === 'rock' ? 0.8 : 0.9) && p.y + p.h > floor - 3) bossHitPlayer(b.dmg, b.x, p, 0, { kb: [4, 8], iframes: 0.35 });
+          }
+        } else if (b.state === 'stuck' && b.t > 0.6) H.blades.splice(i, 1);
+        if (floor == null) H.blades.splice(i, 1);
+      }
+      for (let i = H.ghosts.length - 1; i >= 0; i--) { H.ghosts[i].age += dt; if (H.ghosts[i].age > 0.55) H.ghosts.splice(i, 1); }
+    });
+    function hkSpriteAt12(m, x, y, facing, frame, alpha) {
+      const fake = { type: 'hollowknight', h: m.h, w: m.w, def: m.def, id: m.id, phase: 2, move: 'slash', vx: 0, legPhase: 0, dying: null };
+      const u = TILE / 16;
+      ctx.save(); ctx.globalAlpha = alpha; ctx.translate(Math.round(ox12 + (x + m.w / 2) * TILE), Math.round(oy12 + (y + m.h) * TILE)); ctx.scale(facing, 1);
+      MOB_DRAW.hollowknight(ctx, fake, u, []); ctx.restore();
+    }
+    let ox12 = 0, oy12 = 0;
+    B12.pre.push(function hkDraw12(ox, oy) {
+      const H = B12.hk, m = Game.boss && Game.boss.type === 'hollowknight' && Game.boss.dying == null ? Game.boss : null;
+      ox12 = ox; oy12 = oy;
+      if (m) {
+        // the wind-up arc
+        if (m.move === 'wind' || (m.move === 'leap' && m.moveT < 0.4) || m.move === 'summon' || m.move === 'dashcut') {
+          const x = ox + (m.x + m.w / 2) * TILE, y = oy + (m.y + 1.9) * TILE, k = Math.min(1, m.moveT / (m.phase >= 2 ? 0.3 : 0.6)), r = TILE * (m.phase >= 2 ? 4.5 : 3.8);
+          ctx.save(); ctx.fillStyle = `rgba(255,${m.phase >= 2 ? 90 : 220},${m.phase >= 2 ? 70 : 255},${0.1 + 0.22 * k})`; ctx.beginPath(); ctx.moveTo(x, y);
+          const f = m.facingDir > 0 ? 0 : Math.PI; ctx.arc(x, y, r, f - 0.9, f + 0.9); ctx.closePath(); ctx.fill(); ctx.restore();
+        }
+        for (const g of H.ghosts) if (g.age >= 0) hkSpriteAt12(m, g.x, g.y, g.facing, g.frame, 0.45 * (1 - g.age / 0.55));
+      }
+      // the floor cracks (a warning) before each spear
+      const fl = m ? m.arena.floor : null;
+      if (fl != null) for (const s of H.spikes) if (s.t > -1 && !s.up) {
+        const k = Math.max(0, s.t) / 0.5, x = ox + s.x * TILE, y = oy + fl * TILE;
+        ctx.fillStyle = `rgba(90,240,255,${0.25 + 0.6 * k})`; ctx.fillRect(x - TILE * 0.12, y - 3, TILE * 0.24, 3 + TILE * 0.1);
+        ctx.fillStyle = `rgba(255,255,255,${0.4 * k})`; ctx.fillRect(x - 1, y - 6 * k - 2, 2, 5 * k + 2);
+      }
+      // the warning beams of the swords and rubble
+      if (m) for (const b of H.blades) if (b.state === 'warn' && b.t > -0.05) {
+        const k = Math.max(0, b.t) / 0.85, x = ox + b.x * TILE, top = oy + (m.arena.floor - 13) * TILE, bot = oy + m.arena.floor * TILE;
+        const g = ctx.createLinearGradient(0, top, 0, bot); g.addColorStop(0, 'rgba(90,240,255,0)'); g.addColorStop(1, `rgba(${b.kind === 'rock' ? '200,200,200' : '120,250,255'},${0.2 + 0.5 * k})`);
+        ctx.fillStyle = g; ctx.fillRect(x - TILE * (0.1 + 0.2 * k), top, TILE * (0.2 + 0.4 * k), bot - top);
+      }
+      // spears, swords and rubble themselves
+      if (m) for (const s of H.spikes) if (s.up) {
+        const k = Math.min(1, (s.t - 0.5) / 0.1), fade = 1 - Math.max(0, (s.t - 0.9) / 0.2), h = TILE * 3.3 * k, w = TILE * 0.7, x = ox + s.x * TILE, y = oy + m.arena.floor * TILE;
+        ctx.save(); ctx.globalAlpha = fade; ctx.beginPath(); ctx.moveTo(x - w / 2, y); ctx.lineTo(x, y - h); ctx.lineTo(x + w / 2, y); ctx.closePath();
+        const g = ctx.createLinearGradient(x - w / 2, 0, x + w / 2, 0); g.addColorStop(0, '#1f98b0'); g.addColorStop(0.5, '#e8ffff'); g.addColorStop(1, '#3fd8ee'); ctx.fillStyle = g; ctx.fill();
+        ctx.strokeStyle = '#0a3a4a'; ctx.lineWidth = 2; ctx.stroke(); ctx.restore();
+      }
+      if (m) for (const b of H.blades) if (b.state !== 'warn') {
+        const x = ox + b.x * TILE, y = oy + b.y * TILE, fade = b.state === 'stuck' ? 1 - b.t / 0.6 : 1;
+        ctx.save(); ctx.globalAlpha = fade; ctx.translate(x, y);
+        if (b.kind === 'rock') { ctx.fillStyle = '#7a847a'; ctx.fillRect(-TILE * 0.35, -TILE * 0.7, TILE * 0.7, TILE * 0.7); ctx.fillStyle = '#a8b2a8'; ctx.fillRect(-TILE * 0.35, -TILE * 0.7, TILE * 0.7, 4); ctx.fillStyle = '#4a524a'; ctx.fillRect(TILE * 0.15, -TILE * 0.3, TILE * 0.2, TILE * 0.3); }
+        else {
+          ctx.fillStyle = '#e8ffff'; ctx.fillRect(-TILE * 0.12, -TILE * 2.4, TILE * 0.24, TILE * 2.4); ctx.beginPath(); ctx.moveTo(-TILE * 0.12, 0); ctx.lineTo(0, TILE * 0.25); ctx.lineTo(TILE * 0.12, 0); ctx.fill();
+          ctx.fillStyle = '#3fd8ee'; ctx.fillRect(-TILE * 0.05, -TILE * 2.4, TILE * 0.1, TILE * 2.4); ctx.fillStyle = '#d9a93a'; ctx.fillRect(-TILE * 0.4, -TILE * 2.6, TILE * 0.8, TILE * 0.2); ctx.fillStyle = '#5a3a22'; ctx.fillRect(-TILE * 0.08, -TILE * 3.3, TILE * 0.16, TILE * 0.7);
+        }
+        ctx.restore();
+      }
+    });
+    B12.glow.push(function hkGlow12(ox, oy, glow) {
+      const m = Game.boss && Game.boss.type === 'hollowknight' && Game.boss.dying == null ? Game.boss : null; if (!m) return;
+      const t = performance.now() / 1000, cx = ox + (m.x + m.w / 2) * TILE, cy = oy + (m.y + 1.9) * TILE, p2 = m.phase >= 2;
+      glow(cx, cy, TILE * (p2 ? 3.4 : 2.4), p2 ? '255,80,50' : '60,220,240', p2 ? 0.28 : 0.18);
+      if (p2) for (let i = 0; i < 6; i++) { const a = t * 2.2 + i * 1.047, x = cx + Math.cos(a) * TILE * 2.1, y = cy + Math.sin(a) * TILE * 1.5; glow(x, y, TILE * 0.9, '255,110,40', 0.7); glow(x, y, TILE * 0.3, '255,240,170', 0.95); }
+      if (m.move === 'slash') {   // the sweep of the sword
+        const k = Math.min(1, m.moveT / 0.26), r = TILE * (p2 ? 4.4 : 3.7), col = p2 ? '255,130,80' : '120,245,255';
+        ctx.save(); ctx.translate(cx, cy); ctx.scale(m.facingDir, 1);
+        for (let j = 0; j < 5; j++) {
+          const a0 = -1.5 + k * 2.4 - j * 0.16;
+          ctx.beginPath(); ctx.arc(0, 0, r * (1 - j * 0.03), a0 - 0.32, a0);
+          ctx.strokeStyle = `rgba(${col},${(0.7 - j * 0.13) * (1 - k * 0.4)})`; ctx.lineWidth = TILE * (0.5 - j * 0.07); ctx.lineCap = 'round'; ctx.stroke();
+        }
+        ctx.restore();
+      }
+      if (m.move === 'rain' || m.move === 'summon') glow(cx, cy - TILE * 2.6, TILE * 2.2, '120,250,255', 0.5 * Math.min(1, m.moveT * 2));
+      for (const s of B12.hk.spikes) if (s.up) glow(ox + s.x * TILE, oy + (m.arena.floor - 1.3) * TILE, TILE * 1.6, '90,240,255', 0.4);
+      for (const b of B12.hk.blades) if (b.state === 'fall' && b.kind === 'sword') glow(ox + b.x * TILE, oy + (b.y - 1.2) * TILE, TILE * 1.6, '120,250,255', 0.5);
+    });
+    B12.glow.push(function drawSoulWaves12(ox, oy, glow) {
+      for (const b of Game.bolts12) if (b.kind === 'ksoul' || b.kind === 'psoul') {
+        const x = ox + b.x * TILE, y = oy + b.y * TILE, dir = Math.sign(b.vx) || 1;
+        const col = b.kind === 'psoul' ? '90,235,255' : (b.p2 ? '255,110,70' : '90,235,255');
+        glow(x, y, TILE * 1.8, col, 0.5);
+        for (let j = 0; j < 4; j++) {
+          ctx.beginPath(); ctx.arc(x - dir * j * TILE * 0.35, y, TILE * (1.0 - j * 0.08), dir > 0 ? -1.15 : Math.PI - 1.15, dir > 0 ? 1.15 : Math.PI + 1.15);
+          ctx.strokeStyle = `rgba(${col},${0.85 - j * 0.2})`; ctx.lineWidth = TILE * (0.34 - j * 0.06); ctx.lineCap = 'round'; ctx.stroke();
+        }
+      }
+    });
+    BOLT_COL12.ksoul = ['90,235,255', '#bff6ff']; BOLT_COL12.psoul = ['90,235,255', '#bff6ff'];
     // the shield: hits from the front are mostly absorbed (and wear it down)
     function hollowBlock12(mob, dmg) {
       const p = Game.player;
@@ -17153,15 +17358,6 @@
       eventMessage('The Hollow Knight crumbles. Its long watch is over.', '#6fe8ff'); sfx('toast.challenge'); stopBossMusic(true);
       Game.shake = Math.max(Game.shake, 0.8);
     };
-    // telegraph: a faint arc in front of the Knight while it winds up
-    B12.pre.push(function hollowTelegraph12(ox, oy) {
-      const m = Game.boss; if (!m || m.type !== 'hollowknight' || m.dying != null) return;
-      if (m.move === 'wind' || (m.move === 'leap' && m.moveT < 0.4) || m.move === 'summon') {
-        const x = ox + (m.x + m.w / 2) * TILE, y = oy + (m.y + 1.9) * TILE, k = Math.min(1, m.moveT / (m.phase >= 2 ? 0.3 : 0.6)), r = TILE * (m.phase >= 2 ? 4.3 : 3.7);
-        ctx.save(); ctx.fillStyle = `rgba(255,${m.phase >= 2 ? 90 : 220},${m.phase >= 2 ? 70 : 255},${0.12 + 0.2 * k})`; ctx.beginPath(); ctx.moveTo(x, y);
-        const f = m.facingDir > 0 ? 0 : Math.PI; ctx.arc(x, y, r, f - 0.9, f + 0.9); ctx.closePath(); ctx.fill(); ctx.restore();
-      }
-    });
     // ---- inside the ruins ----
     B12.updaters.push(function ruinSys12(dt, p) {
       const w = Game.world; if (w.isInterior || netIsClient()) return;
@@ -17192,7 +17388,10 @@
       });
       once('key', () => { for (const [sx, sy] of R.skel.key) skelAt12(R.x0 + sx, R.y0 + sy); eventMessage('Bones rattle in the dark!', '#d6cfb4'); });
       once('ante', () => { for (const [sx, sy] of R.skel.ante) skelAt12(R.x0 + sx, R.y0 + sy); });
-      if (inRoom('arena') && !f.ruinDone.includes(R.id) && !Game.boss && Settings.difficulty !== 'peaceful' && (B12.knightCd = (B12.knightCd || 0) - dt) <= 0) { B12.knightCd = 4; spawnHollow(R); }
+      if (inRoom('arena') && !f.ruinDone.includes(R.id) && !Game.boss && !parasiteBeaten12() && Settings.difficulty !== 'peaceful') {
+        if ((B12.sleepMsg = (B12.sleepMsg || 0) - dt) <= 0) { B12.sleepMsg = 25; eventMessage('The throne is still. The Hollow Knight will not stir until the Apex Parasite is dead.', '#a8c8b8'); }
+      }
+      if (inRoom('arena') && !f.ruinDone.includes(R.id) && !Game.boss && parasiteBeaten12() && Settings.difficulty !== 'peaceful' && (B12.knightCd = (B12.knightCd || 0) - dt) <= 0) { B12.knightCd = 4; spawnHollow(R); }
     });
     B12.updaters.push(function inRuinReset12(dt, p) { const w = Game.world; if (B12.inRuin && !w.isInterior) { const R = w.ruinsNear(Math.floor(p.x), 0)[0]; if (!R || p.y < R.y0 - 4) B12.inRuin = false; } });
     // ---- dart traps ----
@@ -17233,7 +17432,7 @@
     // ---- the Ancient Door ----
     function useAncientDoor12(x, y) {
       const p = Game.player, s = p.selectedSlot();
-      if (!s || s.item !== RUIN_KEY) { showToast('The door is sealed by old magic. It needs a Ruin Key.'); sfx('door.lock', { x, y }); return; }
+      if (!s || s.item !== RUIN_KEY) { showToast(parasiteBeaten12() ? 'The door is sealed by old magic. It needs the Ruin Key the Apex Parasite carries.' : 'The door is sealed by old magic. Something in the desert sands holds the key...'); sfx('door.lock', { x, y }); return; }
       const w = Game.world, seen = new Set(), q = [[x, y]];
       while (q.length && seen.size < 24) {
         const [cx2, cy2] = q.pop(), k = cx2 + ',' + cy2; if (seen.has(k) || w.getTile(cx2, cy2) !== ANCIENT_DOOR) continue; seen.add(k);
@@ -18552,7 +18751,7 @@
         }
         const Wp = s && WEAPONS[s.item];
         if (Wp && Wp.type === 'musket') txt = (p.musketReload ? 'Reloading...' : s.loaded ? 'Loaded' : 'Empty') + ` \u2022 Musket Balls x${Game.creative ? '\u221e' : countItem(p.inventory, MUSKET_BALL)}`;
-        else if (Wp && Wp.type === 'katana') txt = p.kDashCd > 0 ? `Dash in ${p.kDashCd.toFixed(1)}s` : 'Dash ready (right-click)';
+        else if (Wp && Wp.type === 'katana') txt = Wp.noDash ? '' : p.kDashCd > 0 ? `Dash in ${p.kDashCd.toFixed(1)}s` : 'Dash ready (right-click)';
         else if (Wp && Wp.type === 'hammer') txt = p.poundCd > 0 ? `Ground Pound in ${p.poundCd.toFixed(1)}s` : 'Ground Pound ready (right-click)';
         if (ah.textContent !== txt) { ah.textContent = txt; ah.style.display = txt ? 'block' : 'none'; }
       }
@@ -20590,6 +20789,7 @@
         if (victims.some(v => v.id === m.id)) continue;   // (1.1.4: the rings of the Parasite's body all share its id: one cut, not twenty)
         if (boxDistToPoint(m, c.x, c.y) <= W.reach + (p.kCombo === 2 ? 0.6 : 0) && canSeeBox(c, m)) victims.push(m);
       }
+      if (W.wave && p.kCombo === 2) fireSoulWave12(p, slot, W, c);
       if (!victims.length) return;
       const crit = isCritFall(p);
       const base = weaponDamage(p, slot, W) * (p.kCombo === 2 ? 1.3 : 1);
@@ -20605,9 +20805,16 @@
       }
       wearWeapon(p, slot);
     }
+    // (1.2.1) the Hollow Blade's third cut throws a crescent of soul that pierces a few monsters
+    function fireSoulWave12(p, slot, W, c) {
+      const dmg = Math.max(2, Math.round(weaponDamage(p, slot, W) * 0.55));
+      spawnBolt12({ from: 'player', kind: 'psoul', x: c.x + p.facing * 1.2, y: c.y + 0.1, vx: p.facing * 15, vy: 0, dmg, r: 0.6, life: 0.7, trail: true, pierce: 3, hitSet: new Set() });
+      sfx('spell.zap', { pitch: 1.3, vol: 0.7 });
+    }
     // IAIDO: right-click to dash through everything in your way. You can't be
     // hurt mid-dash; a heartbeat later, everything you passed gets cut.
     function katanaDash(p, slot, W) {
+      if (W.noDash) return;
       if ((p.kDashCd || 0) > 0 || p.kDash || p.dead || p.riding || p.swimming) return;
       const dir = Math.abs(p.lookX) > 0.15 ? Math.sign(p.lookX) : p.facing;
       p.facing = dir;
@@ -22132,7 +22339,7 @@
       ctx.save(); ctx.translate(sx + TILE / 2, sy); ctx.rotate(a); ctx.drawImage(tex, 0, 0, TEX, TEX, -TILE / 2, 0, TILE, TILE); ctx.restore();
     }
     function weaponTooltip(stack, W) {
-      if (W.type === 'katana') return `<div class="tt-blue">3-hit combo</div><div class="tt-blue">Right-click: dash slash (${W.dashDmg} damage)</div>` + (W.bleed ? '<div class="tt-blue">Makes enemies bleed</div>' : '') + (W.leech ? '<div class="tt-blue">Leech: heals you as you hit</div>' : '') + `<div class="tt-line">A cut every ${W.cd} s</div>`;
+      if (W.type === 'katana') return `<div class="tt-blue">3-hit combo</div>` + (W.noDash ? '' : `<div class="tt-blue">Right-click: dash slash (${W.dashDmg} damage)</div>`) + (W.wave ? '<div class="tt-blue">Every 3rd cut throws a wave of soul</div>' : '') + (W.bleed ? '<div class="tt-blue">Makes enemies bleed</div>' : '') + (W.leech ? '<div class="tt-blue">Leech: heals you as you hit</div>' : '') + `<div class="tt-line">A cut every ${W.cd} s</div>`;
       if (W.type === 'hammer') return '<div class="tt-blue">Flattens and launches monsters</div><div class="tt-blue">Right-click: ground pound</div><div class="tt-line">Heavy: you move a bit slower</div>';
       if (W.type === 'magic') return `<div class="tt-blue">Costs ${W.mana} mana per cast</div><div class="tt-blue">Left-click (or hold) to cast</div>`;
       if (W.type === 'musket') return `<div class="tt-blue">Left-click: fire. Aim for the head!</div><div class="tt-blue">Shots pierce up to 4 monsters</div><div class="tt-line">${stack.loaded ? 'Loaded' : 'Empty (reloads with Musket Balls)'}</div>`;
@@ -22157,7 +22364,7 @@
     // Messages are small JSON objects { t: type, ... }. Big ones (the world sent to a
     // joining player) are split into pieces and put back together on arrival.
     // =============================================================================
-    const NET_VERSION = 'beta-1.2';
+    const NET_VERSION = 'beta-1.2.1';
     const NET_RATE = { state: 1 / 15, mobs: 1 / 8, drops: 1 / 5, cont: 0.4, flags: 1, inv: 5, spawn: 1.2, proj: 1 / 15 };
     const Net = {
       active: false, role: null, kind: 'online', code: '', myId: null, tx: null,
@@ -22685,6 +22892,7 @@
       for (let i = 0; i < 3; i++) Game.flags.sensei[i] = Game.flags.sensei[i] || !!(f.sensei && f.sensei[i]);
       for (const k of ['ruinRooms', 'ruinDone']) if (Array.isArray(f[k])) { Game.flags[k] = Game.flags[k] || []; for (const x of f[k]) if (!Game.flags[k].includes(x)) Game.flags[k].push(x); }   // (1.2)
       Game.flags.bloodMoons = Math.max(Game.flags.bloodMoons | 0, f.bloodMoons | 0);
+      Game.flags.parasiteDown = Game.flags.parasiteDown || !!f.parasiteDown;
       if (Array.isArray(f.fish)) { Game.flags.fish = Game.flags.fish || []; for (const x of f.fish) if (!Game.flags.fish.includes(x)) Game.flags.fish.push(x); }
     }
 
@@ -23453,7 +23661,7 @@
       // cheats: chosen when the world is made. Worlds from before 1.3 keep them on.
       Game.cheats = saveData ? (saveData.cheats ?? true) : !!cheats;
       const fl = (saveData && saveData.flags) || {};
-      Game.flags = { tonioSold: !!fl.tonioSold, sensei: [0, 1, 2].map(i => !!(fl.sensei && fl.sensei[i])), fish: Array.isArray(fl.fish) ? fl.fish.slice() : [], ruinRooms: Array.isArray(fl.ruinRooms) ? fl.ruinRooms.slice() : [], ruinDone: Array.isArray(fl.ruinDone) ? fl.ruinDone.slice() : [], bloodMoons: fl.bloodMoons | 0 };
+      Game.flags = { tonioSold: !!fl.tonioSold, sensei: [0, 1, 2].map(i => !!(fl.sensei && fl.sensei[i])), fish: Array.isArray(fl.fish) ? fl.fish.slice() : [], ruinRooms: Array.isArray(fl.ruinRooms) ? fl.ruinRooms.slice() : [], ruinDone: Array.isArray(fl.ruinDone) ? fl.ruinDone.slice() : [], bloodMoons: fl.bloodMoons | 0, parasiteDown: !!fl.parasiteDown };
       Game.netSaves = (saveData && saveData.netPlayers) || {};
       Game.rules = Object.assign(defaultRules(), (saveData && saveData.rules) || (!saveData && newWorldRules) || {});   // (1.0.2)
       Game.dayShift = (saveData && saveData.dayShift) || 0; Game._lastT = null;
@@ -23569,7 +23777,7 @@
       Game.world = new World((Math.random() * 1e9) | 0);
       Game.mobs = []; Game.drops = []; Game.particles = [];
       Game.projectiles = []; Game.arrows = []; Game.boss = null; Game.ritual = null; stopBossMusic(true);
-      Game.flags = { tonioSold: false, sensei: [false, false, false], fish: [], ruinRooms: [], ruinDone: [], bloodMoons: 0 }; resetCombatState(); Game.cheats = false;
+      Game.flags = { tonioSold: false, sensei: [false, false, false], fish: [], ruinRooms: [], ruinDone: [], bloodMoons: 0, parasiteDown: false }; resetCombatState(); Game.cheats = false;
       Game.worldId = null; Game.worldName = null;
       el('chat-input').placeholder = 'Type a command, like /help';
       updateNetBadge();

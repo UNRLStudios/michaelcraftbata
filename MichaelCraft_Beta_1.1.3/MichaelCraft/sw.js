@@ -2,7 +2,7 @@
 // Makes the game installable as an app and playable offline: everything the game
 // loads is kept in a cache on your phone. When a new version is uploaded, change
 // VERSION below so phones throw away the old copy.
-const VERSION = 'michaelcraft-beta-1.2';
+const VERSION = 'michaelcraft-beta-1.2.1';
 const PRECACHE = [
  "./",
  "index.html",
@@ -248,6 +248,7 @@ const PRECACHE = [
  "Sounds/music/desperation_BGM.mp3",
  "Sounds/music/final_stand.mp3",
  "Sounds/music/apex_parasite.mp3",
+ "Sounds/music/hollow_knight.mp3",
  "Textures/items/abyss_tome.png",
  "Textures/items/ancient_armor.png",
  "Textures/items/ancient_metal.png",

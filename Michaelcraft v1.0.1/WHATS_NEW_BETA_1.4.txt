@@ -1,0 +1,139 @@
+MICHAELCRAFT BETA 1.4 - THE UNDERWORLD
+=====================================
+
+(Everyone in a multiplayer game needs 1.4: the version is now beta-1.4. Worlds you already have are fine.)
+
+
+DUCKING
+-------
+  * Press C to duck (or hold S while you're standing on the ground). You crouch down to 1.4 blocks tall,
+    shuffle along slowly, and you can't walk off a ledge (like sneaking in Minecraft).
+  * You stand back up when there's room above your head.
+  * Friends see you duck too.
+  * Cursor Mode has moved from C to LEFT CTRL. It switches when you LET GO of Ctrl, so Ctrl+Q still drops
+    a whole stack. (If you had already set your own key for Cursor Mode, it stays.)
+  * Both keys can be changed in Options > Controls.
+
+
+FOOTBALL  (a new add-on, for multiplayer)
+-----------------------------------------
+  Turn it on in Create New World > Add-ons. Everyone gets a FOOTBALL (craft more: 4 Leather + 1 String).
+  * Hold the mouse button to WIND UP. A meter fills over your head: let go in the GREEN for a perfect spiral.
+    Hold too long and the meter falls back again, so you have to time it.
+  * AIM with the mouse: a dotted line shows the arc the ball will take.
+  * CATCH it by clicking just as it reaches you. Right on time: PERFECT CATCH! Too late, and if it's coming
+    in fast, you FUMBLE it. A slow ball you just grab. Walk over a ball on the ground to pick it up.
+  * Real physics: gravity (Moon Gravity makes it float), air drag, a perfect spiral cuts through the air
+    while a bad throw wobbles, it casts a shadow, and a pointy ball bounces crazily and rolls end over end.
+  * A football that lands in lava (or falls out of the world) goes back to whoever threw it.
+  * New advancement: Touchdown! (a perfect catch). It unlocks the Eye Black accessory.
+  * It needs at least two players: you can't throw it alone.
+
+
+THE UNDERWORLD  (a new dimension)
+---------------------------------
+  HOW TO GET THERE: craft a HELLBREAKER (2 Ember Ingots with a Block of Diamond between them on top,
+  2 Obsidian as the handle). It's a pickaxe that breaks BEDROCK. Dig all the way down, through the
+  bedrock at the bottom of the world... and fall. You drift down into the Underworld through a storm of
+  embers (that fall never hurts).
+  HOW TO GET BACK: dig up through the Underworld's bedrock ceiling (you come out near the bottom of your
+  world), or ask the Lost Soul to send you home. If you die down there you wake up where you came in
+  (or in a bed you put down there).
+
+  WHAT IT'S LIKE:
+    * A gigantic burning cavern under everything: a ceiling of brimstone with stalactites, LAVA SEAS in
+      the low ground, great spires of rock, FLOATING ISLANDS of ash, and lava falling out of the ceiling.
+    * Behind it all: a cavern that glows from below, jagged spires, far-off ruined towers with burning
+      windows, distant lavafalls, and embers drifting up. Everything has a hot red cast; the dark is red-black.
+    * Its own MUSIC, played live: a growling drone, a slow heartbeat and bells far away. Distant roars.
+    * Water boils away down here.
+    * RUINED HELLBRICK TOWERS with Hellfire Lanterns and Infernal Chests, and little shrines on the islands.
+    * THE SOUL TEMPLE: one in every world, a few hundred blocks from where you land. Big, black and
+      stepped, lit with lanterns... and someone is crying for help inside.
+
+  THE DEMONS (they only live down here):
+    * Lesser Demon - flies, and throws DEMON SCYTHES that speed up and fly through walls
+    * Hellhound - runs you down and pounces; its bite sets you on fire
+    * Cinder Imp - blinks around you and throws bouncing fireballs
+    * Magma Slime - hops at you and burns; it bursts into two little ones
+    * Infernal Brute - a huge slammer
+    Torches and lanterns still keep them away from your base.
+
+  NEW BLOCKS:  Brimstone, Hellstone Ore (glows; needs a diamond pickaxe or better), Scorched Ash, Hellbrick,
+    Hellbrick Platform, Obsidian Bricks, Hellfire Lantern, Fireblossom (glows), Infernal Chest, Soul Cage,
+    Underworld Altar, Demon Heart.
+  NEW ITEMS:  Hellstone (smelt it) -> Hellstone Ingot, Demon Horn, Fireblossom Petal (eat it: lava and fire
+    can't hurt you for 25 seconds), the HELLFORGED Pickaxe, Axe and Sword (the best tools in the game; the
+    pickaxe breaks bedrock too, the sword sets things on fire).
+
+
+THE LOST SOUL
+-------------
+  Caged in the Soul Temple for a thousand years. Talk to him (right-click) and FREE him.
+  From then on he counts every demon you slay down here (it's shown at the top of the screen).
+  At 50, go back to him: he forges you a DEMON HEART (and another for every 50 more).
+  He can also tell you about the Overlord... and send you home.
+
+
+THE OVERLORD  (the new boss - the hardest one in the game)
+----------------------------------------------------------
+  THE RITUAL (only in the Underworld): put 5 BLOCKS OF GOLD in a row in the floor, an UNDERWORLD ALTAR
+  on the middle one (crafted: 2 Demon Horns, a Diamond, a Hellstone Ingot and 5 Obsidian Bricks), then the
+  DEMON HEART on the altar. The gold lights up with the heartbeat... and THE OVERLORD rises out of the ground.
+
+  A huge black DRAGON with molten scales. His long neck and tail swing as he flies, his great wings beat,
+  and his jaw opens with fire glowing inside when he breathes skulls and beams at you (the fire comes out
+  of his MOUTH, so watch his head). When he's enraged his horns catch fire. 3200 health (more with friends), and every hit he lands
+  is 50% stronger. He NEVER stops moving: he swoops from side to side over you, fires while he flies, and
+  barely pauses between attacks. His own theme: THE OVERLORD (Sounds/music/the_overlord.mp3) - drums,
+  chugging guitars, a screaming lead and a choir. When he's enraged it speeds up.
+    PHASE 1  Hellfire Barrage (volleys of homing skulls, fired on the move) - Demon Scythes (they fly out...
+             and come BACK) - Meteor Rain (get out of the red circles) - Infernal Charge (the floor burns
+             behind him) - Ground Slam (shockwaves along the floor: jump them; after a slam he's on the
+             ground for a moment: hit him!) - INFERNAL BLINK (he bursts into fire, reappears above you, a
+             crosshair locks on... and he dives straight through it) - Skull Storm (he circles you, raining
+             skulls) - he calls demons
+    PHASE 2  (65%) his horns ignite and a ring of fire blasts out: faster, double charges and double slams,
+             two waves of scythes, Lava Pillars that march at you, Hell Chains (he drags you in, then slams)
+             and Rings of Fire (find the gap)
+    PHASE 3  (30%) ENRAGED: a wall of fire closes the arena in, DOOM SWEEPS - beams of hellfire at head height
+             ("DUCK!") or at your feet ("JUMP!"), three in a row - triple charges, triple slams, double
+             blinks, meteor storms.
+  When he dies: he screams, light cracks out of him, explosions come faster and faster... and one huge blast
+  turns the screen white (with its own death sound).
+  If everyone runs away (or dies), he sinks back into the fire and leaves the Demon Heart on the altar.
+  He drops the HELLFIRE CLEAVER (forged from his fang: every cut throws a crescent of hellfire that burns),
+  Hellstone Ingots, Mana Stars, Diamonds, Demon Horns, Emeralds, Golden Apples and Hellfire Lanterns.
+
+
+ADVANCEMENTS
+------------
+  Rock Bottom (make a Hellbreaker), Highway to Hell (reach the Underworld), A Soul Set Free, Heart of
+  Darkness (a Demon Heart), The Ritual (call the Overlord), Overlord Overthrown, Forged in Fire (Hellforged
+  Pickaxe), Back From Hell, Touchdown!
+  New accessories: Overlord's Crown, Demon Horns, Soul Wisp, Ember Halo, Eye Black.
+
+
+NEW MONSTER ART
+---------------
+  Every hostile monster except the Husk and the Cave Crawler has been redrawn: real pixel art with
+  outlines and shading, built from body parts that MOVE.
+  * Walkers stride and swing their arms (the Ice Husk and Crimson Husk reach for you, the Ruin Skeleton
+    swings a rusty sword, the Night Stalker's arms hang to its knees, the Barkling's branches chop down).
+  * The golems (Ice Golem, Magma Brute, Sentinel, Selenite Golem) and the Brutes raise both fists to slam.
+  * Bats, the Gloom Owl and the demons beat real wings; bats fold them to dive.
+  * The Frost Wraith and the Crimson Reaper float in rippling, tattered cloaks (the Reaper swings his scythe).
+  * Wisps and the Cinder Imp's head are living flames; the Hellhound has a burning mane and tail and opens
+    its jaws to bite; crawlers walk on six jointed legs; the Magma Slime squashes before it hops; the
+    Sporeling crouches and springs; the Brood Larva got a new armored body.
+  * Every monster is drawn on the same pixel grid as the world, so nothing looks blurry or mismatched.
+
+
+ALSO
+----
+  * MULTIPLAYER FIXES: friends fighting the Hollow Knight now get its health bar and music too (it was
+    missing for everyone but the host). Monsters' walk and wing animations are no longer sent over the
+    network every frame (less lag, smoother animation for friends).
+  * The Add-ons screen shows two columns on a wide screen, so all five fit without scrolling.
+  * Cheats: /underworld (go straight there), /earth (come back), /summon overlord (in the Underworld).
+  * New sounds from the Terraria pack (Sounds/terraria/ and Sounds/sounds_bundle_14.js).

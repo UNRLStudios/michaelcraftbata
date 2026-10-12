@@ -1,0 +1,39 @@
+MICHAELCRAFT BETA 1.1.1 - FIXES
+===============================
+
+NOTE: the version is now beta-1.1.1, so everyone in a multiplayer game needs 1.1.1.
+(If it's installed on a phone, sw.js already has the new VERSION, so it updates.)
+
+
+PLACING: PIPES, PLATFORMS AND JAPANESE BEAMS JUST NEED TO TOUCH SOMETHING
+  - Exhaust Pipes, Vents and the Gas Furnace, Wood/Abyss Platforms, and the Japanese
+    building blocks (Torii Beam, Lattice Beam/Posts/Joints, Red Pillar, Kawara
+    eaves, tips, slopes and ridges) no longer need a solid block to sit on. They only
+    need to touch something, and you can keep building off them: a pipe off a pipe
+    off a pipe, a beam out over a gap.
+  - In the code: a new block setting, chain: true, with a NOTE in defBlock() explaining
+    it for future blocks (and canPlaceAt() uses it).
+
+THE INVENTORY
+  - It now grows and shrinks with Options > Video > HUD Size (Small 85%, Normal 100%,
+    Large 125%) - it never gets bigger than your screen can show.
+  - The hotbar, hearts, hunger, charms, coordinates, boss bar and corner buttons hide
+    while your inventory or any block's screen is open.
+
+ARMOR
+  - You can put armor on by dropping it on the armor slot (it swaps with what you
+    were wearing), or by shift-clicking it in your inventory.
+  - Clicking the armor slot picks the armor up (shift-click sends it to your bag).
+  - Armor is stronger:
+       Leather 2 -> 3   Iron 5 -> 6   Cobalt 6 -> 7   Diamond 7 -> 9
+       Ruby 8 -> 10   Samurai 7 -> 9   Abyssal 10 -> 13
+    (The King's Desperation hits a bit harder to match, so it stays as tough as it
+    was - Diamond still takes 3-4 a hit there.)
+
+SHIFT-CLICK
+  - Charm Merger: shift-click a charm into it (and back out).
+  - Enchanting Table: shift-click a weapon, tool or armor onto it (and back out).
+  - (Checked the rest: chests, Furnace, Gas Furnace, Gem Cutter and charms already
+    worked.)
+  - In the code: a NOTE above quickMoveTarget() explaining how to add shift-click
+    to future blocks with screens.

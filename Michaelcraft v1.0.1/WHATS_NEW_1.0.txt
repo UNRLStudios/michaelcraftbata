@@ -1,0 +1,112 @@
+MichaelCraft v1.0 - THE FULL RELEASE
+An UNRL Studios game. Michael Muth Jr. (game developer), Claude Opus 5.5 (co-developer),
+Cash Sklare (alpha & beta tester).
+
+THE PATH (the bosses unlock in order now; no tool requirements, just the order)
+  1. Get at least full diamond gear (pickaxe, axe, sword, chestplate).
+  2. Defeat the Apex Parasite (desert).
+  3. Defeat the Hollow Knight (Ancient Ruins). Until he falls, the King's altar stays cold.
+  4. Defeat the King of the Abyss. Until he falls, the bedrock will NOT crack (even with a Hellbreaker).
+     By now you should have Abyssal Armor and a good sword like the Parasite Katana.
+  5. Break into the Underworld, find and free the Lost Soul, slay 50 demons.
+  6. Defeat THE OVERLORD.
+  7. Wake the totem (the King), build a Supercharger, gear up.
+  8. Defeat the Slayer of Worlds. The credits roll... and HARDMODE begins.
+
+THE GUIDE (press G, or Pause > Guide)
+  Every step from your first tree to Hardmode, with tips. Steps tick themselves off as you go, and the
+  next one is highlighted. The key can be changed in Options > Controls.
+  New players get a welcome card the first time they start a world.
+
+TUTORIAL WORLD (title screen)
+  Its own little world, always the same, never saved. 14 short steps: walk, jump, chop, craft planks,
+  a crafting table, a pickaxe, mine, ore, torches, eating, fighting, and the Guide.
+
+THE SLAYER OF WORLDS
+  Four times as deadly as 1.7, and 10,000 health. She hits for roughly 190-280 before armor.
+  You will need supercharged armor (and to dodge).
+  She drops the totem again when she falls, so you can keep supercharging.
+
+ENCHANTING goes up to V
+  Costs: I 8, II 16, III 28, IV 45 emeralds + 2 diamonds, V 70 emeralds + 5 diamonds.
+  /enchant works up to 5.
+
+THE SUPERCHARGER (new block)
+  Recipe: Hellstone Ingot, Void Crystal, Hellstone Ingot / Obsidian Bricks, Enchanting Table, Obsidian Bricks /
+  Obsidian Bricks, Block of Diamond, Obsidian Bricks.
+  Right-click it with the AWAKENED totem to set the totem on top. Then right-click it to open it.
+  Each roll costs 8 emeralds + 1 diamond and gives one random power (a new roll replaces the old one):
+    Weapons: Damage (+v% damage), Leech (heals you), Fire Aspect (burns, extra damage)
+    Armor:   Absorption (every hit divided by 1 + v%), Armor Points (+v% of the armor's points)
+  v goes from +10% (1 in 2) to +400% (1 in 500,000):
+    +50% 1 in 7 / +100% 1 in 35 / +200% 1 in 853 / +300% 1 in 20,648 / +400% 1 in 500,000
+  Rarity: Common, Uncommon, Rare, Epic, Legendary, MYTHIC. Supercharged items glow in their rarity color.
+  Duck (C) + right-click the Supercharger to take the totem back (you need it for her altar).
+  The King of the Abyss tells you about it now (ask him "Can the totem do anything else?").
+
+CREDITS
+  Roll after the Slayer of Worlds falls (skippable). Also: the Credits button on the title screen, and /credits.
+
+HARDMODE (after the Slayer)
+  - Monsters have 60% more health and hit 50% harder, and there are more of them.
+  - Bosses have 60% more health, hit 40% harder, and drop Voidsteel Ingots.
+  - Bands of BLIGHT across the land (not near spawn): purple soil, Blightstone, dead trees, a purple haze.
+  - New monster: the VOID WRAITH (flies, fires void bolts). Corrupted Shades roam at night and in the Blight.
+  - VOIDSTEEL ORE deep underground (needs a Hellforged pickaxe). Smelt it into ingots.
+    Voidsteel Pickaxe / Axe / Shovel / Sword (the best tools), Voidsteel Armor (Abyssal Armor + 7 ingots):
+    14 armor, +5 damage, +4 hearts.
+  - /hardmode on|off (cheats).
+
+SETTINGS AND PERFORMANCE (Options > Video)
+  - Boss Effects: Full / Reduced / Minimal (screen tears, lensing, flashes and particle counts).
+  - Mob Detail: High / Low (Low draws monsters faster).
+  - Presets: Best Looks, Balanced, Max Performance (one click).
+  - Phones start on Reduced boss effects and Low mob detail.
+
+CHUNKS AND LOADING
+  The world is made in chunks (16 blocks wide). Before, every chunk was built the moment anything looked
+  at it, so teleporting, flying fast or zooming out could freeze the game while several were built at once.
+  - The chunk under you is made right away, the ones on screen next (one a frame), and the rest of the
+    Loaded Chunks are made in the spare moments between frames. Land that isn't ready yet hides in fog
+    (with "Loading...") instead of freezing the game.
+  - Options > Video > World:
+      Loaded Chunks (3-12, default 5): how far around you the world is kept and keeps running.
+      Render Chunks (2-12, default 6): how far you can see before the fog.
+    The presets set them too (Max Performance: 3 / 3, Best Looks: 7 / 10). Phones start on 4 / 4.
+  - A loading screen when a world opens: the land around you, chunk by chunk (nearest first), then the
+    light, then the creatures, with a progress bar and a tip.
+  - /chunks shows how many are loaded.
+
+FIXES BEFORE RELEASE
+  - Bosses only did 1 damage to anyone in good armor (armor took a flat amount off every hit). Now, against
+    a boss (and anything hitting you during a boss fight), armor blocks a SHARE of each hit instead:
+    10 armor blocks 29%, 16 (Abyssal + Protection V) blocks 39%, 20 blocks 44%, 50 blocks 67%.
+    Armor tooltips show it ("Blocks 39% of a boss's damage"). Normal monsters work the same as before.
+  - The game no longer pauses when you open your inventory: monsters keep coming, you keep falling,
+    furnaces keep smelting, the clock keeps ticking (you just stand still while it's open).
+  - Voidsteel Armor shows on your character now: dark violet plates with glowing cyan seams, full
+    gauntlets and greaves (like the other armors, the head stays yours).
+  - The Supercharger has new art (an arcane forge: two claws hold the totem over a glowing chamber), and
+    it's a background block like the Crafting Table and Enchanting Table (you walk in front of it).
+  - The Creative inventory is sorted: tabs for Building, Nature, Utility, Tools, Combat, Food, Items and
+    Eggs, and inside each one, headed groups where things that belong together sit together (ores in
+    order, tools tier by tier from wood to Voidsteel, fish raw then cooked, every biome's blocks together).
+  - A Void Wraith spawn egg.
+  - The title menu is bigger (it grows with your screen), and Options sits next to Credits;
+    Tutorial World moved to the bottom row between Skins and Exit Game.
+
+OTHER
+  - Hellforged tools (pickaxe, axe, sword, Hellbreaker, Hellfire Cleaver) are animated: molten metal
+    ripples along them, in your hand and in every slot.
+  - New arrow textures (arrow, iron, diamond, ruby).
+  - Parasite gear nerfed: tools mine at 10.5 (was 12.5), 600 uses, 8 damage; less leech; armor 8 defense,
+    +1 heart; Parasite Katana 11 damage. The Apex Parasite drops 5 ingots (was 20).
+  - FIX: the Underworld's progress (Lost Soul, demons, the Overlord) and the Slayer's flags were not kept
+    when you reloaded a world. They are now.
+
+New textures (you can redraw them, same paths):
+  Textures/blocks/v10/supercharger.png, supercharger_on.png, blight_stone.png, blight_soil.png
+  Textures/blocks/void/voidsteel_ore.png
+  Textures/items/void/voidsteel_ingot.png, voidsteel_chestplate.png
+  Textures/items/tools/void/voidsteel_pickaxe.png, _axe, _sword, _shovel
+  Textures/items/tools/hell/anim/*_anim.png  (8 frames side by side)

@@ -1,0 +1,354 @@
+MichaelCraft v1.0.1
+
+HARDMODE MONSTER DAMAGE, CROSSHAIR ON THE MENU
+- Hardmode monsters now hit 9x as hard as normal (was 1.5x). Armor up.
+- The custom crosshair (and its click animation) is now your pointer on the main menu and every other screen too.
+
+HARDMODE MONSTERS, CROSSHAIR
+- Hardmode monsters now have 8x their normal health (was 1.6x). Bring your best sword.
+- The custom crosshair works everywhere in a world now, including the inventory, chests and menus (it used
+  to turn back into the normal mouse there).
+- The crosshair animates when you click: it squeezes in and lights up while you hold the button, then pops
+  back out. Its tip stays exactly on the mouse the whole time.
+
+BOSS HEALTH NUMBER FIX
+- Fixed: after you beat a boss (or lost to one), its health number stayed stuck at the top of the screen.
+  The boss bar now slides fully off the screen and its number goes with it.
+
+CUTSCENE BARS, CRYSTAL HEART
+- Fixed: the black cutscene bars (the Slayer's and the King of the Abyss') were drawn UNDER the hotbar, hearts
+  and boss bar. They now go over the HUD (dialogs and menus still show on top).
+- The Crystal Heart no longer drops the first time you beat the Slayer of Worlds before Hardmode. You get it
+  from her Hardmode rematch, like before.
+
+SLAYER'S SLASH FLURRY NERFED, SINGULARITY SWORD REACH
+- Slayer of Worlds, Infinite Slashes / Frenzy Slashes (the flurry near the end of the fight): 6 cuts (was
+  10 / 8), with more time between them, a longer warning before each one, narrower cuts and less damage.
+  Getting hit by one now protects you for 1.1 s, so one mistake can't chain into the whole flurry.
+- Singularity Sword: its Event Horizon crescents fly almost twice as far (40 blocks, was 22) and faster.
+
+PRISMHEART BUFF
+- 36 damage (was 32), 20% critical hits (was 18%), and its ghosts can hit the same enemy again a little sooner.
+
+SLAYER OF WORLDS (THE SWORD): REFORGED
+- A brand new animated texture: the red core pulses up the blade, light runs round the guard ring, and
+  sparks of void drift off it. It's drawn bigger in your hand too.
+- Stronger than Hellfire now: 36 damage (was 30), a cut every 0.21 s (was 0.26 s), longer reach.
+- Crescents hit harder, fly faster and pierce more enemies. The third cut throws FIVE (was three).
+- The dash recharges in 0.5 s (was 0.85 s), goes further, and hits for 60 (was 38).
+- NEW, WORLD REND: the first cut after a dash throws a giant crescent that goes through everything.
+
+SINGULARITY SWORD: MORE DAMAGE
+- Damage 58 (was 48), and a cut every 0.17 s (was 0.18 s).
+- Event Horizon crescents, Micro-Singularities and Orbital Fragments all hit harder.
+
+SINGULARITY SWORD BUFF
+- Riftwalk (right-click) recharges in 1.8 s (was 5 s) and reaches 20 blocks (was 18). Its cut hits harder.
+- Damage 48 (was 40), and it swings a little faster. 25% critical hits (was 22%).
+- Event Horizon crescents hit harder, fly faster and further.
+- A Micro-Singularity every 3rd swing (was every 4th), and it grinds harder.
+- 4 Orbital Fragments (was 3), firing faster and harder.
+
+THE SINGULARITY IS MUCH HARDER
+- 85,000 health (was 60,000), and it hits harder (touching it, and its dash, hurt more too).
+- It reads your movement: dashes, lasers and bolt fans aim at where you're GOING, every other shot. Running
+  in a straight line won't save you anymore.
+- More of everything: 4 dashes (5 in the second form) that shed bolts as they go, 3-4 lasers that sweep,
+  more and faster orbs, more shards, a faster ring with smaller gaps, a stronger pull, bigger bolt fans.
+- Second form: it STACKS attacks. Shard rain or a void often lands on top of whatever it's doing.
+- NEW THIRD PHASE, EVENT HORIZON (at a quarter health): space itself drags you toward it for the rest of
+  the fight, it gets even faster, fires lasers out of both sides, and opens more voids at once.
+
+THE SINGULARITY IS MUCH FASTER NOW
+- It never sits still: between attacks it circles you fast, swaps sides and fires fans of void bolts.
+- NEW ATTACK, VOID DASH: a lane of light shows where it's going, then it rips straight through it, 3 times in a row
+  (4 in its second form, and each dash leaves a burst of bolts). Step out of the lane.
+- Almost no downtime between attacks. Lasers charge faster and fire 2 shots (3 in the second form). Orbs launch
+  sooner, shards fall faster, the ring and the pull are quicker, and it keeps moving and shooting during them.
+- Teleport is snappier, and it comes out of it already attacking. The intro and phase change are shorter, and it
+  opens its second form with a dash.
+- Fixed: it could use the same attack twice in a row.
+
+FIX: WHITE SCREEN DURING THE SINGULARITY FIGHT
+- FIXED: the screen could turn solid white (and go glitchy when zooming) during the Singularity fight.
+  When the Singularity teleported, its glow was drawn at a tiny negative size for a split second, which crashed
+  that frame's lighting pass and left the screen stuck in "add light" mode, so every frame piled up to white.
+- The teleport no longer does that, every effect radius is clamped, and the lighting/overlay passes now always
+  clean up after themselves even if one effect breaks, so a single bad effect can't white out the screen again.
+
+NEW BOSS: THE SINGULARITY (the first Hardmode boss, harder than the Slayer)
+  A collapsed star wrapped in void-crystal: a black hole for an eye, halos and rings of torn matter
+  turning around it, crystals hanging in the air like knives. 60,000 health.
+  How to call it: in Hardmode, make a COLLAPSED STAR at the Magical Workbench
+      Voidsteel Ingot, Shattered Crystal, Voidsteel Ingot
+      Shattered Crystal, Void Crystal, Shattered Crystal
+      Voidsteel Ingot, Shattered Crystal, Voidsteel Ingot
+    and use it anywhere on the surface. (/summon singularity works too.)
+  Its attacks (every one is warned first, and every one has a way out):
+    VOID LASER          a thin line marks where it will fire, then a massive beam. Second form: it sweeps.
+    GRAVITATIONAL PULL  a well that drags you in for a few seconds, then explodes: be outside its ring.
+    ORBITAL FRAGMENTS   void orbs circle it, then launch and home in on you (they turn slowly: sidestep).
+    REALITY SHARDS      columns of light mark the ground, then crystal shards fall from the sky.
+    SINGULARITY RING    a ring of energy closes in around you and opens back out: slip through the glowing gap.
+    TELEPORT            it folds itself away and unfolds somewhere else.
+    FINALE (second form) five small voids at once: each one pulls, spits rings of bolts, then collapses.
+  At half health it COLLAPSES into its second form: faster, more of everything, voids circling it.
+  When it dies it falls into itself and is gone in a flash of light.
+  It drops SINGULARITY FRAGMENTS (3 the first time), Voidsteel Ingots, Void Crystals, Shattered Crystals,
+  Mana Stars, Diamonds and Emeralds.
+  Its code is in Mobs/Bosses/singularity.js.
+
+NEW SWORD: THE SINGULARITY SWORD (the best sword in the game)
+  At the Magical Workbench: a Singularity Fragment above the Prismheart. 40 damage, a cut every 0.2 s,
+  22% critical hits. Its picture is animated: void energy pulses up the blade and the rims of its two black
+  holes turn.
+    - Every swing cuts AND throws an EVENT HORIZON: a crescent of void that flies at your cursor, through
+      walls and through every enemy in its way.
+    - Every 4th swing opens a MICRO-SINGULARITY at your cursor: a little black hole that drags enemies in,
+      grinds them, then implodes.
+    - Right-click, RIFTWALK (every 5 s): step through space to your cursor (up to 18 blocks); the rift you
+      leave cuts everything along the way, and you can't be hurt mid-step.
+    - Three ORBITAL FRAGMENTS circle you while you hold it and fire homing void bolts at anything near.
+  Its code is in Items/singularity.js.
+
+THE SLAYER'S SLASH FLURRIES ARE DODGEABLE NOW
+  INFINITE SLASHES (her last phase): 10 cuts, one every 0.34 s, each glowing 0.34 s before it lands, and she
+  appears a little further from you (was 14 cuts, one every 0.16 s, with almost no warning).
+  FRENZY SLASHES: one every 0.32 s with 0.26 s of warning (was 0.24 s and 0.15 s).
+
+A CUSTOM CROSSHAIR
+  Over the world your mouse pointer is now the new crosshair (Textures/gui/crosshair.png, drawn at 2x). Its tip,
+  the very top-left pixel, is exactly where the mouse is: what the tip touches is what you mine, hit and aim at.
+
+FIXED: THE SLAYER'S TRAIL STUCK ON SCREEN
+  If you died while she was dashing (or diving), her glowing trail could stay hanging in the air, even into the
+  next fight. It goes away with her now.
+
+HELLFIRE'S PICTURES ARE ALIVE
+  Lava surges up the cracks from the hilt to the tip (white-hot at the crest), flames flicker up off its
+  edges and embers drift away, in your inventory, in your hand and on the ground. The Hellfire Base and
+  Hellfire Blade burn the same way.
+
+THE PRISMHEART, STRONGER
+  32 damage per ghost (was 24), 18% critical hits (was 14%) and it reaches 22 blocks (was 20). It's the best
+  sword in the game again, ahead of Hellfire.
+
+THE SLAYER OF WORLDS IN HARDMODE
+  Her rematch hits a bit softer (1.15x her normal damage, was 1.4x: about 41 a heavy hit on Normal, was 50)
+  but she has a lot more health: 35,000 (was 24,000).
+
+NEW SWORD: HELLFIRE (the strongest sword before Hardmode)
+  27 damage, a cut every 0.3 s, long reach, and it sets everything it touches on fire.
+  How to make it (all at a Crafting Table):
+    HELLFIRE BASE:   Demon Horn, Hellstone Ingot, Demon Horn / Hellstone Ingot, Hellfire Cleaver, Hellstone Ingot /
+                     Demon Horn, Hellstone Ingot, Demon Horn
+    HELLFIRE BLADE:  Hellstone Ingot, Hellforged Sword, Hellstone Ingot / Hellstone Ingot, Hollow Blade, Hellstone Ingot /
+                     Hellstone Ingot, Ember Sword, Hellstone Ingot
+    HELLFIRE:        the Base and the Blade together
+  What it does:
+    - Cuts 1 and 2, RENDING FLAME: a great crescent of hellfire tears through the air and hangs there, burning
+      whatever touches it.
+    - Cut 3, HELLMAW: you drive the blade into the ground and a line of fire geysers bursts out of the earth ahead
+      of you, throwing enemies into the air.
+    - Right-click, BRAND OF THE DAMNED (every 4 s): hurl a burning sigil at your cursor, straight through walls. It
+      brands the first enemy it hits; a moment later the brand detonates, and fire leaps along chains to brand up
+      to three more enemies nearby, who detonate too.
+    - WRATH: every hit fills the bar under your feet. When it's full the blade is engulfed in black fire, and your
+      next right-click opens THE GATES OF HELL: the sky turns red, the ground cracks open, and giant charred claws
+      of fire burst up under every enemy nearby and crush them.
+    - SOUL FEAST: everything it kills screams out its soul, which flies into you and heals you.
+    - Its picture is animated (lava pulses through the cracks in it), and it's drawn big in your hand.
+  Its code is in Items/hellfire.js.
+
+THE KING OF THE ABYSS IS ANIMATED
+  He's built from pieces now (cape, sleeves, body, head and jaw), so he moves:
+    - he breathes, his heart beats, his cape ripples and his sleeves sway; now and then he chuckles
+    - he leans into his movement, and his cape and sleeves trail behind him
+    - his jaw snaps open with every volley of fireballs and every ring of orbs, fire glowing in his mouth
+    - winding up a charge he hunches forward, then throws his whole body into the dash
+    - when he roars (rising, enraging, summoning imps, calling meteors, Desperation) his head goes back,
+      his jaw opens wide and his sleeves fly up
+    - he fades in out of the dark when he rises, and little flames burn in his eyes
+  (Textures/entities/king_of_the_abyss_parts.png holds the pieces.)
+
+THE KING OF THE ABYSS, REDRAWN
+  Twice the detail: a horned skull under a jeweled gold crown, spiked bone pauldrons, a fur collar with a
+  gold clasp, an open ribcage with his heart burning inside, a skull belt buckle, bell sleeves, and a rune-
+  stitched royal robe and cape with ragged hems. His floating hands are now armored claws with a red gem.
+  In the fight his eyes flicker with flame, his crown glints, and soul wisps rise off his robe (red when
+  he's enraged). His old pictures are kept in Textures/entities/old if you want them back.
+
+THE CRYSTAL HEART DROPS THE FIRST TIME YOU BEAT THE SLAYER
+  The first time the Slayer of Worlds falls (before Hardmode), her Crystal Heart falls with her, so you don't
+  have to fight her again for it. (Beating her again in Hardmode still plays her goodbye scene and gives
+  you another one.)
+
+THE SUPERCHARGER KEEPS ITS CHARGE, YOU KEEP THE TOTEM
+  Right-click a Supercharger while holding the awakened Slayer totem: it charges up and the totem stays in
+  your hand, so you can still take it to the Shattered Altar and fight her.
+  Already locked a totem into one? Open the Supercharger and press TAKE THE TOTEM BACK (or duck with C and
+  right-click it). You only get one back if you don't already have one.
+
+NEW HARDMODE CHARM: THE COMET CHARM
+  Wear it and double-tap Space (or the jump button) to take off. Then you fly as long as you like:
+  A/D left and right, W or Space up, S down, and hold Sprint for the afterburner (x1.5, with a sonic boom).
+  It's FAST: 24 blocks a second at tier I, up to 50 at tier VIII (75 with the afterburner).
+  The handling is touchy: full speed almost at once, sharp turns, and you slide for a moment when you let go.
+  Double-tap again to drop out of the sky, or fly down onto the ground to land. Hitting a wall at speed
+  shakes the screen (it doesn't hurt). It leaves a glowing comet trail.
+  Make it at the Magical Workbench:  Shattered Crystal, Mana Star, Shattered Crystal
+                                     Shattered Crystal, Charm Frame, Shattered Crystal
+                                     Shattered Crystal, Power Charm, Shattered Crystal
+  (It comes out at the same tier as the Power Charm you put in. It merges up like any charm.)
+  Its code is in Items/comet_charm.js.
+
+MORE PERK SLOTS
+  You can wear 5 charms now (was 3), and 6 once your world is in Hardmode. Until then the 6th slot shows
+  locked in your inventory. Old saves keep the charms they had on.
+
+THE PRISMHEART LOOKS BIGGER IN YOUR HAND
+  You hold it about 1.6x bigger than a normal sword.
+
+THE SLAYER OF WORLDS, REDRAWN
+  She's a tall, grown-up warrior queen now: a smaller, sharper face with narrow glowing eyes, smoky shadow and
+  dark lips (she blinks), side-swept bangs, long legs, armored shoulders, silver hair that flows down past her
+  dress and sways, a horned tiara with a crimson bow, and a gothic battle dress with a laced corset, layered
+  skirt, long gloves and heeled boots. In her last phases her hair goes pale and her eyes burn red.
+
+BOSSES ON HARD HIT A BIT SOFTER
+  On Hard difficulty, every hit from a boss does 5 less damage (but never less than it would on Normal).
+
+THE KING OF THE ABYSS HITS A BIT SOFTER
+  Every hit he lands does 2 less damage (one heart), in every fight and on every difficulty.
+
+THE SLAYER OF WORLDS HITS A BIT SOFTER
+  Her hits do 20% less on every difficulty (see the table further down).
+
+HEART CHARM AND REGENERATION CHARM BUFFED
+  Tier:                 I    II   III  IV   V    VI   VII  VIII
+  Heart Charm (hearts)  +7   +9   +11  +13  +15  +18  +21  +25    (was +5 +6 +8 +9 +10 +12 +14 +16)
+  Regeneration (a heart every ... seconds)
+                        5    4    3.2  2.6  2.1  1.7  1.4  1.1    (was 8 6.5 5.2 4.2 3.4 2.7 2.2 1.8)
+
+HARDMODE BOSSES ARE MUCH HARDER
+  Every boss you fight in Hardmode (an Echo, or summoned the usual way):
+    - 2.4x health (was 1.6x) and hits 1.75x harder (was 1.4x)
+    - everything it does is 25% faster: it moves, attacks and recovers quicker
+    - it burns with a dark red aura, shedding embers
+    - and it has an attack it never used before:
+        Apex Parasite    acid rains down on everyone at the fight every few seconds, and it keeps birthing larvae
+        Hollow Knight    spectral swords mark the floor around you and fall, whatever else he's doing
+        King of the Abyss  rings of abyssal orbs between his moves; in his second phase, a fan of fireballs after each
+        The Overlord     showers of meteors walk across the ground toward you
+        Slayer of Worlds shattered worlds rain down around you, and rings of void burst out of her
+      (The Slayer is different: 3.5x health (35,000), but her hits only 1.15x harder than before Hardmode.)
+  Each boss's Hardmode attack is at the bottom of its own file in Mobs/Bosses/.
+
+THE PRISMHEART SOUNDS AND LOOKS BETTER
+  Its own sounds, from the Terraria sound pack (Sounds/terraria/): Terraria's sword swing as each ghost leaves,
+  a ghostly glaive cry under the flurry, Sky Dragon's Fury as you swing it, a crystal impact when a ghost bites,
+  and a crystal shatter on a critical hit.
+  Each ghost leaves a ribbon of its own colour and a trail of prism dust; hits flash a star of light and throw
+  crystal shards; a crit shatters with a ring and a shake; it flares at your hand as it leaves; and the sword
+  glows through every colour while you hold it.
+
+THE MAGICAL WORKBENCH, REDRAWN
+  An arcane table with gold trim and a glowing rune, two little crystals on top, and a prism crystal floating
+  over it that bobs and turns through every colour (animated).
+
+THE PRISMHEART (a new post-Hardmode sword)
+  It doesn't swing like a sword. Every swing throws the ghost of one of the ten swords it was forged from
+  (Diamond, Ruby, Frost Blade, Ember Sword, Sensei's Katana, Parasite Katana, Hollow Blade, Hellforged,
+  Voidsteel and the Slayer of Worlds). Each ghost flies a fast, wild loop out to whatever is near your cursor,
+  up to 20 blocks away, and back to you. The ghosts fly straight through blocks and through every enemy in
+  their way. Hold the button to keep swinging. 14% critical hits. No mana, no ammo, never breaks.
+  It can be Supercharged like any weapon. (There are no Terraria-style modifiers like "Legendary" in
+  MichaelCraft; the Supercharger's rarities, up to MYTHIC, are the closest thing.)
+  How to get it:
+    1. In Hardmode, beat any boss again (Parasite, Hollow Knight, King, Overlord: an Echo or the usual way).
+       It shatters into 1 to 6 SHATTERED CRYSTALS. (The Slayer of Worlds never drops them.)
+    2. Beat the Slayer of Worlds again in Hardmode. She doesn't explode this time: she lowers her sword, gives
+       the nearest of you her CRYSTAL HEART, and sinks back down into her altar.
+    3. MAGICAL WORKBENCH: 8 Shattered Crystals around a Crafting Table (at a Crafting Table).
+    4. PRISMHEART: at the Magical Workbench, 8 Shattered Crystals around the Crystal Heart.
+  The Prismheart, the Shattered Crystal and the Crystal Heart are animated (in your slots, in your hand,
+  on the ground). Their code is in Items/prismheart.js; the Slayer's scene is in Mobs/Bosses/slayer_of_worlds.js.
+
+FIX: BOSSES ONLY DID 1 DAMAGE ON PEACEFUL
+  Peaceful multiplies all damage by 0, and every hit is at least 1, so on Peaceful every boss hit did 1.
+  Now a boss you summon on Peaceful hits like it does on Normal (and the Slayer of Worlds too). Monsters
+  still don't spawn on Peaceful.
+
+EVERY MOB HAS ITS OWN FILE NOW (the new Mobs folder, next to index.html)
+  Every creature and every boss is in its own file: Mobs/Animals, Mobs/Monsters, Mobs/NPCs, Mobs/Bosses
+  (king_of_the_abyss.js, apex_parasite.js, hollow_knight.js, overlord.js, slayer_of_worlds.js...).
+  Each file has, top to bottom: its STATS (health, damage, speed, size, knockback...), its PATHFINDING,
+  its AI, its VISUALS (how it's drawn, its particles and effects), its SOUNDS and its LOOT.
+  Change a number in a mob's file, reload, and the game uses it. Mobs/README.txt explains it all
+  (and how to add a new mob). The Mobs folder has to be next to index.html, like Textures and Sounds.
+
+SMARTER MONSTERS: PATHFINDING
+  Monsters used to walk straight at you. Now a monster that's after you plans a route over the blocks
+  (A* pathfinding, from its real size, with closed doors counted as walls):
+    - it leaps a one-block hole instead of falling in and getting stuck, and plans its way round lava
+    - it jumps up the ledges on the way, drops down where it has to, and stops at a drop it can't take
+    - bats, imps, demons, wisps and wraiths fly round walls: hide in a hut and they find the doorway
+    - a swooping bat only dives when it can actually see you (no more diving into the roof forever)
+    - your dogs and cats find their way to you, and farm animals to you when you hold their food
+  Each mob's file says how it moves (walk, climb, fly) and how far it will jump, drop and look.
+  /mobpaths shows the routes they're planning (green: a route to you, orange: as close as it can get,
+  blue: flying round a wall).
+
+ARMOR NO LONGER BLOCKS BOSSES
+  Bosses (and anything hitting you during a boss fight) now hit you in FULL: armor and Protection don't
+  take anything off. Only a Supercharged Absorption roll and perks like the Hollow Ward still help.
+  Normal monsters work like before (armor takes a flat amount off each hit).
+  What a hit does now, on Normal:  Apex Parasite 6-11 / Hollow Knight 8-11 / King of the Abyss 1-16 /
+  The Overlord 6-21 (fire 1).
+
+THE SLAYER OF WORLDS, TUNED BY DIFFICULTY
+  Her damage follows your world's difficulty (Options > Gameplay):
+    Easy      about 14-22 a hit
+    Normal    about 20-40 a hit
+    Hard      about 31-71 a hit
+    Nightmare even more
+  (She still has 10,000 health.)
+
+BOSS MOMENTS
+  A title card when the King of the Abyss and the Apex Parasite rise, and a VICTORY card with your fight
+  time whenever a boss falls (for everyone in multiplayer too).
+
+ALL FIVE BOSSES CHECKED IN MULTIPLAYER
+  Parasite, Hollow Knight, King, Overlord and Slayer: both players see the boss and its health bar, both
+  get hit for real damage, the friend's hits count, the advancement and the Victory card reach both, and
+  the Slayer's credits roll for both.
+
+FIX: the Tutorial's "Jump" step could miss a quick jump. It remembers it now.
+
+ECHOES: FIGHT ANY BOSS AGAIN
+  Every boss drops its Echo when it falls (every time). Use it at that boss's place:
+    Echo of the Parasite       right-click in a desert, on the surface
+    Echo of the Hollow Knight  right-click inside the Ancient Ruins
+    Echo of the King           right-click an Abyssal Altar
+    Echo of the Overlord       right-click an Underworld Altar
+    Echo of the Slayer         right-click the Shattered Altar at the World's End
+  It only works once you've beaten that boss. You can also craft them (shapeless, any crafting grid):
+    Parasite: 3 Parasite Ingots + a Mana Star
+    Hollow Knight: 2 Ancient Metal + an Ancient Armor Plate + a Mana Star
+    King: an Abyssal Heart + a Mana Star
+    Overlord: 2 Demon Horns + a Hellstone Ingot + a Mana Star
+    Slayer: 2 Void Crystals + a Voidsteel Ingot + a Mana Star
+  In Hardmode they come back much stronger (see HARDMODE BOSSES above) and drop Voidsteel.
+  The Slayer's echo doesn't drop another Slayer of Worlds sword or totem, and the credits don't roll again.
+  New advancement: Encore. The Echoes are in Creative > Utility > Boss Summons.
+
+WAYPOINTS
+  On the map (M): press "Add Pin", then click the map. Name it, pick a colour, Add.
+  Click a pin to rename, recolour or delete it. "Pins" jumps between them. Each pin shows how far away it is.
+  Pins are saved with the world and shared with friends in multiplayer (up to 40). /waypoint [name] pins
+  where you stand. Pins on the Moon and in the Underworld only show there.
+
+New textures: Textures/items/echo/echo_parasite.png, echo_hollow.png, echo_king.png, echo_overlord.png,
+echo_slayer.png (redraw them any time, same paths).
+Textures/items/prism/prismheart.png, shattered_crystal.png, crystal_heart.png (your art) and their animated
+strips *_anim.png (8 frames side by side, made from your art), Textures/blocks/prism/magical_workbench.png and magical_workbench_anim.png.

@@ -1,0 +1,150 @@
+MICHAELCRAFT BETA 1.0.5 - THE MECHANICS UPDATE
+==============================================
+
+NOTE: the version is now beta-1.0.5, so everyone in a multiplayer game needs 1.0.5.
+Older worlds load fine (your charms become level I).
+
+
+SMOOTHER MINING
+---------------
+  - A cursor that wobbles a little over a block's edge no longer makes you switch
+    blocks and lose your progress.
+  - Half-dug blocks keep their cracks for 4 seconds (like Terraria). Switch to
+    another block and come back, and you carry on where you left off.
+  - The cracks sit on the block you're actually digging, and the block darkens
+    smoothly as it gives.
+  - Dig taps keep an even rhythm (about 4 per block) instead of a fixed tick.
+
+SMOOTHER BUILDING
+-----------------
+  - Hold right-click and drag: a block goes down the moment your cursor reaches a
+    new tile (no waiting for the next "tick").
+  - A fast drag fills every tile it passed over, so lines of blocks come out solid
+    instead of gappy (up to 10 tiles at once, all within your reach).
+  - A little puff of the block when you place it.
+
+
+CHARM LEVELS (I, II, III)
+-------------------------
+  Put TWO charms of the same kind and level in any crafting grid: they fuse into
+  ONE charm of the next level (so a level III takes four level I's).
+  Villagers and recipes make level I. The level shows in the corner of the slot
+  (white I, blue II, gold III) and in the tooltip.
+
+                   I              II             III
+    Spring        jump x1.25     x1.35          x1.45  (about twice as high)
+    Swift         +25% speed     +35%           +45%
+    Warrior       +25% melee     +35%           +50%   (at least +1 / +2 / +3)
+    Heart         +5 hearts      +6             +8
+    Cloud         double jump,   double jump,   TRIPLE jump,
+                  dash 0.9 s     dash 0.65 s    dash 0.45 s
+    Feather       fall 3.2/s     2.4/s          1.7/s
+    Power         ~10 blocks     ~15 blocks     ~22 blocks of flight (faster too)
+
+  New advancement: "Maxed Out" - fuse a charm to level III.
+
+
+ANGEL WINGS (new charm)
+-----------------------
+  Recipe (Crafting Table):   G P G      G = Block of Gold (4)
+                             D F D      P = Power Charm
+                             G . G      F = Feather Charm
+                                        D = Diamond (2)
+  - Power Flight AND Slow Falling in ONE charm slot, and you steer faster while
+    gliding.
+  - Its level is the LOWER of the two charms you made it from (a Power II + a
+    Feather III make Wings II). Fuse two Wings for the next level, like any charm.
+  - Real pixel-art wings on your back, drawn in the same pixel size as your
+    character: folded on the ground, spread while you glide, beating while you fly.
+    Friends see them in multiplayer.
+  - Flying on them is ALL feathers, no Power Charm fire: every wing beat throws a
+    flurry of pixel feathers and a puff of air under you with a soft whump (the
+    Ender Dragon's wing sound, pitched up), gold-and-white sparkles trail off the
+    wing tips, and while you glide the air streams off them and a feather drifts
+    away now and then.
+  - New advancement: "Earn Your Wings".
+  - Icon: Textures/items/angel_wings.png (16x16 - replace it with your own art if
+    you like).
+
+
+PIXEL PARTICLES
+---------------
+  - Every particle is drawn on the same pixel grid as the blocks, in whole pixels:
+    mining chips are real bits of the block's own texture (like Minecraft), sparks
+    are pixel squares and plus signs, feathers and petals are pixel sprites, and
+    particles fade in steps instead of smoothly.
+  - Light (torch glow, fireballs, auras) stays soft and smooth, like before.
+
+
+THE DESPERATION PHASE: REBUILT LIKE INFERNUM'S SUPREME CALAMITAS
+-----------------------------------------------------------------
+  Rebuilt from the video you sent (Infernum's Supreme Calamitas desperation), and
+  a lot faster:
+  - INFINITE FLIGHT for everyone from the moment it starts ("Infinite flight
+    granted!"): hold Space to fly up, let go to drop, hold S to dive. You fly as
+    fast as you sprint and turn sharply. No fall damage.
+  - The arena is walled in by BRIMSTONE FIRE (left, right and the roof) with a dark
+    seam on the edge. Touching it hurts and you can't leave once you're in.
+  - He never sits still: he flies around you, picking a new spot every ~2 seconds,
+    and touching him hurts.
+  - PATTERNS, NOT RANDOM ATTACKS. Every pattern plays out the same way every time,
+    with one clear way through it that you can learn (its name shows under the
+    boss bar):
+      CORRIDOR  thin red lines warn, then pillars erupt from the floor EVERYWHERE
+                except a 5-block gap. The gap steps 3 blocks along each time and
+                bounces off the walls. Answer: follow the gap.
+      HEX       he stops in the middle; a white flash, pink rings bloom, red lines
+                shoot out of him, then a dart flies down every line. Each hex is
+                turned exactly HALF a gap from the last. Answer: sit between two
+                lines and slide half a gap each time. (II, III: a second set right
+                after, turned half a gap again)
+      SNAKE     walls of darts fall from the roof; the gap in each wall follows a
+                smooth snake from side to side. Answer: weave with the snake.
+                (II, III: bombs on alternate sides, with a dotted ring showing where
+                and how wide they'll burst)
+      SPIRAL    he spins in the middle firing arms of darts in pulses. Answer: circle
+                him WITH the spin - it reverses (he roars when it does) - or slip
+                through an arm between two pulses.
+  - Each round plays all four a little faster; a white flash between rounds clears
+    the screen and gives you 3 hearts back.
+      0:00 Corridor  0:12 Hex  0:24 Snake  0:36 Spiral  0:48 flash
+      0:52 ...round II...  1:40 flash   1:44 ...round III...  2:32 flash
+      2:36 FINALE (a slow spiral and a gentle snake), then he swells with light
+      and falls in a white flash at 2:50, as the song ends
+  - Easier than before: darts and pillars hit softer (2-3 a hit in Diamond armour),
+    1.4 seconds of safety after a hit, and the 3 hearts back between rounds.
+    A test bot that just follows each pattern's answer survived the whole fight
+    easily; one that flew around without dodging didn't.
+  - Projectile effects: darts have a white-hot head, a fading afterimage trail and
+    pixel embers; orbs sparkle; bombs fizz with a dotted burst ring; pillars throw
+    embers up their column; warning lines have a spark running down them.
+  - It lasts the whole song (the song is 2:52; he falls as it ends). For exactly
+    2:30, set DESP.length to 150 in index.html.
+  - To tune it: DESP_DMG (damage), DESP.iframes (safety after a hit), and the
+    [I, II, III] numbers in each pattern in kingDesperation.
+
+
+THE KING ATTACKS EVERYONE
+-------------------------
+  - In multiplayer, EVERY player at the fight gets their own fan of fireballs, the
+    meteor storm falls around every player, and each claw goes after a different
+    player (the next round picks the next players).
+  - The Desperation phase already aims at everyone (rain, pillars, volleys,
+    Gigablasts, and a gap in the Final Nova for each player).
+
+
+THE HUD: BIGGER, AND MINECRAFT-STYLE
+------------------------------------
+  - A GUI scale like Minecraft's "Auto": the HUD is drawn in GUI pixels and blown
+    up by the biggest whole number that fits your screen (3x on 1280x720, 4x on
+    1920x1080), so it's much bigger and every pixel stays square and sharp.
+    Options > HUD Size: Small / Normal / Large moves it one step down or up.
+  - The hotbar is one pixel-art picture now (182x22, stone-grey frame, see-through
+    cells) with a chunky white frame on the selected slot.
+  - Hearts, hunger, armour and air: your Textures/HUD art, spaced like Minecraft's.
+  - Your charms show at the top-left in light-grey bevelled boxes (like Minecraft's
+    potion-effect boxes) with their level.
+  - The buttons in the corner are stone buttons (they turn blue when you hover).
+  - The boss bar is a thin, notched pixel bar with the name over it and the health
+    under it (purple during the Desperation).
+  - Messages and chat sit bottom-left on dark strips, like Minecraft's chat.

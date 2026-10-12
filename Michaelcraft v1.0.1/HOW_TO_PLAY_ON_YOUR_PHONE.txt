@@ -1,0 +1,39 @@
+PLAYING MICHAELCRAFT ON YOUR PHONE (as an app)
+==============================================
+
+Phones only let you install a web game as an app when it's on a WEBSITE (https).
+Opening index.html straight from a folder on your phone works for playing, but it
+can't be installed and won't have an icon. So, once:
+
+1. PUT THE GAME ONLINE (free, about 2 minutes)
+   Easiest: Netlify Drop
+     - on a computer, go to  app.netlify.com/drop
+     - drag the whole "MichaelCraft" folder (the one with index.html in it) onto the page
+     - it gives you a link like  https://something-random.netlify.app
+       (make a free account to keep it and give it a nicer name)
+   Or GitHub Pages: put the MichaelCraft folder in a GitHub repository and turn on
+   Pages in its Settings.
+
+2. INSTALL IT
+   Android (Chrome): open the link. Tap "Install App" on the title screen
+                     (or Chrome's menu > "Install app" / "Add to Home screen").
+   iPhone (Safari):  open the link, tap Share (the square with the arrow),
+                     then "Add to Home Screen".
+
+3. PLAY
+   Tap the MichaelCraft icon. It opens full screen, sideways, like a real app.
+   After the first time it loads, it works OFFLINE too (it keeps a copy of
+   everything on your phone).
+
+UPDATING
+   Upload the new version to the same place (drag the new folder onto Netlify
+   again). For phones to pick it up straight away, change VERSION at the top of
+   sw.js (for example to 'michaelcraft-beta-1.2') every time you upload.
+
+FILES THAT MAKE THIS WORK (keep them next to index.html)
+   manifest.webmanifest  - the app's name, icon, full screen + sideways
+   sw.js                 - the offline copy
+   icons/                - the app icon (a grass block and a diamond pickaxe; swap in
+                           your own 192x192 and 512x512 PNGs if you like)
+
+Multiplayer still needs an internet connection.

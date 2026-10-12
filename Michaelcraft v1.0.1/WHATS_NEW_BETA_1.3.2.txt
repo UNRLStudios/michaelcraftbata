@@ -1,0 +1,91 @@
+MICHAELCRAFT BETA 1.3.2 - THE MOON
+==================================
+
+(Everyone in a multiplayer game needs 1.3.2: the version is now beta-1.3.2. Worlds you already have are fine.)
+
+
+THE ROCKET GOES TO THE MOON  (Space Detention add-on)
+-----------------------------------------------------
+  Right-click the Cockpit of your finished rocket and it doesn't just fly away any more: it flies to THE MOON.
+    * Countdown, liftoff, up through the sky into black space...
+    * ...then the CRUISE: Earth shrinks away below you while the Moon swells up to fill the sky...
+    * ...a flash, and the rocket comes down on its engines onto the Moon's LANDING PAD (dust everywhere).
+  The first time you land, Space Detention is beaten: "YOU ESCAPED!" (you still get the 2 Mana Stars and
+  8 Diamonds). Then: Explore the Moon, or Save and Quit.
+  The rocket waits on the pad. Right-click its Cockpit to FLY HOME (Earth grows, you land back on your own
+  launch site), and again to go back up. As many trips as you like.
+  * Worlds that already escaped in 1.3/1.3.1: the rocket is gone, but your launch site's blueprint is back.
+    Build a new rocket on it and fly to the Moon.
+  * Multiplayer: the host launches and EVERYONE flies along. A friend who joins while the host is up there
+    starts on the Moon too.
+  * Cheats: /moon and /earth take you there and back straight away (no rocket needed).
+
+
+THE MOON
+--------
+  Its own world, with its own vibe:
+    * A black sky with a purple-and-blue nebula, three layers of stars, shooting stars, a fierce little
+      white sun, and the EARTH hanging up there, slowly turning (clouds, ice caps, and city lights on its
+      night side). Far-off crater ridges stand on the horizon.
+    * No day and no night: a hard, silver light, always.
+    * LOW GRAVITY: huge floaty jumps, slow falls, falls hurt far less, and moon dust puffs up when you land
+      or run.
+    * Its own MUSIC, played live: a slow, spacey pad, a deep drone and bells echoing in the dark.
+    * The land: grey Moon Dust over Moon Rock, wide flat dark "seas" of Lunar Basalt, rough highlands, and
+      CRATERS everywhere (big ones with raised rims and a central peak, lots of little ones).
+    * Underground: long winding LAVA TUBES, and deep hollow GEODES lined with glowing Moon Crystals.
+    * The landing pad has a lamp post on each side (you can't break the pad, or the rocket while it's up there).
+    * If you die on the Moon you wake up next to the rocket (or in a bed you put on the Moon).
+
+  NEW BLOCKS:  Moon Dust, Moon Rock, Lunar Basalt, Lunar Ore, Moon Crystals (glow), Meteorite (glows; a
+               fallen star sits in the middle of most big craters), Moon Cheese (yes, really: a rare pocket
+               deep down), Moon Bricks (4 Moon Rock), Lunar Lamp (the brightest light there is).
+  NEW ITEMS:   Lunarite (from Lunar Ore), Moon Crystal, Star Fragment (from Meteorites), Moon Cheese (a big meal
+               that heals you for a while), Star Jelly (restores mana and makes you swift).
+  LUNAR TOOLS: Lunar Pickaxe, Axe, Shovel and Sword (3 / 3 / 1 / 2 Lunarite + sticks). Faster than Ember,
+               they mine anything, and the Lunar Sword's hits throw monsters UP into the air.
+  RECIPES:     Lunar Lamp x4  = 4 Glass + 4 Moon Crystals + 1 Star Fragment (G C G / C S C / G C G)
+               Mana Star      = 3 Star Fragments + 1 Moon Crystal
+
+  MOON MONSTERS (they only live up there; lamps and torches keep them away from your base):
+    Crater Crawler   a rocky bug with glowing violet cracks. Big floaty hops at you, and a bite.
+    Star Jelly       a glowing jellyfish that drifts above the dust. Harmless. Drops Star Jelly.
+    Astral Wisp      keeps its distance and throws curving bolts of starlight.
+    Selenite Golem   rare and huge. Winds up and slams the ground.
+
+  NEW ADVANCEMENTS (each with an accessory):  One Small Step (land on the Moon) - Earthrise (fly home) -
+    It IS Made of Cheese! - Moonlighting (Lunar Pickaxe) - Catch a Falling Star (a Star Fragment)
+
+
+NEW FONT: MINECRAFTIA
+---------------------
+  All the writing in the game (menus, the HUD, signs, damage numbers...) is in MINECRAFTIA now, like
+  Minecraft's own lettering. It's built into the game, so it works everywhere with nothing to install.
+  (Minecraftia normally sits too high in its boxes: the built-in copy is fixed so text is centred.)
+
+
+CREATE NEW WORLD fits on one screen
+-----------------------------------
+  The Create New World menu is two columns now (name and username side by side, game mode and cheats side
+  by side, game rules and add-ons side by side, Create and Back at the bottom): no more scrolling.
+
+
+NEW BOSS SOUNDS (from Terraria)  -  the King of the Abyss keeps his own
+-------------------------------------------------------------------------
+  APEX PARASITE    Terraria's boss roar when it wakes, the ground rumbling, wyvern screams, a whoosh when it
+                   dives, an acid spit, ground-shaking eruptions when it bursts out of the sand, a screech
+                   when it molts, and a burst of explosions as its body blows apart.
+  BROOD LARVAE     bug chitters, squeals and pops.
+  HOLLOW KNIGHT    an armored voice, heavy blade cuts, a sonic slash for every soul wave, metal CLANGS when
+                   its shield blocks, crystal spears cracking up out of the floor, a glass SHATTER when the
+                   shield breaks, ghostly blades raining down, a dark summoning for the skeletons (and the
+                   skeletons rattle like Terraria's).
+  CRIMSON REAPER   a scream when it arrives, a ghostly pulse, the swish of the Death Sickle, a mirror-blink
+                   when it teleports, and a dark mage's cries.
+  SENSEI           new blade whooshes for his cuts and his dash.
+  The files are in Sounds/terraria/ (and in Sounds/sounds_bundle_132.js for when the game is opened from a folder).
+
+
+FIXES
+-----
+  * The "YOU ESCAPED!" screen was hidden behind the launch (it showed nothing). It shows now.

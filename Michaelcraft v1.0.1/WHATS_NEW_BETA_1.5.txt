@@ -1,0 +1,78 @@
+MICHAELCRAFT BETA 1.5 - THE SKY ISLANDS
+=======================================
+
+(Everyone in a multiplayer game needs 1.5: the version is now beta-1.5. Worlds you already have are fine:
+ they keep their land exactly as it was. The plains spawn and the Sky Islands come with NEW worlds.)
+
+
+THE SKY ISLANDS  (a new, very rare biome)
+-----------------------------------------
+  * Clusters of floating islands, high above a quiet meadow: grass, flowers, cherry, oak and birch trees,
+    and stone underneath with a little coal, iron, gold and even diamond in it.
+  * They're RARE: about one cluster every 7,000 blocks, and never close to the spawn.
+  * Getting up: look for a trail of blue GUST CLOUDS rising from the ground. Land on one and it throws you
+    high into the air (hold Duck or Down to stand on one without bouncing). They break your fall, too.
+  * White CLOUDS float between the islands: stand on them, and jump up through them from below.
+  * New blocks: Cloud and Gust Cloud.
+  * New advancements: Head in the Clouds (set foot on the Sky Islands) and Updraft (ride a Gust Cloud).
+
+
+MICHAEL
+-------
+  * Michael lives in a little cottage on the biggest Sky Island. He made this whole world, and he has a lot
+    to say: right-click him to talk (who he is, how the clouds work, tips, and more).
+  * He runs a shop where everything is REALLY cheap: diamonds, iron, gold, golden apples, mana potions,
+    mana stars, food, arrows, clouds... and he'll even swap you an emerald for some coal.
+  * He sells his own invention: the MAGMA CANNON (12 emeralds).
+  * New advancement: Meet the Maker.
+
+
+THE MAGMA CANNON
+----------------
+  * A magic weapon (it costs mana: 22 a shot). Left-click to fire.
+  * It lobs a spinning ball of molten rock that trails fire, smoke and sparks, then bursts into a LAVA STORM:
+    a double shockwave, a blinding flash, flying lava, five burning globs that burst again where they land,
+    and pools of lava on the ground that burn any monster standing in them. Everything it hits catches fire.
+  * You hold it like a real cannon (aimed with the mouse), its core glows, and it kicks you back when it
+    fires (fire it at the ground in mid-air for a little lift).
+  * Friends in multiplayer see the whole show.
+  * New advancement: Lava Storm.
+
+
+A BIG PLAINS SPAWN
+------------------
+  * Every new world now starts in a wide, open plains (about 220 blocks across), with gentle hills.
+
+
+BUSIER NIGHTS
+-------------
+  * Monsters spawn a LOT more at night: about twice as many, and much faster. Light up your base!
+  * The biome monsters (Redwood, Frostlands, Ashlands) come out in bigger numbers at night too.
+
+
+SPAWN EGGS  (Creative only)
+---------------------------
+  * A spawn egg for every creature (40 of them), in the new EGGS tab of the Creative inventory.
+  * Right-click to spawn the creature where your cursor is. In Survival they don't work.
+  * In multiplayer, the host spawns it for you.
+
+
+MORE KEYS YOU CAN CHANGE
+------------------------
+  * Options > Controls now has: Hotbar Slot 1 to 9, Next Hotbar Slot, Previous Hotbar Slot (both unset at
+    first), Pause / Back, and Open Command (/).
+  * While a key is flashing, press DELETE to clear it. Esc always works as Back, whatever you set.
+
+
+SMOOTHER MONSTERS
+-----------------
+  * The monsters are drawn at your screen's full resolution now, so they glide and their arms, legs and
+    wings turn smoothly, instead of moving in big pixel steps.
+
+
+NEW COMMANDS
+------------
+  * /tp and /locate now know every biome: plains, forest, desert, taiga, mountains, ocean, snow (plus
+    redwood, frost and ash, as before).
+  * /tp skyislands (or /tp sky) and /locate skyislands find the nearest Sky Islands.
+  * /tp michael takes you right to Michael's door.

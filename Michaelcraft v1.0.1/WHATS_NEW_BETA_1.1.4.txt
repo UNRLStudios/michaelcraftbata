@@ -1,0 +1,125 @@
+MICHAELCRAFT BETA 1.1.4 - THE APEX PARASITE
+===========================================
+
+NOTE: the version is now beta-1.1.4, so everyone in a multiplayer game needs 1.1.4.
+
+
+THE APEX PARASITE - the desert's boss
+-------------------------------------
+  A huge armored worm, 22 plates long, that flies through the air AND swims through the
+  sand. It is fast, it twists and curls, and the less health it has left, the faster it
+  gets (up to 60% faster). Touching ANY part of it hurts.
+
+  WAKING IT
+    Craft a PARASITE TOTEM at a Crafting Table:
+                               G E G
+                               G R G        G = Block of Gold,  E = Emerald,  R = Ruby
+                               G E G
+    (a Ruby in the middle, an Emerald above and below it, 3 Blocks of Gold down each side)
+    Place the totem on dry sand on the SURFACE of a DESERT, under the open sky, and
+    right-click it. The ground trembles... and it bursts out from underneath.
+    (Anywhere else the totem just says it only stirs in a desert.)
+    If you fall - or everyone runs away - it slithers back under the sand and the
+    totem is left behind for another try.
+
+  HOW TO FIGHT IT
+    * Aim for the HEAD. Every ring of its body can be hit too, but the plates blunt your
+      blows. As it gets hurt it MOLTS and sheds plates, so its body takes more damage -
+      but it also gets nastier.
+    * PHASE 1 (100-66%)  The Hunt. It chases you in curving, weaving runs, and:
+        - DIVES: climbs high above you with a roar, then plunges through where you stood.
+        - BURROWS: sinks under the sand and tunnels beneath you (watch for the dust on the
+          ground - that is where it will come up), then erupts under your feet, spraying
+          acid into the sky.
+        - SPITS ACID: circles you lobbing glowing globs of acid that arc down at you.
+        - BROODS: curls up with its sacs swollen (its plates are open now - hit it!) and
+          bursts into Brood Larvae.
+    * PHASE 2 (66-33%)  It molts. Faster, spits two globs at a time, more larvae, and it
+      CONSTRICTS: runs a ring around you that closes in. Get out through the gap!
+    * PHASE 3 (below 33%)  FRENZY. Twitchy, unpredictable, double dives, triple acid and
+      the most larvae.
+
+  THE BROOD LARVAE
+    Little worms of its own, each with its own way of moving:
+      Guards    circle their mother like a ring, then lunge at you and fall back.
+      Weavers   dart at you in a weaving line.
+      Burrowers dive into the sand, tunnel under you, then leap out.
+    Each has 14 health. They all vanish when the Parasite dies or leaves.
+
+  REWARDS
+    20 PARASITE INGOTS (see below), Gold Ingots, Diamonds, Emeralds and Rubies. Two new advancements: "Something Stirs Below" (wake it) and
+    "Exterminator" (beat it).
+
+  FOR TESTING
+    /summon parasite     makes it rise out of the sand right where you stand
+    /summon larva 5      a few Brood Larvae on their own
+    Multiplayer: everyone sees and fights the same worm (it gets +50% health for each
+    extra player near it, like the King - see Game Rules > Boss Scaling).
+
+
+PARASITE GEAR - better than ruby
+--------------------------------
+  The 20 Parasite Ingots it drops make bone-white armor and tools with glowing green
+  veins. All of it LEECHES: it heals you a little as you hit things (at most ~3 life a
+  second, so it helps but doesn't make you unkillable).
+    Parasite Pickaxe   3 ingots + 2 sticks. Mines faster than anything (12.5), 760 uses,
+                       and it's LUCKY: 45% to shake a second drop out of ore.
+    Parasite Axe       3 ingots + 2 sticks        Parasite Shovel   1 ingot + 2 sticks
+    Parasite Sword     2 ingots + 1 stick. 10 damage (ruby is 7), leeches the most.
+    Parasite Armor     8 ingots (chestplate shape). 11 armor (ruby is 10), +1 damage with
+                       every weapon, +2 hearts, leech. The body of your character changes
+                       to bone plates with a green sac on the chest.
+    PARASITE KATANA    a Sensei's Katana in the middle, ringed by 8 ingots. 13 damage (Sensei: 9),
+                       a cut every 0.25 s (Sensei: 0.4 s), a longer dash that cuts for 24,
+                       bleeds, leeches, and throws green spores. About twice the damage
+                       per second of the Sensei's Katana.
+
+KATANAS ARE FASTER
+------------------
+  The Katana now cuts every 0.2 seconds and the Sensei's Katana every 0.4 (both were 0.5).
+
+DEATH MESSAGE
+-------------
+  "was slain by the King of the Abyss" is only for the King now. The Apex Parasite (and
+  its larvae) get their own name.
+
+
+BOSS MUSIC
+----------
+  The Apex Parasite has its own song now (Sounds/music/apex_parasite.mp3, 3:45).
+
+
+BLEED IS GENTLER
+----------------
+  Bleeding (the Sensei's Katana, Ruby Arrows) now does 1 damage every SECOND for 3 seconds
+  (it was every half second, so twice as much). And on the Apex Parasite a katana hit
+  now cuts the worm ONCE - it used to count a hit for every ring of its body, so the
+  katana's dash did ~20 hits at once. Same for the Hammer's smash.
+
+
+CREATIVE MENU
+-------------
+  Every charm is in the creative menu in ALL 8 tiers (Speed Charm I ... Speed Charm VIII).
+  Search "charm", or a tier like "vii".
+
+
+RECIPE SEARCH
+-------------
+  The Recipes list (inventory AND crafting table) has a SEARCH BAR: type part of a name
+  or an ingredient ("totem", "emerald", "pick"). Esc clears it.
+  Recipes you can't make yet can be CLICKED too: the recipe shows faintly in the
+  crafting grid, with what you have / what you need under it (red = missing).
+  Click it again to hide it. (3x3 recipes in the inventory's 2x2 grid show their
+  ingredients and a picture of the shape instead.)
+
+
+FOR WHOEVER ADDS THE NEXT BOSS
+------------------------------
+  The Parasite is a good example of a boss with a BODY (not just a box):
+    * the boss is ONE mob (the head). parasiteSegs() builds the body from the head's path,
+      so friends compute the same body themselves and only the head travels over the net.
+    * parasiteProxies() hands every weapon one stand-in per ring of the body (through
+      combatTargets()), and hurtMob() forwards those hits to the head.
+    * its helpers (wormSteer = chase a point by turning) are reusable for any worm.
+  The long comment above "THE APEX PARASITE" in index.html explains it all.
+  (It has its own boss song, like the King.)

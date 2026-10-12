@@ -1,0 +1,61 @@
+MICHAELCRAFT BETA 1.6 - THE SLAYER OF WORLDS
+============================================
+
+(Everyone in a multiplayer game needs 1.6: the version is now beta-1.6. Worlds you already have are fine.)
+
+
+THE KING OF THE ABYSS IS STRONGER
+---------------------------------
+  * Twice the health (1,650), and every hit he lands is much harder than before.
+
+
+THE MYSTERIOUS ITEM
+-------------------
+  * Beat THE OVERLORD and something cold falls from his ashes: a MYSTERIOUS ITEM.
+  * Take it to the Abyss and use it (right-click) on an Abyssal Altar. The King of the Abyss rises out of
+    the dark (a cutscene) and tells you what it is: a sacred totem of the SLAYER OF WORLDS, with her soul
+    trapped inside. Listen to him all the way and the totem AWAKENS.
+  * Hold the awakened totem and an arrow points the way to THE WORLD'S END.
+
+
+THE WORLD'S END
+---------------
+  * A broken land very, very far away: about 8,000 blocks east or west of the spawn (the King tells you
+    which way). Shattered stone, ruined obsidian pillars, shards of rock floating in the air, void crystals,
+    a purple sky and a black sun. Nothing lives there.
+  * In the middle, on a dais, stands the SHATTERED ALTAR. Use the awakened totem on it, and she comes.
+
+
+THE SLAYER OF WORLDS  (the new boss, the hardest in the game)
+------------------------------------------------------------
+  "One sword. Every world. No more."  She has her own song.
+  * PHASE 1 - THE ARRIVAL (100% to 70%): she descends from the sky.
+      Sky Dive (she flies high, then dives at you and the ground cracks), Sword Swings (fast combos),
+      Summon Minions (Corrupted Shades rise from the ground).
+  * PHASE 2 - THE CORRUPTION (70% to 40%):
+      World Shatter (her sword goes into the ground and pillars of corruption erupt), Teleport Strikes
+      (she vanishes and reappears behind you: watch for the mark), Corruption Rings (find the gap).
+  * PHASE 3 - THE FINAL FORM (40% to 10%): her wings grow, and the world around you turns strange.
+      World Split (the world is cut open, down and across: get off the dotted lines), Meteor Call,
+      Frenzy Slashes.
+  * PHASE 4 - THE END (10% to 0%): there's nothing left but her and you. She's much faster.
+      Reality Spiral (a vortex that drags you in), Infinite Slashes, and WORLD END: she charges up
+      everything she has left. FIND THE LIGHT: get into a pillar of light (an arrow points to it) before
+      she lets go. After that she's exhausted for a few seconds and takes double damage. Finish her.
+  * If everyone leaves, she fades back into the totem, and it's left on the altar.
+  * New advancements: Something Strange, A Sacred Totem, The World's End, One Sword. Every World., No More.
+
+
+THE SLAYER OF WORLDS  (the sword)
+---------------------------------
+  * She drops it. It can't be crafted or found anywhere else.
+  * The best sword in the game: 30 damage, a long reach, a fast 3-cut combo, and the katana dash
+    (right-click).
+  * Every cut throws a crescent of void that flies through walls and cuts through up to 6 monsters.
+    The third cut of the combo throws three.
+
+
+COMMANDS
+--------
+  * /tp worldsend and /locate worldsend.
+  * /summon slayer (cheats): she comes to wherever you are.

@@ -1,0 +1,117 @@
+MICHAELCRAFT BETA 1.0.2 - THE MULTIPLAYER FIX-UP (AND GOLD!)
+============================================================
+
+NOTE: the version is now beta-1.0.2, so everyone in a multiplayer game needs 1.0.2.
+Your worlds from 1.0.1 load fine (they start with the default game rules).
+
+
+MULTIPLAYER BUG FIXES
+---------------------
+No more duping from furnaces, gem cutters or chests
+  - Spam-clicking the output of a furnace or gem cutter used to give you extra items.
+    Before, the host and each friend had their own copy of every container and sent
+    it back and forth. Whichever copy arrived last won, so a click could get "undone"
+    and the item came back.
+  - Now only ONE player can have a container open at a time. If someone else is
+    using it you'll see "Mikey is using that." Whoever has it open is the only one
+    who can change it, and the host always has the real contents.
+  - Shift-clicking fuel in or out no longer makes it disappear (same cause, same fix).
+  - Breaking a chest/furnace: only the host spills what's inside, so it can't drop
+    twice. You can't break one while someone else has it open.
+  - Supply chests are only filled with loot once, by the host. Chests inside
+    buildings (temples etc.) are shared too, so leaving and rejoining can't refill them.
+  - This works for every container, including any new ones added later.
+
+The King of the Abyss works for everyone
+  - The real bug: the King has an internal timer called "t", and the network used
+    "t" for the monster's TYPE, so friends' games didn't know what he was and threw
+    him away. Fixed for every monster.
+  - He now goes after whoever is closest (and switches targets now and then), not
+    just the host. His fireballs, orbs, meteors, claws and charge hurt everyone.
+  - Friends see his projectiles, hear his sounds, feel the screen shake, and get the
+    boss bar and the Final Stand music.
+  - Anyone can summon him at the altar, or with /summon king (cheats on).
+  - He only leaves when EVERY player nearby is dead or has run away. The host dying
+    doesn't end the fight any more.
+  - Everyone who fought him gets the "king" advancement; whoever summoned him gets
+    the summon one.
+  - Placing the altar away from an Abyss no longer teleports him to a far-away Abyss.
+  - Any future boss gets all of this automatically (see "BOSSES" in index.html).
+
+Much less lag
+  - The host used to keep throwing away and rebuilding the world around one player
+    to make room for another when you were far apart. Now it keeps the world loaded
+    around everyone.
+  - Monster updates now only send what changed (about a quarter of the data now).
+  - During the boss fight, the King's whole arena map was being sent 8 times a
+    second. Not any more.
+  - Monsters, furnaces and drops were running at double speed while the host was
+    dead or in a menu. Fixed.
+  - The inventory screen no longer redraws every time some furnace somewhere ticks.
+  - Reading blocks is faster in general, for single player too.
+
+
+GAME RULES  (Pause > Game Rules, or "Game Rules..." when creating a world)
+----------
+  Keep Inventory ........... ON: keep your stuff when you die. OFF: drop it all where you fell.
+  Friendly Fire (PvP) ...... players can hurt each other with any weapon (default OFF).
+  Mob Spawning ............. monsters and animals keep appearing.
+  Daylight Cycle ........... OFF: the time of day freezes.
+  Natural Regeneration ..... heal slowly when your hunger bar is nearly full.
+  Hunger ................... OFF: nobody gets hungry.
+  Fall Damage .............. falling from high up hurts.
+  Bosses Scale With Players  a boss gets +50% health for every extra player near it.
+  Death Messages ........... everyone sees "Joiny was slain by Mikey." etc.
+  Friends Can Use Commands . with cheats on, friends can use commands too.
+
+  - The host's rules count for everyone. Friends can look at them but not change them.
+  - Command: /gamerule to list them, /gamerule keepInventory off to change one.
+  - Rules are saved with each world.
+
+
+GOLD IS USEFUL NOW
+------------------
+  Gold tools (pick, axe, shovel, sword): the FASTEST mining in the game, but they
+    wear out quickly. They're lucky:
+      - Gold Pickaxe: 30% chance of a second drop from any ore.
+      - Gold Sword: monsters you finish off drop double loot half the time.
+  Golden Apple (8 gold ingots around an apple): heals 4 hearts at once, then keeps
+    healing for 6 seconds. You can eat it even when you're full. Perfect for bosses.
+  Villagers: Toolsmiths buy 5 gold ingots for an emerald. Farmers sell Golden Apples.
+  New advancement: "Midas Touch".
+
+
+CRAFTABLE CHARMS
+----------------
+  First make a Gold Charm Frame:   . S .      S = String
+                                   G . G      G = Gold Ingot
+                                   . G .
+  Then put the frame in the crafting grid with (any order):
+    Spring Charm   Frame + 2 Iron Sticks + String            (a coiled spring)
+    Swift Charm    Frame + 2 Cobalt Ingots + Leather
+    Warrior Charm  Frame + 2 Rubies + Bone
+    Heart Charm    Frame + Golden Apple + 2 Rubies
+    Cloud Charm    Frame + 2 Glass Bottles + Diamond         (a cloud in a bottle)
+    Feather Charm  Frame + 2 Paper + String                  (a little parachute)
+    Power Charm    Frame + Firefly Jar + Block of Coal + Ruby
+  Villagers still sell them too.
+
+
+OTHER
+-----
+  - Diamond ore is brighter and has a few white glints. The old texture is kept in
+    Textures/_originals/diamondore_tile.png if you want it back.
+  - New textures (made from your own art, recoloured): Textures/items/tools/gold/,
+    Textures/items/golden_apple.png, Textures/items/charm_frame.png. Draw over them
+    in TextureForge any time.
+  - Friends can now use /summon (it happens where they're standing).
+  - Death messages now say who (or what) got you, including "slain by <player>".
+
+
+FOR THE CURIOUS (how the multiplayer fixes work)
+------------------------------------------------
+  Containers: the host keeps a list of who has each container open (a "lock").
+  Opening one asks the host first; the host says yes (with the real contents) or no.
+  While you have it open, only your game changes it and runs its furnace, and every
+  change goes to the host right away, followed by your inventory, in that order, so
+  the two always match even if you quit suddenly.

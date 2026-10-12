@@ -1,0 +1,56 @@
+MICHAELCRAFT BETA 1.2.1 - THE KNIGHT'S REVENGE
+==============================================
+
+(Everyone in a multiplayer game needs 1.2.1: the version is now beta-1.2.1.)
+
+
+THE ROAD TO THE KNIGHT AND THE KING
+-----------------------------------
+  * The APEX PARASITE now comes first. Beat it and it drops the RUIN KEY (and the world remembers: you have
+    "beaten the Parasite" from then on, even in multiplayer).
+  * The Ruin Key is gone from every other place. The old key-room chest in the Ancient Ruins is an ordinary
+    treasure chest now, and no monster, fish or chest drops a key. (Worlds you already played: a key you
+    already hold still opens the door, but...)
+  * ...the HOLLOW KNIGHT will not wake until the Apex Parasite is dead. Walk into his arena before that and
+    the throne just sits there, silent.
+  * The King of the Abyss can't be summoned either: the altar stays cold until the Parasite has fallen.
+    (Cheat commands like /summon still work, for testing.)
+  * So the order is: Apex Parasite -> Ancient Ruins and the Hollow Knight -> the King of the Abyss.
+
+
+THE HOLLOW KNIGHT, REBUILT   (520 health, was 430 - a bit tougher, and it hits much harder: 9 / 13 damage)
+------------------------------------------------------------------------------------------------------
+  PHASE 1 (shield up, cyan glow)
+    * 3-cut sword combos with a visible wind-up arc and a glowing sweep. The LAST CUT throws a crescent
+      SOUL WAVE along the floor - jump it!
+    * SHIELD BASH, with a dust trail.
+    * SHIELD QUAKE: it slams the shield down, glowing cracks race along the floor toward you, and a moment
+      later CRYSTAL SPEARS burst up out of every crack. Keep moving!
+  PHASE 2 (the shield shatters in a burst of sparks, eyes and aura turn red, six flames orbit the Knight)
+    * Much faster combos with soul waves, harder hits.
+    * DASH CUT: it vanishes in a trail of afterimages and cuts you from behind.
+    * SPECTRAL BLADE RAIN: beams of light mark the floor, then giant swords fall along them.
+    * LEAP SLAM: two soul waves along the floor and rubble falling from the ceiling.
+    * SHIELD QUAKE in both directions, and it still calls up skeletons.
+  Its own battle music: "Boss Battle". (The King keeps his own song.)
+
+
+BALANCE
+-------
+  * HOLLOW BLADE: weaker (12 damage, was 15, a little slower, a bit shorter reach). The soul wave on every
+    third cut is real now (it pierces up to three monsters). No more dash.
+  * FROST BLADE: no more dash.
+  * HOLLOW SIGNET: now takes off at most 13% damage at the top tier (it used to be 38%). The tiers go
+    3 / 4 / 5 / 6 / 8 / 10 / 12 / 13 percent.
+  * LIGHTNING ROD: 4 less damage (18 -> 14).
+  * VOID ORB: it now EXPLODES the moment it touches a monster (it still explodes by itself after a few
+    seconds, or when it hits a wall).
+  * ABYSS TOME: now crafted with the ABYSSAL HEART (the one the King drops): 3 Paper + Blood Shard +
+    Abyssal Heart. It no longer drops from chests or the Crimson Reaper.
+
+
+FIXES
+-----
+  * FISHING ROD: the bobber no longer falls through the blocks when you cast. It stops at walls, lands on
+    the ground (cast it into water to fish!), and casting right up against a wall works.
+  * The game's music files were re-encoded a little smaller (the game is still the same size).

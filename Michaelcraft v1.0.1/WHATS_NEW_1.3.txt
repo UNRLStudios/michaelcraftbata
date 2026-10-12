@@ -1,0 +1,120 @@
+MICHAELCRAFT ALPHA 1.3 - THE COMBAT UPDATE
+===========================================
+
+NEW WEAPONS
+-----------
+Katana            Iron Stick + String + 2 Iron Ingots (crafting table, diagonal: blade top-right,
+                  stick bottom-left, string next to it)
+                  - Left-click: 3-hit combo (falling cut, rising cut, lunging thrust that hits harder)
+                  - Right-click: IAIDO dash. You dash ~5 blocks and can't be hurt mid-dash;
+                    a heartbeat later everything you passed gets cut.
+Sensei's Katana   Won by beating a Sensei in a duel. Faster, longer dash, red trail,
+                  cherry petals, and cuts make enemies bleed.
+Sledgehammer      6 Blocks of Iron (top two rows) + Iron Stick (bottom middle).
+                  32x32 texture so it's HUGE in your hands.
+                  - Left-click: wind up and SMASH. It's AREA damage: every creature in a circle
+                    around the impact gets hit, and the shockwave runs along the ground both
+                    ways (so monsters behind you get it too, at 60%). Blocks pop up in a
+                    wave, with Minecraft-style square dust and block chips.
+                    Monsters get flattened, knocked flying and see stars.
+                    Finish one off and it gets sent into orbit.
+                  - Right-click: GROUND POUND (jump, flip, slam down on everyone around).
+                  - It's heavy: you walk a bit slower holding it.
+Tonio's Musket    Only ONE per world. Tonio sells it for 60 emeralds.
+                  - Left-click: fire. Then it reloads itself (about 2 seconds) using a Musket Ball.
+                  - Shots PIERCE: the ball goes through up to 4 monsters in a line
+                    (each one takes 25% less).
+                  - The top quarter of a monster is its head: HEADSHOTS do 1.75x damage.
+                  - New detailed 32x32 flintlock model (and its own side-on model in your hands).
+                  - Right-click to reload by hand.
+
+SAMURAI ARMOR (your texture)
+-------------
+Buy it from any Sensei: 45 emeralds, or 30 once you've beaten that Sensei.
+7 armor (like diamond). With a katana in hand: +2 damage and a 25% shorter dash cooldown.
+When you wear it you look the part: red lacquered plates laced with black silk, gold trim.
+Your new iron, diamond and ruby chestplate textures are in too (same file names as before).
+
+NEW ITEMS
+---------
+Iron Stick        2 Iron Ingots stacked -> 2 Iron Sticks
+String            Cave Crawlers drop it, 1 Leather -> 2 String, or buy it from the Fisherman
+Musket Balls      Iron Ingot + Coal + Paper -> 8 (or 12 for 2 emeralds from Tonio)
+Tonio's Map       Map with a Gold Ingot on each side. Cartographers sell it too.
+Dojo Map          Map with a Coal on each side. Cartographers sell it too.
+                  Right-click a locator map to mark the place on your world map;
+                  hold it and an arrow points the way.
+
+TONIO
+-----
+(Redrawn: round curly afro, sideburns, mustache and goatee, red bandana, leather vest,
+ bandolier of brass musket balls, rolled sleeves, tall boots. He gets a face-on portrait
+ when you talk to him.)
+A log cabin somewhere a few hundred blocks from spawn (only one per world). Go in with W.
+Tonio (big black afro, mustache, old musketeer coat) greets you by name.
+Right-click him to talk: buy Bessie the musket, buy musket balls, hear some stories.
+Once you buy it, the musket rack on his wall stays empty.
+
+THE DOJOS AND THE SENSEIS
+-------------------------
+Exactly three dojos in every world: a two-storey Japanese hall on a stone base, with a torii
+gate, stone lanterns, a gravel path and cherry trees dropping petals. It's built from real
+blocks (your base/pillar/lattice textures + new kawara roof tiles), so you can walk in,
+jump up onto the beams, and take it apart for building. There's a chest upstairs.
+
+Each has a Sensei: Kenji the Swift, Hiroshi the Still and Takeshi the Storm.
+Right-click to talk (lore about Master Masamura and the three crimson blades forged from
+the heart of the Abyss) or to challenge him to a duel for his sword.
+
+THE DUEL (mini-boss, with its own note-block duel music)
+  - Combo: he raises his blade before each cut, then has to catch his breath.
+  - Iaido dash: he crouches with his hand on the hilt and a red line shows his path.
+    JUMP over it (or dash through it with your own katana).
+  - Counter stance: he glows BLUE with a blue "!" - DON'T hit him, or he parries and cuts back.
+  - Leap (Takeshi, or anyone at half health): jumps, hangs, and crashes down on the red marker.
+  - Shuriken (half health): three throwing stars in a fan.
+  - After a combo, a dash or a leap he's open for a moment: hits then do +25%.
+  - At half health he gets serious: faster, red eyes, faster music.
+  - If you die he heals and waits for you. If you run off (48+ blocks) the duel ends.
+  - Beat him: Sensei's Katana + emeralds + string. After that you can spar again for fun.
+
+TALKING TO NPCS
+---------------
+Right-click Tonio or a Sensei. The line types out (click it, or press Space/Enter, to skip),
+then pick a choice with the mouse or keys 1-9. Esc leaves. Chrome's right-click menu no
+longer pops up, and the click that opens the talk screen can't press a choice by accident.
+
+MENU FIXES
+----------
+- "Allow Cheats" when you create a world. With cheats OFF there are no commands
+  (except /help, /pos and /seed) and you can't switch game modes from the pause menu.
+  Picking Creative turns cheats on (like Minecraft), but you can turn it back off.
+- Worlds made before 1.3 keep cheats ON, so you don't lose your commands.
+- Usernames: set yours when you make a world (or in Options > Gameplay). It shows over your
+  head (you can turn that off), in death messages, and people call you by it.
+
+EXTRAS
+------
+- 10 new advancements (Way of the Blade, Iaido, Hammer Time, To the Moon!, Howdy Stranger,
+  Meet Bessie, Sharpshooter, Through the Gate, The Student Surpasses, Three Crimson Blades).
+- New building blocks: Dojo Foundation, Red Pillar, Lattice Posts/Joints/Beams, Kawara Roof
+  (tile, slopes, eave, eave tips, ridge, ridge ends), Tatami Mat, Paper Lantern (sways),
+  Stone Lantern, Cherry Blossom Leaves, Torii Beam, Katana Rack, Shoji Wall.
+  Tatami: 3 Wheat over 3 Planks. Shoji Wall: Sticks + Paper. Paper Lantern: String, Paper, Torch.
+- Commands: /locate tonio, /locate dojo, /tp tonio, /tp dojo
+- New sounds from your sound pack (musket blast, reload, parry clangs, temple bell, Tonio's
+  voice, wind chimes by the dojos...) are in the Sounds folder and in sounds_bundle.js.
+
+TEXTURES
+--------
+Your textures moved from MISC into:
+  Textures/blocks/japanese/      (base blocks, pillar, posts, joints, arch)
+  Textures/items/tools/katana/   (katana.png, senseis_katana.png)
+New textures (all 16x16 like TextureForge makes, except the 32x32 hammer):
+  Textures/blocks/japanese/japanese_roof*.png   the kawara roof pieces
+  Textures/blocks/japanese/ (tatami, paper/stone lantern, sakura leaves, shoji, torii beam, katana rack)
+  Textures/blocks/tonio/    (musket rack, empty rack, Tonio's sign)
+  Textures/items/           (iron stick, string, musket ball, tonio map, dojo map, shoji wall)
+  Textures/items/tools/musket/tonios_musket.png
+  Textures/items/tools/sledgehammer/sledgehammer.png (32x32)
+Open any 16x16 one in MISC/TextureForge.html (Import PNG) to redraw it.

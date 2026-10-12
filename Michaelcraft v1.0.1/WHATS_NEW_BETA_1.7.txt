@@ -1,0 +1,55 @@
+MICHAELCRAFT BETA 1.7 - THE SLAYER OF WORLDS, REFORGED
+======================================================
+
+(Everyone in a multiplayer game needs 1.7: the version is now beta-1.7.)
+
+
+SHE HITS MUCH HARDER
+--------------------
+  * Everything the Slayer of Worlds does hurts three times as much as in 1.6. Her Corrupted Shades
+    hit twice as hard. Bring your best armor.
+
+
+ONE CHANCE
+----------
+  * The Overlord only drops the Mysterious Item the FIRST time he's beaten in a world. Never again.
+  * Once the Slayer of Worlds is defeated, the Shattered Altar never answers again: you fight her once.
+    (If everyone runs away, she fades back into the totem and you can try again until you win.)
+
+
+NO MORE GETTING STUCK
+---------------------
+  * She flies through anything now (like Terraria's bosses), so walls, pillars and the ground can't trap her.
+  * The fight follows you: run off the arena or drop into a cave and she comes after you, and if she ever
+    ends up far away she blinks back next to you.
+  * Every move has a time limit, so she can never freeze in one.
+  * The ground under the World's End arena is solid now (no caves to fall into mid-fight).
+
+
+HER EFFECTS, REMADE
+-------------------
+  * Sword cuts: layered crescents with a motion smear, a white-hot leading edge, and sparks off the blade.
+  * Sky Dive: speed lines and a comet trail, then a crater: rubble, crystal shards, smoke, shockwave rings,
+    a zoom-blur and a flash of color fringing (chromatic aberration). Scorch marks stay on the ground.
+  * World Shatter: clusters of corruption crystals burst out of the cracking ground, then shatter.
+  * Ground waves: rolling walls of void-fire that kick up rubble and leave glowing cracks.
+  * Corruption Rings: three-layer rings with runes riding them and lightning crackling along them.
+  * Teleport Strikes: a rift tears open where she's about to come through; she implodes when she leaves.
+  * WORLD SPLIT: the picture itself is torn in two along the cut, and the halves slide apart.
+  * Meteor Call: crystal meteors with burning tails and spinning rune circles where they'll land.
+  * Reality Spiral: a black hole with an accretion disk that bends the screen around it (real lensing),
+    with light spiraling in.
+  * World End: a sphere that eats the light, everything rushing into it, then a blinding blast.
+  * Phase changes: the colors invert for an instant, letterbox bars, and a glitching title card.
+  * Her entrance: a pillar of light from the sky. Her death: rays of light break out of her, she shatters
+    into feathers and crystal, and her soul rises out of the light.
+  * In phase 4, she leaves a trail of light wherever she moves.
+
+
+1.7.1 - DIRECTIONAL DASH
+------------------------
+  * The Slayer of Worlds (the sword) now dashes in ANY direction: right-click and you dash toward your
+    cursor - up, down, diagonally, straight through the air. (With no mouse, it goes the way you're holding
+    the movement keys.) You can't be hurt mid-dash, and everything you pass through gets cut, as before.
+  * Dash DOWN into the ground and you land with a void shockwave that hits every monster around you.
+  * It leaves a trail of void sparks behind you.

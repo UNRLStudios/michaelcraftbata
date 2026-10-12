@@ -1,0 +1,37 @@
+MICHAELCRAFT BETA 1.0.1 - A SMALL, SUBTLE UPDATE
+================================================
+
+MULTIPLE WORLDS
+  - Title screen > Singleplayer shows all your worlds: name, game mode, day,
+    cheats, last played and seed. Newest at the top.
+  - Play Selected World (or double-click one), Create New World (now with a
+    World Name box), Edit (rename it, or turn cheats on/off), Delete (click twice).
+  - Continue still jumps straight into the world you played last.
+  - Your old world is moved into the list automatically as "My World".
+  - Saves are compressed (lib/lz-string.min.js), so lots of worlds fit. Autosaves
+    compress in the background, so there's no stutter.
+  - Multiplayer: "Host a Saved World" now lets you pick which world to host.
+
+MAX FPS
+  - Options > Video > Max FPS: 30 to 240, or Unlimited (your screen's refresh
+    rate, e.g. 60 or 144). Turn on Show FPS to see it working.
+  - Animations that used to assume 60 FPS now follow the real frame time, so the
+    game plays the same at any frame rate.
+
+NEW LOGO
+  - "MICHAEL" in molten gold and "CRAFT" in emerald, in its own chunky pixel font
+    (it looks the same with or without internet), sitting on a floating island
+    of grass, dirt, stone and ore blocks. A shine sweeps across it and it bobs gently.
+
+THE SPLASH TEXT
+  - Pops in, pulses, and its letters ripple in a wave.
+  - It now sits on the island below the letters, so it never overlaps the logo,
+    and long ones shrink to fit. Click it for a new one.
+
+COMMANDS IN SURVIVAL WORLDS
+  - That's the "Allow Cheats" setting: a world made with cheats OFF only allows
+    /help, /seed, /pos and /players. You can now switch cheats on for any world:
+    Singleplayer > pick the world > Edit > Allow Cheats: ON > Save.
+    (The error message in chat tells you this too.)
+
+NOTE: the version is now beta-1.0.1, so everyone in a multiplayer game needs 1.0.1.

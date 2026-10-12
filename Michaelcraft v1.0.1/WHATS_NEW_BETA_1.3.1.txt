@@ -1,0 +1,30 @@
+MICHAELCRAFT BETA 1.3.1
+=======================
+
+(Everyone in a multiplayer game needs 1.3.1: the version is now beta-1.3.1.)
+
+THE ROCKET IS NOW BACKGROUND BLOCKS
+-----------------------------------
+  Every rocket part (hull, fins, engines, fuel tanks, cockpit, nose cone) is a walk-through block now, like the
+  Crafting Table: you can stand inside the rocket while you build it, walk through it, and place parts around
+  yourself. The Launch Platform itself is still solid ground.
+
+CURSOR MODE (like Terraria's) - so you can really right click
+-------------------------------------------------------------
+  For touch screens and trackpads. A crosshair is your pointer:
+    * DRAG anywhere on the screen to move it (it stays where you leave it)
+    * HOLD the red L button to mine / attack (left click)
+    * HOLD the blue R button to place / use / open things, or to rapid-fire the Short Bow (right click)
+    * use one thumb on the screen and another on a button at the same time
+    * the crosshair turns red or blue while you hold L or R
+  Turn it on with the cross button next to the jump button (touch), with C, or in Options > Controls > Cursor
+  Mode. On a keyboard, Z is left click and X is right click while it is on (you can rebind all three keys).
+  The old mine / place toggle button is replaced by it while it is on.
+
+SEE YOUR FRIENDS' SHOTS (multiplayer)
+-------------------------------------
+  Arrows, musket balls, spells (Ember Staff, Frost Wand, Void Orb, Abyss Tome...), the Hollow Blade's soul
+  wave, the Frost Blade's shards and Lightning Rod's lightning now show up on everybody's screen, not just the
+  shooter's. They are for show - the shooter's own game does the hitting. The monsters' spells (Frost Wraith
+  shards, Ember Wisp fireballs, the Hollow Knight's soul waves...) are now sent to friends too, so you can see
+  them coming, and they DO hurt the friend they hit.

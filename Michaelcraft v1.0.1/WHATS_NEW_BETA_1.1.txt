@@ -1,0 +1,88 @@
+MICHAELCRAFT BETA 1.1 - THE GAS FURNACE UPDATE
+==============================================
+
+NOTE: the version is now beta-1.1, so everyone in a multiplayer game needs 1.1.
+Older worlds load fine.
+
+
+THE GAS FURNACE (built in the world, Create-style)
+--------------------------------------------------
+  It isn't one recipe: you craft three parts and BUILD it in the world.
+
+  1. GAS FURNACE (Crafting Table)    I I I      I = Iron Ingot
+                                     I F I      F = Furnace
+                                     C C C      C = Cobblestone
+  2. EXHAUST PIPES x6 (Crafting Table): three Iron Ingots in a row
+  3. VENTS x2 (Crafting Table)       I S I      S = Stick
+                                     S . S
+                                     I S I
+
+  Build it: put the Gas Furnace down, run Exhaust Pipes away from it (touching it
+  on any side), and finish with a Vent that has open air on one side for the smoke.
+
+  - Pipes join up on their own to whatever they touch (pipes, the furnace, vents),
+    with copper flanges at every joint and chunky boxes at bends and branches.
+  - Make it any shape you like: a chimney straight up, along a ceiling, round
+    corners, through walls, branching off - up to 64 pipes.
+  - MORE VENTS = FASTER. One vent: smelts 3x as fast as a Furnace. Two: 4x.
+    Three or more: 5x. Branch the pipe and cap each branch with a vent.
+  - It burns fuel only 1.5x as fast as a Furnace, so every item costs less fuel.
+  - The smoke comes out of each vent's open side (straight on if it can, else up).
+  - Two Gas Furnaces can share the same pipes and vents.
+  - It re-checks its pipes twice a second, so you can rebuild while it runs.
+
+  You can SEE it working (no text anywhere):
+  - running: the window glows, it lights up the room, heat pulses run down the
+    pipes toward the vents, the vent fans spin and puff smoke out, and it roars
+    (blast furnace sounds)
+  - no working vent: it won't light, and black smoke chokes out of its top
+  - its screen has three fan lights: lit for each working vent (up to 3), a red X
+    when there are none
+
+  New advancement: "Industrial Revolution" - get a Gas Furnace venting.
+  Textures (16x16, swap in your own if you like): Textures/blocks/gas_furnace.png,
+  gas_furnace_on.png, vent.png, vent_base.png, exhaust_pipe.png (the pipe's icon -
+  in the world pipes are drawn joined up).
+
+
+REGENERATION CHARM (new charm, tiers I to VIII)
+-----------------------------------------------
+  Recipe (any grid, shapeless): Gold Charm Frame + 2 Golden Apples + a Ruby.
+  Heals you all the time, even when you're hungry:
+     I     II    III   IV    V     VI    VII   VIII
+     8s    6.5s  5.2s  4.2s  3.4s  2.7s  2.2s  1.8s   per heart
+  Little hearts float up as it heals. Merge two at a Charm Merger for the next
+  tier, like any charm.
+
+
+NO MORE TIP TEXT IN BLOCK SCREENS
+---------------------------------
+  The Furnace, Gem Cutter, Enchanting Table, Charm Merger and Crafting Table screens
+  no longer tell you what to do: the help paragraphs, the labels under the slots
+  ("Coal Block", "Raw Iron", "Item", "Charm"...), the Gem Cutter's status line and
+  the hover hints are all gone. Just the slots, like Minecraft.
+
+
+PLAY IT ON YOUR PHONE (install it as an app)
+--------------------------------------------
+  - The game can now be installed on a phone like an app, with its own icon,
+    full screen and sideways - and it works OFFLINE after the first load.
+    See HOW_TO_PLAY_ON_YOUR_PHONE.txt (it has to be on a website for this: free
+    and quick with Netlify Drop or GitHub Pages).
+  - New files: manifest.webmanifest, sw.js, icons/ (a grass block + a diamond
+    pickaxe icon).
+  - "Install App" shows on the title screen when the browser can install it
+    (Chrome on Android, desktop Chrome/Edge). iPhone: Share > Add to Home Screen.
+
+PHONE FIXES
+  - Title screen: the logo no longer gets cut off on a phone held sideways.
+  - Inventory and every block screen fit on a sideways phone without scrolling:
+    your inventory moves to a second column on the right.
+  - New DOWN button on the touch controls (drop through platforms, dive while
+    flying, climb down ladders) - and the jump button now climbs ladders.
+  - The first tap on a menu button goes full screen and turns sideways (when the
+    browser allows it).
+  - No more accidental zooming, page bouncing or text selection while playing.
+  - The corner text (day, X, biome) no longer runs under the buttons.
+  - Phones start on the lighter "Performance" resolution for a smoother frame rate
+    (Options > Video > Resolution to change it).

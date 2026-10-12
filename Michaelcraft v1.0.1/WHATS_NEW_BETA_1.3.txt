@@ -1,0 +1,85 @@
+MICHAELCRAFT BETA 1.3 - THE ADD-ONS UPDATE
+==========================================
+
+(Everyone in a multiplayer game needs 1.3: the version is now beta-1.3. Worlds you already have are fine.)
+
+
+ADD-ONS   (Singleplayer > Create New World > Add-ons...)
+-------------------------------------------------------
+  Little rule-sets, built into the game, that you pick when you make a world. They are saved with the world
+  (you can't change them later), they show on the world list and the pause menu, and a friend who joins gets
+  them too. Four to start with:
+
+  NIGHTMARE MODE   Its own difficulty, far worse than Hard.
+                   * ONE LIFE (it includes Hardcore)
+                   * the world is ALWAYS "Moody" dark - the Brightness option is ignored
+                   * monsters hit 2.5x as hard (Hard is 1.5x), have DOUBLE health and run 18% faster
+                   * bosses have 50% more health and hit 1.7x as hard
+                   * twice as many monsters, appearing twice as often
+                   * you get hungry 50% sooner and heal less than half as fast
+                   * a dark red edge closes in on the screen, and beats when you are nearly dead
+  HARDCORE         ONE LIFE. When you die the world is over: you can only SPECTATE it (fly around, nothing can
+                   hurt you, but you can't touch anything) or DELETE it. It is saved the moment you die, so
+                   quitting can't undo it. Your hearts get a gold glow.
+  MOON GRAVITY     Gravity is 60% weaker. Jumps carry you three times as high (about 4 blocks), falling is slow
+                   and floaty, falls hurt far less, and landings kick up grey moon dust. Everything else is
+                   light too: monsters bounce, drops drift down, particles float.
+  SPACE DETENTION  You are stuck on this world, and the only way out is up. See below.
+
+
+SPACE DETENTION: BUILD A ROCKET AND ESCAPE
+------------------------------------------
+  1. Craft a LAUNCH PLATFORM (Crafting Table): 3 Iron Ingots, a Block of Coal, 3 Cobblestone.
+  2. Hold it: a glowing hologram of the launch site and the rocket follows your cursor (it turns red when the
+     ground is wrong). Right-click to place it. It needs open sky and flat-ish ground; it CLEARS the site
+     (trees, hills and all), lays a 5-wide pad and fills in any gap under it.
+  3. Now the transparent BLUEPRINT hangs over the pad: a faint grid, a scan line, and every missing part as
+     a glowing ghost. Hold a part and its ghost cells pulse. A checklist on the left tells you what is missing.
+  4. Craft the parts and place each one on ITS cell (a part refuses any other spot, and tells you what the
+     blueprint wants there). 25 parts in all:
+        Rocket Engine x3     3 Ember Ingots + 3 Iron + 2 Obsidian each                    (Ashlands)
+        Rocket Fuel Tank x9  3 Frost Crystals + 4 Iron makes 3                              (Frostlands)
+        Rocket Hull x9       8 Iron makes 4
+        Rocket Fin L / R     3 Redwood Ingots + 1 Iron each (two different recipes)      (Redwood forest)
+        Rocket Cockpit x1    3 Glass + Diamond + 2 Ancient Metal + Iron                      (Ancient Ruins!)
+        Rocket Nose Cone x1  4 Gold + Ruby + 3 Iron
+     (Engines, Tanks, Fins and the Cockpit need all three new biomes, and the Cockpit's Ancient Metal comes
+     from the Hollow Knight, which needs the Apex Parasite's key: so a rocket takes a whole playthrough.)
+  5. When every cell is filled the blueprint turns green. RIGHT-CLICK THE COCKPIT: countdown from 5, the engines
+     light, the ground shakes, LIFTOFF - the rocket climbs through the sky into black space and stars.
+  6. "YOU ESCAPED!": keep playing (you get 2 Mana Stars and 8 Diamonds, plus the Astronaut Helmet accessory) or
+     save and quit. Break the middle platform to pack the launch site up and get your Launch Platform back.
+  The parts only craft (and the platform only places) in Space Detention worlds. Only the host can launch.
+  New advancements: Launch Site, Ready for Liftoff, Escape Velocity.
+
+
+MANA STARS  (a bigger mana bar, not a faster one)
+-------------------------------------------------
+  Eat a MANA STAR: +20 maximum mana, for good, up to 9 stars (100 -> 280). Mana still refills at the same speed,
+  so a bigger bar means more spells before you run dry. They are saved with you, and the bar grows wider
+  and shows a star for each one you have.
+  Where: 1-2 from the Hollow Knight, 1 from the Apex Parasite, 2 from the King of the Abyss, 1 from the
+  Crimson Reaper (70%), sometimes in Ancient Ruins chests, or CRAFT one: 2 Moonpetals + Frost Crystal + Diamond.
+
+
+NEW AND CHANGED WEAPONS
+-----------------------
+  SHORT BOW   Sticks + String + an Iron Ingot. HOLD RIGHT-CLICK and it looses an arrow every 0.3 seconds
+              (a bit wild, a bit weaker than a long draw: arrows are used up fast!). Left-click still draws it like
+              a normal bow. Smaller in your hands, too.
+  FROST BLADE Every cut now throws a shard of frost (55% of the sword's damage, short range, chills what it hits).
+
+
+ARMOR IS A LITTLE WEAKER (everything, in every way)
+---------------------------------------------------
+                        was -> now
+  Leather Tunic          3 -> 2 armor
+  Iron Chestplate        6 -> 5
+  Cobalt Chestplate      7 -> 6, breath lasts 1.5x (was 2x), swims a bit slower
+  Diamond Chestplate     9 -> 8
+  Ruby Chestplate       10 -> 9
+  Samurai Armor          9 -> 8, katana bonus +1 damage (was +2), dash cooldown -15% (was -25%)
+  Parasite Armor        11 -> 9, +0.5 damage (was +1), +1.5 hearts (was +2), leech 3% (was 4%)
+  Abyssal Armor         13 -> 11, +4 damage (was +5), +2.5 hearts (was +3)
+  Ancient Armor         12 -> 10, +1.5 damage (was +2), +1.5 hearts (was +2), thorns 15% (was 25%)
+  Ancient Armor now REALLY hurts back whatever bites you (it was only written on the tooltip before).

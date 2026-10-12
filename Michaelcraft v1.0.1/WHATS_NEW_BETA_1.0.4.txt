@@ -1,0 +1,114 @@
+MICHAELCRAFT BETA 1.0.4 - THE ABYSS UPDATE
+===========================================
+
+NOTE: the version is now beta-1.0.4, so everyone in a multiplayer game needs 1.0.4.
+Older worlds load fine.
+
+
+ABYSSAL ARMOR (new)
+-------------------
+  Recipe (Crafting Table):   B A B      B = Block of Ruby (7)
+                             B H B      A = Samurai Armor
+                             B B B      H = Abyssal Heart
+  - 10 defense
+  - +5 damage to EVERYTHING you do (swords, katanas, hammers, bow, musket)
+  - +3 extra hearts
+  - Crimson-and-void look when you wear it (it uses the Samurai body shape).
+
+
+ABYSSAL WAR HAMMER (new)
+------------------------
+  Recipe (Crafting Table):   B B B      B = Block of Ruby (5)
+                             B H B      H = Abyssal Heart
+                             . S .      S = Sledgehammer (where the stick usually goes)
+  - Works like the Sledgehammer, but 14 base damage per smash (the pound does 17).
+  - RAGE: every 10th swing it glows purple and for 2 seconds you can swing every
+    0.1 seconds.
+  - Hammers aren't slowed by the King's melee armour, and it takes Sharpness
+    at the Enchanting Table.
+
+
+THE ABYSSAL HEART
+-----------------
+  No longer just a trophy: it's what makes Abyssal Armor and the Abyssal War Hammer.
+  The King drops one every time you beat him.
+
+
+BALANCE
+-------
+  - Katanas (Katana and Sensei's Katana): one attack every 0.5 seconds
+    (was 0.22 / 0.19). The dash is unchanged.
+  - Tonio's Musket: 45 damage per shot (was 22), and reloads in 1.7 s (was 2.1).
+
+
+KING OF THE ABYSS: DESPERATION PHASE (rebuilt from scratch)
+------------------------------------------------------------
+  Built like a Terraria desperation phase, but tuned for the FIRST boss.
+
+  At 1% health he refuses to die. Nothing can hurt him now (no single hit can
+  skip it), everything he'd thrown vanishes and his imps are sacrificed.
+
+  GET READY (10 seconds): a big countdown, Final Stand fades out, and glowing
+  walls appear around the arena. Get between them (once you're in, you can't
+  leave until it's over).
+
+  Then his own song starts (Sounds/music/desperation_BGM.mp3) and the boss bar
+  becomes his LAST STRENGTH, draining over 53 seconds. When it's empty he dies on
+  his own and drops his loot. You win by SURVIVING.
+
+     0-10 s   CRIMSON RAIN       Orbs fall through the roof. Every 1.5 s one lands
+                                 right above you: keep moving.
+    10-21 s   BRIMSTONE PILLARS  Warned columns of fire. Some chase you (4 in a
+                                 row), some FENCE the whole floor: stand in a gap.
+                                 The last fence comes twice, shifted half a gap.
+    21-31 s   HELLFIRE           Aimed fans of 3 orbs, plus Gigablasts that burst
+                                 into a ring over your head.
+    31-42 s   SHOCKWAVES         His claws go up and the floor line flashes
+                                 "JUMP!" (it turns white just before the slam). Two
+                                 fire waves roll out from under him along the floor
+                                 (and over the dais): jump as one reaches you.
+    42-47 s   LAST BREATH        Alternating rings of orbs (each fills the gaps of
+                                 the last) and a little rain.
+    47-53 s   FINAL NOVA         He gathers his strength, then fires one huge ring.
+                                 The white cone and the "SAFE" mark show the one gap
+                                 (one per player, a couple of blocks from you).
+
+  What keeps it fair (and skill-based):
+    - every attack is warned first, with a short breather between acts
+    - one idea at a time; orbs fly 6-10 blocks a second (you sprint at 8.6)
+    - the only thing you MUST jump is a shockwave, timed for your jump
+    - a hit gives you 1 second of safety and only a small push (no chain hits)
+    - standing still gets you hit; moving keeps you safe
+
+  DAMAGE (after the King's x1.6; armour takes a flat amount off):
+    orb 11, wave 11, pillar 13, Gigablast 13, nova 14, the walls 10.
+    In Diamond armour: 4, 4, 6, 6, 7, 3 - about 4-5 mistakes before you die.
+
+  Playtests (Diamond armour, Normal, the whole 63 seconds):
+    - a bot that just reads the warnings took 4 hits (16 of 20 health) and won;
+    - standing still took 16 hits (76 damage) in 30 seconds - dead by about 11 s;
+    - shockwaves: jumping when the wave is about 1.5-3 blocks away clears it
+      every time (a window of about a quarter of a second).
+
+  New sounds (from the Minecraft pack): a totem when he refuses to die, a conduit
+  when it starts, an earth-crack for the slams, thunder for the Final Nova and a
+  respawn-anchor drain when his strength runs out.
+
+  Testing: with cheats on, /summon king, then /desperation skips straight to it.
+
+  To tune it (index.html):
+    BOSSES > abyssking > desperation: { at: 0.01, music: ... }
+    DESP = { grace: 10, length: 53, iframes: 1.0, kb: [4, 3], wall: 18.5 }
+    DESP_DMG = { orb: 7, wave: 7, pillar: 8, blast: 8, nova: 9, border: 6 } (before x1.6)
+    DESP_ACTS (when each act starts and what he says), and the numbers inside each
+    act in kingDesperation.
+
+
+BEDS SET YOUR SPAWN POINT
+-------------------------
+  - Right-click a bed at ANY time of day: "Respawn point set". (Sleeping at night
+    still skips to morning and heals you.)
+  - You respawn next to your bed. If the bed is broken or blocked, you're told so
+    and go back to world spawn.
+  - A bed inside a building respawns you at that building's front door.
+  - In multiplayer, every player has their own bed. It's saved with the world.

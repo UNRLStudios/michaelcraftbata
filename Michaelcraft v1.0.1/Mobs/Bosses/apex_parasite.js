@@ -379,10 +379,18 @@ function sandPuff(x, y, n) {
   for (let i = 0; i < k; i++) Game.particles.push({ x: x + (Math.random() - 0.5) * 1.2, y: y + (Math.random() - 0.5) * 0.6, vx: (Math.random() - 0.5) * 4, vy: -1.5 - Math.random() * 3.5, life: 0.5 + Math.random() * 0.4, age: 0, size: 0.1 + Math.random() * 0.12, color: ['#d9b873', '#c9a35f', '#e8cf94'][i % 3], gravity: 9 });
 }
 // ---- drawing ------------------------------------------------------------------
+// (1.0.1 remaster) The Parasite is PIXEL ART now, like every other boss. Its whole body is painted onto a
+// small grid (16 pixels to a block, lined up with the world's own pixels), then blown up with no
+// smoothing. Each ring, the head, the jaw, the frill and the feelers is painted as its own piece:
+//   1. the piece fills its pixels with MATERIALS (shell, belly bone, flesh, ooze, teeth...)
+//   2. it is shaded the way the other monsters are: edges facing up catch the light, edges facing down
+//      are in shadow (worked out on the screen grid, so it is lit from above however it is turned)
+//   3. it gets a dark outline, drawn over whatever is behind it (so every ring stands out from the last)
 const PARA_COL = {
-  shell: '#e6d6a8', shellHi: '#fff3cf', shellLo: '#b39a63', shellDk: '#6e5a33',
-  flesh: '#5b2415', fleshHi: '#8e3a1e', fleshDk: '#2a0e07',
-  ooze: '#b6ff3a', oozeHi: '#f0ffa8', oozeDk: '#4d8a14', eye: '#f4ff5a', maw: '#1a0905', tooth: '#fff1c8',
+  shell: '#e6d6a8', shellHi: '#fff3cf', shellLo: '#b39a63', shellDk: '#6e5a33', shellDk2: '#463619',
+  flesh: '#5b2415', fleshHi: '#8e3a1e', fleshLo: '#41180c', fleshDk: '#2a0e07', fleshGlow: '#7d8222',
+  ooze: '#b6ff3a', oozeHi: '#f0ffa8', oozeMid: '#7fd424', oozeDk: '#4d8a14', eye: '#f4ff5a', eyeHi: '#ffffe6',
+  maw: '#1a0905', tooth: '#fff1c8', toothHi: '#ffffff', ol: '#1c0c07',
 };
 const PARA_HIT = (() => {   // what it looks like when it is hurt: everything pulled toward red
   const out = {};
@@ -392,110 +400,322 @@ const PARA_HIT = (() => {   // what it looks like when it is hurt: everything pu
   }
   return out;
 })();
-function paraPoly(g, pts, fill, stroke) {
-  g.beginPath(); g.moveTo(pts[0], pts[1]);
-  for (let k = 2; k < pts.length; k += 2) g.lineTo(pts[k], pts[k + 1]);
-  g.closePath();
-  if (fill) { g.fillStyle = fill; g.fill(); }
-  if (stroke) { g.strokeStyle = stroke; g.lineWidth = Math.max(1, TILE / 14); g.lineJoin = 'round'; g.stroke(); }
+// ---- the materials: [family, base tone, 4-tone ramp (light -> dark), flat?]. Shading only sees the edges
+// between FAMILIES, so a darker part of the same shell (Sd) doesn't get a seam drawn round it ----
+const PR_SHELL = ['shellHi', 'shell', 'shellLo', 'shellDk'], PR_BONE = ['shell', 'shellLo', 'shellDk', 'shellDk2'];
+const PR_FLESH = ['fleshHi', 'flesh', 'fleshLo', 'fleshDk'], PR_OOZE = ['oozeHi', 'ooze', 'oozeMid', 'oozeDk'], PR_TOOTH = ['toothHi', 'tooth', 'shell', 'shellLo'];
+const PM = {}, PR_MATS = [null];
+[
+  ['S', 1, 1, PR_SHELL], ['Sd', 1, 2, PR_SHELL], ['Sl', 1, 0, PR_SHELL], ['G', 2, 0, ['shellDk'], 1],
+  ['B', 3, 1, PR_BONE], ['Bd', 3, 2, PR_BONE],
+  ['F', 4, 1, PR_FLESH], ['Fd', 4, 2, PR_FLESH], ['Fh', 4, 0, PR_FLESH], ['Fg', 4, 0, ['fleshGlow'], 1],
+  ['O', 5, 1, PR_OOZE], ['Od', 5, 2, PR_OOZE], ['Oh', 5, 0, ['oozeHi'], 1], ['D', 6, 0, ['oozeDk'], 1],
+  ['K', 2, 0, ['fleshDk'], 1], ['Kg', 2, 0, ['ooze'], 1],
+  ['H', 7, 1, PR_SHELL], ['Hd', 7, 2, PR_SHELL],
+  ['T', 8, 1, PR_TOOTH], ['M', 9, 0, ['maw'], 1], ['W', 10, 0, ['ooze'], 1], ['Wd', 10, 0, ['oozeDk'], 1],
+  ['P', 11, 0, ['fleshDk'], 1], ['L', 12, 2, PR_SHELL],
+].forEach(([k, fam, tone, ramp, flat]) => { PM[k] = PR_MATS.length; PR_MATS.push({ fam, tone, ramp, flat: !!flat }); });
+const PR_FAM = new Uint8Array(PR_MATS.length), PR_TONE = new Uint8Array(PR_MATS.length), PR_FLAT = new Uint8Array(PR_MATS.length);
+PR_MATS.forEach((M, i) => { if (M) { PR_FAM[i] = M.fam; PR_TONE[i] = M.tone; PR_FLAT[i] = M.flat ? 1 : 0; } });
+// the palette as packed pixels (little-endian ABGR, alpha left out): pal[material][tone], plus the outline
+const PR_PAL = new Map();
+function paraPal(P) {
+  let out = PR_PAL.get(P);
+  if (out) return out;
+  const px = (c) => { const m = c.match(/\d+/g), n = c[0] === '#' ? parseInt(c.slice(1), 16) : 0, [r, g, b] = c[0] === '#' ? [(n >> 16) & 255, (n >> 8) & 255, n & 255] : m.map(Number); return (b << 16) | (g << 8) | r; };
+  out = { mats: PR_MATS.map(M => M && M.ramp.map(k => px(P[k]))), ol: px(P.ol), eye: px(P.eye), eyeHi: px(P.eyeHi), sock: px(P.fleshDk), dust: px(P.shellLo) };
+  PR_PAL.set(P, out);
+  return out;
 }
-// one ring of the body, drawn along its own direction (screen position already translated)
-function drawParaSeg(g, s, i, n, P, m, t) {
-  const T = TILE, r = paraRadius(i, PARA.n) * T, l = PARA.gap * T * 0.58;
-  g.save(); g.rotate(s.ang); if (Math.cos(s.ang) < 0) g.scale(1, -1);   // (the back always faces up)
-  const th = r * (m.phase >= 3 ? 0.22 : m.phase === 2 ? 0.38 : 0.54), y0 = -r * 1.04;
-  paraPoly(g, [-l, -r * 0.6, -l * 0.55, -r * 0.98, l * 0.55, -r * 0.98, l, -r * 0.6, l, r * 0.6, l * 0.55, r * 0.98, -l * 0.55, r * 0.98, -l, r * 0.6], P.flesh, P.fleshDk);
-  g.fillStyle = P.fleshHi; g.fillRect(-l * 0.7, r * 0.3, l * 1.4, r * 0.16);
-  // the swollen sac in the middle of every other ring
-  if (i % 2 === 1) {
-    const pulse = 0.5 + 0.5 * Math.sin(t * 4 + i * 0.9), rad = r * (0.26 + 0.08 * pulse + 0.2 * (m.sacs || 0));
-    g.fillStyle = P.oozeDk; g.beginPath(); g.arc(0, 0, rad * 1.18, 0, 6.3); g.fill();
-    g.fillStyle = P.ooze; g.beginPath(); g.arc(0, 0, rad, 0, 6.3); g.fill();
-    g.fillStyle = P.oozeHi; g.fillRect(-rad * 0.45, -rad * 0.55, rad * 0.5, rad * 0.4);
-  } else { g.fillStyle = P.fleshDk; g.fillRect(-l * 0.15, -r * 0.08, l * 0.3, r * 0.16); }
-  // armor: a big plate along the back, a smaller one under the belly (they chip away with each phase)
-  paraPoly(g, [-l * 1.02, -r * 0.55, -l * 0.6, y0, l * 0.6, y0, l * 1.02, -r * 0.55, l * 0.95, y0 + th, -l * 0.95, y0 + th], P.shell, P.shellDk);
-  g.fillStyle = P.shellHi; g.fillRect(-l * 0.5, y0 + r * 0.06, l * 1.0, r * 0.09);
-  g.fillStyle = P.shellLo; g.fillRect(-l * 0.9, y0 + th - r * 0.1, l * 1.8, r * 0.1);
-  paraPoly(g, [-l * 0.9, r * 0.6, -l * 0.5, r * 1.0, l * 0.5, r * 1.0, l * 0.9, r * 0.6, l * 0.8, r * 1.0 - th * 0.7, -l * 0.8, r * 1.0 - th * 0.7], P.shellLo, P.shellDk);
-  if (i % 3 === 0) paraPoly(g, [-l * 0.35, y0, 0, y0 - r * 0.55, l * 0.35, y0], P.shell, P.shellDk);   // a spine
-  if (m.phase >= 2) {   // cracks
-    g.strokeStyle = P.fleshDk; g.lineWidth = Math.max(1, T / 20); g.beginPath();
-    g.moveTo(-l * 0.3, y0 + 1); g.lineTo(-l * 0.1, y0 + th * 0.6); g.lineTo(l * 0.25, y0 + th * 0.9); g.stroke();
-  }
-  if (i === n - 1) {   // the stinger
-    paraPoly(g, [-l * 0.9, -r * 0.45, -l * 2.6, 0, -l * 0.9, r * 0.45], P.shell, P.shellDk);
-    g.fillStyle = P.ooze; g.beginPath(); g.arc(-l * 2.2, 0, r * 0.14, 0, 6.3); g.fill();
-  }
-  g.restore();
+// ---- the pixel buffer ----
+const PXR = { c: null, g: null, img: null, d: null, lay: null, CW: 0, CH: 0, W: 0, H: 0, ox: 0, oy: 0, x0: 1e9, y0: 1e9, x1: -1, y1: -1 };
+function pxrBegin(W, H, ox, oy) {
+  if (!PXR.c) { PXR.c = document.createElement('canvas'); PXR.g = PXR.c.getContext('2d'); }
+  if (W > PXR.CW || H > PXR.CH) {
+    PXR.CW = Math.max(W, PXR.CW); PXR.CH = Math.max(H, PXR.CH);
+    PXR.c.width = PXR.CW; PXR.c.height = PXR.CH;
+    PXR.img = PXR.g.createImageData(PXR.CW, PXR.CH); PXR.d = new Uint32Array(PXR.img.data.buffer); PXR.lay = new Uint8Array(PXR.CW * PXR.CH);
+  } else PXR.d.fill(0, 0, PXR.CW * (H + 1));
+  PXR.W = W; PXR.H = H; PXR.ox = ox; PXR.oy = oy;
 }
-function drawParaHead(g, m, P, t) {
-  const R = 1.4 * TILE, open = Math.max(0, Math.min(1, (m.maw || 0) + 0.12 + 0.1 * Math.sin(t * 7)));
-  g.save(); g.rotate(m.ang || 0); if (Math.cos(m.ang || 0) < 0) g.scale(1, -1);
-  // feelers trailing behind the crown
-  g.strokeStyle = P.shellDk; g.lineWidth = Math.max(1.5, TILE / 11); g.lineCap = 'round';
-  for (const sd of [0, 1]) {
-    g.beginPath(); g.moveTo(-R * 0.2, -R * (0.95 + sd * 0.05));
-    for (let k = 1; k <= 5; k++) g.lineTo(-R * (0.2 + k * 0.5), -R * (0.95 + sd * 0.1 + k * 0.1) + Math.sin(t * 5 + k * 0.8 + sd * 2) * R * 0.16);
-    g.stroke();
-    g.fillStyle = P.ooze; g.beginPath(); g.arc(-R * 2.7, -R * (1.45 + sd * 0.1) + Math.sin(t * 5 + 4 + sd * 2) * R * 0.16, R * 0.08, 0, 6.3); g.fill();
+// paint one piece: sh(lx, ly, gx, gy) -> material, for the pixels whose centres fall in the local box
+// [lx0, lx1] x [ly0, ly1] of a piece at (cx, cy) (buffer pixels), turned by ang (and flipped so its back is up)
+function pxrPiece(cx, cy, ang, flip, lx0, lx1, ly0, ly1, sh) {
+  const ca = Math.cos(ang), sa = Math.sin(ang), CW = PXR.CW, lay = PXR.lay;
+  let X0 = 1e9, X1 = -1e9, Y0 = 1e9, Y1 = -1e9;
+  for (const lx of [lx0, lx1]) for (const ly of [ly0, ly1]) { const y = ly * flip, X = cx + lx * ca - y * sa, Y = cy + lx * sa + y * ca; X0 = Math.min(X0, X); X1 = Math.max(X1, X); Y0 = Math.min(Y0, Y); Y1 = Math.max(Y1, Y); }
+  const i0 = Math.max(1, Math.floor(X0)), i1 = Math.min(PXR.W - 2, Math.ceil(X1)), j0 = Math.max(1, Math.floor(Y0)), j1 = Math.min(PXR.H - 2, Math.ceil(Y1));
+  if (i1 < i0 || j1 < j0) return;
+  for (let j = j0; j <= j1; j++) {
+    const py = j + 0.5 - cy;
+    for (let i = i0; i <= i1; i++) {
+      const px = i + 0.5 - cx, lx = px * ca + py * sa, ly = (py * ca - px * sa) * flip;
+      if (lx < lx0 || lx > lx1 || ly < ly0 || ly > ly1) continue;
+      const id = sh(lx, ly, i + PXR.ox, j + PXR.oy);
+      if (id) lay[j * CW + i] = id;
+    }
   }
-  // gill-plates at the back of the head
-  paraPoly(g, [-R * 0.9, -R * 0.5, -R * 1.5, -R * 1.15, -R * 0.35, -R * 0.95], P.shellLo, P.shellDk);
-  paraPoly(g, [-R * 0.9, R * 0.5, -R * 1.45, R * 1.1, -R * 0.35, R * 0.9], P.shellLo, P.shellDk);
-  paraPoly(g, [-R * 1.05, -R * 0.55, -R * 0.35, -R * 0.75, -R * 0.35, R * 0.75, -R * 1.05, R * 0.55], P.flesh, P.fleshDk);
-  // the mouth: a dark wedge between the jaws, an ooze-lit throat, rows of teeth
-  const hjx = -R * 0.1, hjy = R * 0.3, ca = Math.cos(open * 0.7), sa = Math.sin(open * 0.7);
-  const tipX = hjx + (R * 1.3) * ca - (R * 0.1) * sa, tipY = hjy + (R * 1.3) * sa + (R * 0.1) * ca;
-  paraPoly(g, [-R * 0.1, -R * 0.05, R * 1.25, -R * 0.05, tipX, tipY, hjx, hjy], P.maw);
-  g.fillStyle = P.ooze; g.globalAlpha = 0.55 + 0.25 * Math.sin(t * 6); g.beginPath(); g.arc(R * 0.25, R * 0.12 + open * R * 0.25, R * (0.2 + open * 0.14), 0, 6.3); g.fill(); g.globalAlpha = 1;
-  // lower jaw (hinged)
-  g.save(); g.translate(hjx, hjy); g.rotate(open * 0.7);
-  paraPoly(g, [0, -R * 0.18, R * 1.32, -R * 0.08, R * 1.1, R * 0.34, R * 0.1, R * 0.4, -R * 0.15, R * 0.22], P.shellLo, P.shellDk);
-  g.fillStyle = P.shellHi; g.fillRect(R * 0.1, R * 0.28, R * 0.9, R * 0.06);
-  g.fillStyle = P.tooth;
-  for (let k = 0; k < 5; k++) { const x = R * (0.2 + k * 0.23); g.beginPath(); g.moveTo(x, -R * 0.16); g.lineTo(x + R * 0.09, -R * (0.34 + 0.1 * (k % 2))); g.lineTo(x + R * 0.18, -R * 0.14); g.fill(); }
-  g.restore();
-  // upper jaw / skull dome
-  paraPoly(g, [-R * 1.0, -R * 0.2, -R * 0.9, -R * 0.82, -R * 0.15, -R * 1.12, R * 0.65, -R * 0.9, R * 1.28, -R * 0.3, R * 1.3, -R * 0.02, R * 0.3, -R * 0.02, -R * 0.15, R * 0.08], P.shell, P.shellDk);
-  paraPoly(g, [-R * 0.85, -R * 0.75, -R * 0.15, -R * 1.02, R * 0.6, -R * 0.82, R * 0.1, -R * 0.62], P.shellHi);
-  for (let k = 0; k < 3; k++) paraPoly(g, [-R * (0.75 - k * 0.3), -R * (0.82 + (k === 1 ? 0.1 : 0)), -R * (0.6 - k * 0.3), -R * (1.2 + (k === 1 ? 0.15 : 0)), -R * (0.45 - k * 0.3), -R * 0.95], P.shell, P.shellDk);   // crest
-  g.fillStyle = P.tooth;
-  for (let k = 0; k < 5; k++) { const x = R * (0.2 + k * 0.22); g.beginPath(); g.moveTo(x, -R * 0.02); g.lineTo(x + R * 0.09, R * (0.2 + 0.1 * open + 0.06 * (k % 2))); g.lineTo(x + R * 0.18, -R * 0.02); g.fill(); }
-  // the eyes
-  for (const [ex, ey, es] of [[0.42, -0.55, 0.15], [0.72, -0.36, 0.12], [0.08, -0.72, 0.12]]) {
-    g.fillStyle = P.fleshDk; g.fillRect(R * (ex - es * 1.25), R * (ey - es * 1.25), R * es * 2.5, R * es * 2.5);
-    g.fillStyle = P.eye; g.fillRect(R * (ex - es), R * (ey - es), R * es * 2, R * es * 2);
-  }
-  g.restore();
+  PXR.x0 = Math.min(PXR.x0, i0); PXR.x1 = Math.max(PXR.x1, i1); PXR.y0 = Math.min(PXR.y0, j0); PXR.y1 = Math.max(PXR.y1, j1);
 }
+// a 1-pixel line of one material (the feelers), in buffer pixels
+function pxrLine(x0, y0, x1, y1, id) {
+  const n = Math.max(1, Math.ceil(Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)))), CW = PXR.CW;
+  for (let k = 0; k <= n; k++) {
+    const i = Math.floor(x0 + (x1 - x0) * k / n), j = Math.floor(y0 + (y1 - y0) * k / n);
+    if (i < 1 || j < 1 || i > PXR.W - 2 || j > PXR.H - 2) continue;
+    PXR.lay[j * CW + i] = id;
+    PXR.x0 = Math.min(PXR.x0, i); PXR.x1 = Math.max(PXR.x1, i); PXR.y0 = Math.min(PXR.y0, j); PXR.y1 = Math.max(PXR.y1, j);
+  }
+}
+// shade the piece, outline it, and lay it over the picture (alpha: 255, or less for the parts under the sand)
+function pxrFlush(pal, alpha) {
+  if (PXR.x1 < PXR.x0) return;
+  const CW = PXR.CW, lay = PXR.lay, d = PXR.d, A = (alpha << 24) >>> 0, ol = (pal.ol | A) >>> 0;
+  const x0 = Math.max(1, PXR.x0 - 1), x1 = Math.min(PXR.W - 2, PXR.x1 + 1), y0 = Math.max(1, PXR.y0 - 1), y1 = Math.min(PXR.H - 2, PXR.y1 + 1);
+  for (let j = y0; j <= y1; j++) for (let i = x0; i <= x1; i++) {
+    const k = j * CW + i, id = lay[k], up = lay[k - CW], dn = lay[k + CW], lf = lay[k - 1], rt = lay[k + 1];
+    if (!id) { if (up || dn || lf || rt) d[k] = ol; continue; }
+    let t = PR_TONE[id];
+    if (!PR_FLAT[id]) {
+      const f = PR_FAM[id], U = PR_FAM[up] !== f, Dn = PR_FAM[dn] !== f, L = PR_FAM[lf] !== f, R = PR_FAM[rt] !== f;
+      if (U && !Dn) t--; else if (Dn && !U) t++; else if (L && !R) t--; else if (R && !L) t++;
+      t = t < 0 ? 0 : t > 3 ? 3 : t;
+    } else t = 0;
+    d[k] = (pal.mats[id][t] | A) >>> 0;
+  }
+  for (let j = PXR.y0; j <= PXR.y1; j++) lay.fill(0, j * CW + PXR.x0, j * CW + PXR.x1 + 1);
+  PXR.x0 = PXR.y0 = 1e9; PXR.x1 = PXR.y1 = -1;
+}
+// one square pixel-art eye (it doesn't turn: an eye is a few square pixels whichever way the head faces)
+function pxrEye(x, y, s, pal, alpha, frenzy) {
+  const A = (alpha << 24) >>> 0, i0 = Math.round(x - s / 2), j0 = Math.round(y - s / 2);
+  for (let j = j0 - 1; j <= j0 + s; j++) for (let i = i0 - 1; i <= i0 + s; i++) {
+    if (i < 0 || j < 0 || i >= PXR.W || j >= PXR.H) continue;
+    const rim = i < i0 || j < j0 || i >= i0 + s || j >= j0 + s;
+    if (rim && (i < i0 || i >= i0 + s) && (j < j0 || j >= j0 + s)) continue;   // (rounded corners)
+    PXR.d[j * PXR.CW + i] = ((rim ? pal.sock : i === i0 && j === j0 && s > 1 && !frenzy ? pal.eyeHi : pal.eye) | A) >>> 0;
+  }
+}
+// ---- shape helpers (local pixels) ----
+function prIn(P, x, y) {   // inside a polygon [x0, y0, x1, y1, ...]?
+  let c = false;
+  for (let a = 0, b = P.length - 2; a < P.length; b = a, a += 2) if ((P[a + 1] > y) !== (P[b + 1] > y) && x < (P[b] - P[a]) * (y - P[a + 1]) / (P[b + 1] - P[a + 1]) + P[a]) c = !c;
+  return c;
+}
+function prSeg(x, y, ax, ay, bx, by) {   // distance from a point to a line segment
+  const dx = bx - ax, dy = by - ay, L = dx * dx + dy * dy, k = L ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / L)) : 0;
+  return Math.hypot(x - ax - dx * k, y - ay - dy * k);
+}
+function prLine(x, y, P) { let d = 1e9; for (let k = 0; k + 3 < P.length; k += 2) d = Math.min(d, prSeg(x, y, P[k], P[k + 1], P[k + 2], P[k + 3])); return d; }
+function prTri(x, y, ax, ay, bx, by, cx, cy) {
+  const s1 = (bx - ax) * (y - ay) - (by - ay) * (x - ax), s2 = (cx - bx) * (y - by) - (cy - by) * (x - bx), s3 = (ax - cx) * (y - cy) - (ay - cy) * (x - cx);
+  return (s1 >= 0 && s2 >= 0 && s3 >= 0) || (s1 <= 0 && s2 <= 0 && s3 <= 0);
+}
+const prScale = (P, R) => P.map(v => v * R);
+// the still parts of a piece (its plates, spines, skull...) are worked out once, into a fine grid of
+// materials in its own frame (3 x 3 samples a pixel, both checker colours), then just looked up each frame
+const PR_GRID = new Map(), PR_Q = 3;
+function prGrid(key, lx0, lx1, ly0, ly1, sh) {
+  let G = PR_GRID.get(key);
+  if (G) return G;
+  const gw = Math.ceil((lx1 - lx0) * PR_Q), gh = Math.ceil((ly1 - ly0) * PR_Q), a = new Uint8Array(gw * gh * 2);
+  for (let y = 0; y < gh; y++) for (let x = 0; x < gw; x++) {
+    const lx = lx0 + (x + 0.5) / PR_Q, ly = ly0 + (y + 0.5) / PR_Q, k = (y * gw + x) * 2;
+    a[k] = sh(lx, ly, 0, 0); a[k + 1] = sh(lx, ly, 1, 0);
+  }
+  G = { a, gw, gh, lx0, ly0 }; PR_GRID.set(key, G);
+  return G;
+}
+function prAt(G, lx, ly, par) {
+  const x = Math.floor((lx - G.lx0) * PR_Q), y = Math.floor((ly - G.ly0) * PR_Q);
+  return x < 0 || y < 0 || x >= G.gw || y >= G.gh ? 0 : G.a[(y * G.gw + x) * 2 + par];
+}
+// ---- the head, in units of its size R (it faces right, its back is up) ----
+const PH_R = 1.4 * 16;
+const PH = {
+  skull: prScale([-1.0, -0.2, -0.98, -0.62, -0.78, -0.92, -0.45, -1.1, -0.05, -1.14, 0.35, -1.03, 0.72, -0.85, 1.06, -0.6, 1.32, -0.3, 1.44, -0.08, 1.4, 0.18, 1.24, 0.03, 0.3, -0.01, -0.12, 0.1, -0.55, 0.3, -0.95, 0.18], PH_R),
+  brow: prScale([-0.86, -0.5, -0.3, -0.72, 0.1, -0.86, 0.5, -0.78, 0.92, -0.6, 1.22, -0.34], PH_R),
+  cheek: prScale([-0.9, -0.06, -0.4, -0.22, 0.25, -0.2], PH_R),
+  seams: [[0.82, -0.82, 0.86, -0.56], [1.08, -0.6, 1.14, -0.38]].map(s => prScale(s, PH_R)),
+  horns: [[-0.86, -0.72, -0.56, -1.0, -1.42, -1.28], [-0.5, -1.04, -0.12, -1.13, -0.98, -1.66], [-0.08, -1.13, 0.3, -1.04, -0.42, -1.6]].map(s => prScale(s, PH_R)),
+  neck: prScale([-1.08, -0.64, -0.3, -0.82, -0.3, 0.82, -1.08, 0.64], PH_R),
+  frillUp: prScale([-0.5, -0.72, -1.22, -1.22, -1.1, -0.9, -1.66, -1.0, -1.32, -0.7, -1.82, -0.6, -1.06, -0.38], PH_R),
+  frillDn: prScale([-0.55, 0.45, -1.18, 0.98, -1.04, 0.68, -1.56, 0.74, -1.22, 0.44, -1.62, 0.3, -0.95, 0.2], PH_R),
+  rays: [[-0.62, -0.6, -1.22, -1.18], [-0.62, -0.6, -1.6, -0.98], [-0.62, -0.6, -1.76, -0.62], [-0.62, 0.36, -1.16, 0.92], [-0.62, 0.36, -1.52, 0.72]].map(s => prScale(s, PH_R)),
+  jaw: prScale([-0.15, -0.2, 0.4, -0.16, 1.2, -0.14, 1.42, -0.36, 1.38, -0.02, 1.12, 0.3, 0.4, 0.42, 0.0, 0.4, -0.25, 0.2], PH_R),
+  eyes: [[0.12, -0.66, 2], [0.46, -0.56, 3], [0.8, -0.42, 2]],
+};
+// one ring of the body (local pixels: x runs toward the head, y < 0 is its back). Its box, and its still
+// parts (worked out once per ring and phase); the glowing sac is added on top each frame (it swells)
+function paraSegBox(i) {
+  const r = paraRadius(i, PARA.n) * 16, l = PARA.gap * 16 * 0.58;
+  return [i === PARA.n - 1 ? -l * 3 : -l * 1.2, l * 1.1, -r * 1.8, r * 1.1];
+}
+function paraSegStatic(i, ph) {
+  const r = paraRadius(i, PARA.n) * 16, l = PARA.gap * 16 * 0.58, last = i === PARA.n - 1;
+  const plateY = -r * (ph >= 3 ? 0.74 : ph === 2 ? 0.58 : 0.44), bellyY = r * (ph >= 3 ? 0.8 : ph === 2 ? 0.68 : 0.58);
+  const spine = i % 2 === 0 && r > 9 ? r * (ph >= 3 ? 0.35 : 0.62) : 0, seam = -l * 0.32, sacY = r * 0.1;
+  const h = ((i * 73 + 17) % 11) / 11, crack = ph >= 2 ? [-l * 0.1 + h * l * 0.4, -r * 1.05, -l * 0.25 + h * l * 0.3, -r * 0.82, l * 0.05 + h * l * 0.2, plateY + r * 0.05] : null;
+  const chip = ph >= 3 && h > 0.35;   // in the frenzy some plates have lost a corner
+  const K = ph >= 3 ? PM.Kg : PM.K;
+  return (x, y, gx, gy) => {
+    const ck = (gx + gy) & 1;
+    // the stinger, behind the last ring
+    if (last && x < -l * 0.7) {
+      if (Math.hypot(x + l * 2.55, y - 1.5) < 1.7) return PM.O;
+      if (!prTri(x, y, -l * 0.7, -r * 0.62, -l * 2.9, -r * 0.05, -l * 0.7, r * 0.5)) return 0;
+      return Math.abs(y + r * 0.08) < 0.6 && x < -l * 1.0 ? PM.G : y > r * 0.12 ? PM.Sd : PM.S;
+    }
+    const rr = r * (1 + 0.06 * x / l), ax = Math.abs(x) / l, ay = Math.abs(y) / rr;
+    const body = ax * ax * ax * ax + ay * ay * ay * ay <= 1;
+    // a hooked spine on the back, swept toward the tail
+    if (spine && y < -r * 0.8 && prTri(x, y, -l * 0.42, -r * 0.84, l * 0.26, -r * 0.84, -l * 0.78, -r - spine)) return x < -l * 0.2 && y > -r - spine * 0.35 ? PM.Hd : PM.H;
+    // the plate on its back: a little bigger than the ring and lapping back over the one behind
+    if (y < plateY) {
+      const px = Math.abs(x + l * 0.08) / (l * 1.08), py = Math.abs(y) / (rr * 1.07);
+      if (px * px * px * px + py * py * py * py <= 1) {
+        if (chip && x > l * 0.35 && y < -r * 0.8) return body ? PM.Fd : 0;
+        if (crack && prLine(x, y, crack) < 0.6) return K;
+        if (Math.abs(x - seam) < 0.55) return PM.G;
+        if (y > plateY - 2.2) return PM.Sd;                                  // the plate's thick lower edge
+        if (y < -r * 0.62 && y > -r * 0.62 - 1.2 && ck && Math.abs(x) < l * 0.7) return PM.Sl;   // (a glint along the top)
+        return PM.S;
+      }
+    }
+    if (!body) return 0;
+    if (y > bellyY) return y > bellyY + 2.4 ? PM.Bd : PM.B;   // the belly plate
+    if (i % 2 === 0) {   // a breathing pore, with a puckered rim
+      const d = Math.hypot(x, y - sacY);
+      if (d < r * 0.13 + 0.6) return PM.P;
+      if (d < r * 0.13 + 1.7) return y < sacY ? PM.Fd : PM.Fh;
+    }
+    if (Math.abs(x - l * 0.62) < 0.55 || Math.abs(x + l * 0.62) < 0.55) return PM.Fd;   // muscle ridges
+    return y > r * 0.22 ? PM.Fd : PM.F;
+  };
+}
+// the head, in pieces: the skull (crest, brow, snout) / the jaw / the frill and the neck. Boxes in units of R.
+const PH_BOX = { skull: [-1.5, 1.5, -1.7, 0.25], jaw: [-0.3, 1.5, -0.5, 0.5], frill: [-1.9, -0.25, -1.3, 1.05] };
+function paraSkullStatic() {
+  const S = PH.skull, R = PH_R;
+  return (x, y) => {
+    for (const [ax, ay, bx, by, cx, cy] of PH.horns) if (prTri(x, y, ax, ay, bx, by, cx, cy)) return (x - cx) * 0.3 + (y - cy) > (by - cy) * 0.6 ? PM.Hd : PM.H;
+    if (!prIn(S, x, y)) return 0;
+    if (prLine(x, y, PH.brow) < 0.6) return PM.G;
+    for (const s of PH.seams) if (prLine(x, y, s) < 0.55) return PM.G;
+    if (Math.hypot(x - 1.18 * R, y + 0.2 * R) < 1.2) return PM.P;   // a nostril pit
+    if (prLine(x, y, PH.cheek) < 0.55) return PM.Sd;
+    const under = y > -0.62 * R + (x / R) * 0.18 * R;   // below the brow: the face, a shade darker
+    return y > -0.1 * R ? PM.Sd : under ? PM.S : PM.Sl;
+  };
+}
+function paraJawStatic() {   // in the jaw's own frame (hinge at 0,0)
+  const R = PH_R;
+  return (jx, jy) => {
+    if (jy < -0.14 * R && jx > 0.16 * R && jx < 1.16 * R) {   // the lower teeth
+      for (let k = 0; k < 5; k++) { const tx = (0.18 + k * 0.2) * R; if (prTri(jx, jy, tx, -0.14 * R, tx + 0.17 * R, -0.14 * R, tx + 0.085 * R, -(0.34 + 0.08 * (k % 2)) * R)) return PM.T; }
+    }
+    if (!prIn(PH.jaw, jx, jy)) return 0;
+    if (Math.abs(jy - 0.2 * R) < 0.55 && jx > 0.05 * R && jx < 1.0 * R) return PM.G;
+    return jy > 0.24 * R ? PM.Bd : PM.B;
+  };
+}
+function paraFrillStatic() {
+  return (x, y) => {
+    const up = prIn(PH.frillUp, x, y), dn = !up && prIn(PH.frillDn, x, y);
+    if (up || dn) {
+      for (const s of PH.rays) if (prSeg(x, y, s[0], s[1], s[2], s[3]) < 0.55) return PM.G;
+      return dn ? PM.Bd : PM.Sd;
+    }
+    if (prIn(PH.neck, x, y)) return y > 0.3 * PH_R ? PM.Fd : PM.F;
+    return 0;
+  };
+}
+const phGrid = (k, sh) => { const b = PH_BOX[k]; return prGrid('h.' + k, b[0] * PH_R, b[1] * PH_R, b[2] * PH_R, b[3] * PH_R, sh); };
 function renderParasite(m, originX, originY) {
   if (m.dead) return;
-  const sp = parasiteSegs(m), n = m.nseg == null ? PARA.n : m.nseg, t = Game.time, T = TILE;
-  const P = m.hurtFlash > 0 || m.dying != null ? PARA_HIT : PARA_COL;
-  const jx = m.shakeAmt ? (Math.random() - 0.5) * m.shakeAmt * T * 0.14 : 0, jy = m.shakeAmt ? (Math.random() - 0.5) * m.shakeAmt * T * 0.14 : 0;
-  const hx = originX + (m.x + m.w / 2) * T + jx, hy = originY + (m.y + m.h / 2) * T + jy, onScreen = (x, y) => x > -4 * T && x < VIEW.w + 4 * T && y > -4 * T && y < VIEW.h + 4 * T;
-  // where it will come up (a dust column on the sand)
+  const sp = parasiteSegs(m), n = m.nseg == null ? PARA.n : m.nseg, t = Game.time, T = TILE, u = T / 16;
+  const P = m.hurtFlash > 0 || m.dying != null ? PARA_HIT : PARA_COL, pal = paraPal(P);
+  const jx = m.shakeAmt ? Math.round((Math.random() - 0.5) * m.shakeAmt * 2.2) : 0, jy = m.shakeAmt ? Math.round((Math.random() - 0.5) * m.shakeAmt * 2.2) : 0;   // (the shake moves it in whole pixels)
+  // where it will come up: a column of dust-coloured light on the sand, in hard pixel bands
   if (m.move === 'burrow' && m.stage === 'stalk' && m.dying == null) {
-    const wx = originX + m.warnX * T, sy = originY + m.surfY * T, a = 0.14 + 0.1 * Math.sin(t * 16);
-    const gr = ctx.createLinearGradient(0, sy - 9 * T, 0, sy); gr.addColorStop(0, 'rgba(182,255,58,0)'); gr.addColorStop(1, `rgba(182,255,58,${a + 0.12})`);
-    ctx.fillStyle = gr; ctx.fillRect(wx - T * 1.1, sy - 9 * T, T * 2.2, 9 * T);
+    const wx = Math.round((originX + m.warnX * T) / u) * u, sy = originY + m.surfY * T, a = 0.14 + 0.1 * Math.sin(t * 16), bw = Math.round(2.2 * 16) * u;
+    for (let k = 0; k < 6; k++) { ctx.fillStyle = `rgba(182,255,58,${((a + 0.12) * (k + 1) / 6).toFixed(3)})`; ctx.fillRect(wx - bw / 2 + (k % 2 ? u : 0), sy - (6 - k) * 1.5 * T, bw - (k % 2 ? 2 * u : 0), 1.5 * T); }
   }
-  for (let i = n - 1; i >= 0; i--) {   // tail first, so the head ends up on top
-    const s = sp[i], sx = originX + s.x * T + jx, sy = originY + s.y * T + jy;
-    if (!onScreen(sx, sy)) continue;
-    ctx.save(); ctx.translate(sx, sy);
-    if (s.u) ctx.globalAlpha = 0.5;   // under the sand
-    drawParaSeg(ctx, s, i, PARA.n, P, m, t);
-    ctx.restore();
+  // the box of the grid to paint: around the body, cut down to the screen
+  const hx = (m.x + m.w / 2) * 16, hy = (m.y + m.h / 2) * 16;
+  let X0 = hx - 64, X1 = hx + 64, Y0 = hy - 64, Y1 = hy + 64;
+  for (let i = 0; i < n; i++) { const s = sp[i]; X0 = Math.min(X0, s.x * 16 - 48); X1 = Math.max(X1, s.x * 16 + 48); Y0 = Math.min(Y0, s.y * 16 - 48); Y1 = Math.max(Y1, s.y * 16 + 48); }
+  X0 = Math.max(Math.floor(X0), Math.floor(-originX / u) - 4); X1 = Math.min(Math.ceil(X1), Math.ceil((VIEW.w - originX) / u) + 4);
+  Y0 = Math.max(Math.floor(Y0), Math.floor(-originY / u) - 4); Y1 = Math.min(Math.ceil(Y1), Math.ceil((VIEW.h - originY) / u) + 4);
+  if (X1 <= X0 || Y1 <= Y0) return;
+  pxrBegin(X1 - X0, Y1 - Y0, X0, Y0);
+  const flipOf = (a) => Math.cos(a) < 0 ? -1 : 1, l = PARA.gap * 16 * 0.58;
+  // ---- the body: tail first, so each ring laps over the one behind it ----
+  const ph = m.phase || 1, F = PM.F, Fd = PM.Fd;
+  for (let i = n - 1; i >= 0; i--) {
+    const s = sp[i], r = paraRadius(i, PARA.n) * 16, b = paraSegBox(i), G = prGrid('s' + i + '.' + ph, b[0], b[1], b[2], b[3], paraSegStatic(i, ph));
+    let sh = (x, y, gx, gy) => prAt(G, x, y, (gx + gy) & 1);
+    if (i % 2 === 1) {   // the sac: it pulses, and swells up when it's about to burst
+      const rad = r * (0.27 + 0.07 * (0.5 + 0.5 * Math.sin(t * 4 + i * 0.9)) + 0.2 * (m.sacs || 0)), sx = l * 0.05, sy = r * 0.1, R1 = rad + 1.1, R3 = rad + 3;
+      sh = (x, y, gx, gy) => {
+        const id = prAt(G, x, y, (gx + gy) & 1);
+        if (id !== F && id !== Fd) return id;
+        const dx = x - sx, dy = y - sy, d = Math.sqrt(dx * dx + dy * dy);
+        if (d >= R3) return id;
+        if (d < rad) return Math.hypot(dx + rad * 0.35, dy + rad * 0.38) < rad * 0.3 ? PM.Oh : dx + dy > rad * 0.45 ? PM.Od : PM.O;
+        return d < R1 ? PM.D : (gx + gy) & 1 ? PM.Fg : id;   // (a membrane, then a dithered glow in the flesh)
+      };
+    }
+    pxrPiece(s.x * 16 - X0, s.y * 16 - Y0, s.ang, flipOf(s.ang), b[0], b[1], b[2], b[3], sh);
+    pxrFlush(pal, s.u ? 128 : 255);
   }
-  if (onScreen(hx, hy) && n > 0) {
-    ctx.save(); ctx.translate(hx, hy);
-    if (m.hu) ctx.globalAlpha = 0.55;
-    drawParaHead(ctx, m, P, t);
-    ctx.restore();
+  // ---- the head ----
+  if (n > 0) {
+    const a = m.ang || 0, f = flipOf(a), cx = hx - X0, cy = hy - Y0, R = PH_R, al = m.hu ? 140 : 255;
+    const open = Math.max(0, Math.min(1, (m.maw || 0) + 0.12 + 0.1 * Math.sin(t * 7)));
+    const ca = Math.cos(a), sa = Math.sin(a), at = (lx, ly) => [cx + lx * ca - ly * f * sa, cy + lx * sa + ly * f * ca];
+    // the feelers, trailing back from the crown
+    for (const sd of [0, 1]) {
+      let [qx, qy] = at(-0.25 * R, -(0.9 + sd * 0.06) * R);
+      for (let k = 1; k <= 7; k++) {
+        const [nx, ny] = at(-(0.25 + k * 0.36) * R, -(0.9 + sd * 0.12 + k * 0.075) * R + Math.sin(t * 5 + k * 0.7 + sd * 2) * 0.16 * R * (k / 7));
+        pxrLine(qx, qy, nx, ny, PM.L); qx = nx; qy = ny;
+      }
+      pxrPiece(qx, qy, 0, 1, -2, 2, -2, 2, (x, y) => x * x + y * y < 3.2 ? (x + y < -0.5 ? PM.Oh : PM.O) : 0);
+    }
+    pxrFlush(pal, al);
+    const Gf = phGrid('frill', paraFrillStatic()), Gj = phGrid('jaw', paraJawStatic()), Gs = phGrid('skull', paraSkullStatic());
+    const fb = PH_BOX.frill, sb = PH_BOX.skull;
+    pxrPiece(cx, cy, a, f, fb[0] * R, fb[1] * R, fb[2] * R, fb[3] * R, (x, y, gx, gy) => prAt(Gf, x, y, (gx + gy) & 1)); pxrFlush(pal, al);
+    // the jaw swings open on its hinge; the mouth behind it is dark, with a green glow down the throat
+    const hjx = -0.1 * R, hjy = 0.3 * R, ja = open * 0.7, jc = Math.cos(ja), js = Math.sin(ja);
+    const maw = [-0.12 * R, -0.05 * R, 1.25 * R, -0.05 * R, hjx + 1.3 * R * jc - 0.1 * R * js, hjy + 1.3 * R * js + 0.1 * R * jc, hjx, hjy];
+    const tgx = 0.28 * R, tgy = (0.1 + open * 0.24) * R, tgr = (0.16 + open * 0.14) * R * (0.9 + 0.12 * Math.sin(t * 6));
+    pxrPiece(cx, cy, a, f, -0.4 * R, 1.6 * R, -0.5 * R, 1.6 * R, (x, y, gx, gy) => {
+      const id = prAt(Gj, (x - hjx) * jc + (y - hjy) * js, (y - hjy) * jc - (x - hjx) * js, (gx + gy) & 1);
+      if (id || !prIn(maw, x, y)) return id;
+      const g = Math.hypot((x - tgx) / 1.3, y - tgy);
+      return g < tgr * 0.7 ? PM.W : g < tgr && ((gx + gy) & 1) ? PM.Wd : PM.M;
+    });
+    pxrFlush(pal, al);
+    // the skull, and its teeth (they reach further down as the mouth opens)
+    const tTop = -0.03 * R, tLen = (0.22 + 0.1 * open) * R;
+    pxrPiece(cx, cy, a, f, sb[0] * R, sb[1] * R, sb[2] * R, Math.max(sb[3] * R, tLen + 0.1 * R), (x, y, gx, gy) => {
+      const id = prAt(Gs, x, y, (gx + gy) & 1);
+      if (id || y < tTop || x < 0.2 * R || x > 1.22 * R) return id;
+      for (let k = 0; k < 5; k++) { const tx = (0.22 + k * 0.2) * R; if (prTri(x, y, tx, tTop, tx + 0.18 * R, tTop, tx + 0.09 * R, tLen + 0.08 * (k % 2) * R)) return PM.T; }
+      return 0;
+    });
+    pxrFlush(pal, al);
+    for (const [ex, ey, es] of PH.eyes) { const [x, y] = at(ex * R, ey * R); pxrEye(x, y, es, pal, al, m.phase >= 3); }
   }
-  ctx.globalAlpha = 1;
+  // (get the next phase's rings ready a few at a time, so the molt doesn't stall the game)
+  if (ph < 3 && loop.frames % 2 === 0) for (let i = 0; i < PARA.n; i++) if (!PR_GRID.has('s' + i + '.' + (ph + 1))) { const b = paraSegBox(i); prGrid('s' + i + '.' + (ph + 1), b[0], b[1], b[2], b[3], paraSegStatic(i, ph + 1)); break; }
+  // ---- onto the screen, every grid pixel a crisp square ----
+  PXR.g.putImageData(PXR.img, 0, 0, 0, 0, PXR.W, PXR.H);
+  ctx.save(); ctx.imageSmoothingEnabled = false;
+  ctx.drawImage(PXR.c, 0, 0, PXR.W, PXR.H, originX + (X0 + jx) * u, originY + (Y0 + jy) * u, PXR.W * u, PXR.H * u);
+  ctx.restore();
 }
 function renderParasiteGlow(m, originX, originY, glow) {
   if (m.dead || !m.sp) return;

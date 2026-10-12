@@ -2,7 +2,7 @@
 // Makes the game installable as an app and playable offline: everything the game
 // loads is kept in a cache on your phone. When a new version is uploaded, change
 // VERSION below so phones throw away the old copy.
-const VERSION = 'michaelcraft-1.0.1-r36';
+const VERSION = 'michaelcraft-1.0.1-r37';   // (r37: the Apex Parasite's pixel-art remaster)
 const PRECACHE = [
  "./",
  "index.html",
